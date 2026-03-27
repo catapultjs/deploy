@@ -1,11 +1,17 @@
-# Deployer
+# Catapult
 
 SSH deployment tool for Node.js applications.
 
 ## Installation
 
 ```bash
-npm install zx
+npm install @jrmc/catapult
+```
+
+Once installed, the `ctp` CLI is available:
+
+```bash
+ctp deploy
 ```
 
 ## Usage
@@ -13,9 +19,9 @@ npm install zx
 Create a `deploy.ts` file at the root of your project:
 
 ```typescript
-import { defineConfig, set } from './bin/deployer.ts'
-import './bin/recipes/adonisjs.ts'
-import './bin/recipes/pm2.ts'
+import { defineConfig } from '@jrmc/catapult'
+import '@jrmc/catapult/recipes/adonisjs'
+import '@jrmc/catapult/recipes/pm2'
 
 await defineConfig({
   keepReleases: 5,
@@ -49,22 +55,28 @@ await defineConfig({
 
 ```bash
 # Deploy
-node bin/cli.ts deploy
+ctp deploy
 
 # Initial server setup (create directories)
-node bin/cli.ts deploy:setup
+ctp deploy:setup
 
 # Rollback to the previous release
-node bin/cli.ts rollback
+ctp rollback
 
 # Server status
-node bin/cli.ts status
+ctp status
 
 # List releases
-node bin/cli.ts list-releases
+ctp list:releases
+
+# List registered tasks and the current pipeline
+ctp list:tasks
+
+# Run a specific task on servers
+ctp task <task-name>
 
 # Target a specific host
-node bin/cli.ts deploy --host staging
+ctp deploy --host staging
 ```
 
 ## Pipeline
@@ -103,31 +115,31 @@ deploy:release → deploy:upload → adonisjs:shared → adonisjs:build → adon
 
 Recipes add tasks to the pipeline automatically upon import.
 
-### `recipes/adonisjs.ts`
+### `recipes/adonisjs`
 
 Adds the `adonisjs:shared`, `adonisjs:build`, and `adonisjs:migrate` tasks for an AdonisJS application.
 Also creates shared directories (`storage`, `logs`, `tmp`, `.env`) during `deploy:setup`.
 
 ```typescript
-import './bin/recipes/adonisjs.ts'
+import '@jrmc/catapult/recipes/adonisjs'
 ```
 
-### `recipes/pm2.ts`
+### `recipes/pm2`
 
 Adds the `pm2:start` task to start or reload processes via PM2.
 The `ecosystem.config.cjs` file must be present in the project.
 
 ```typescript
-import './bin/recipes/pm2.ts'
+import '@jrmc/catapult/recipes/pm2'
 ```
 
-### `recipes/rsync.ts`
+### `recipes/rsync`
 
 Replaces the default transfer mode (git) with rsync.
 
 ```typescript
-import { set } from './bin/deployer.ts'
-import './bin/recipes/rsync.ts'
+import { set } from '@jrmc/catapult'
+import '@jrmc/catapult/recipes/rsync'
 
 set('rsync_excludes', ['.git', 'node_modules', '.env', 'storage', 'tmp', 'logs'])
 ```
@@ -151,14 +163,14 @@ hosts: [
 
 The `repository` is auto-detected from `git remote get-url origin` if not specified.
 
-To use rsync instead, import the `recipes/rsync.ts` recipe (see above).
+To use rsync instead, import the `recipes/rsync` recipe (see above).
 
 ## Recipe configuration: set() / get()
 
 Recipes can expose their own configuration via `set()` / `get()`:
 
 ```typescript
-import { set } from './bin/deployer.ts'
+import { set } from '@jrmc/catapult'
 
 set('rsync_excludes', ['.git', 'node_modules', '.env'])
 ```
@@ -171,7 +183,7 @@ By default, recipes use `node`, `npm`, etc. from the server's `PATH`.
 If the server uses nvm, fnm, or a custom path, they can be overridden:
 
 ```typescript
-import { set } from './bin/deployer.ts'
+import { set } from '@jrmc/catapult'
 
 set('bin/node', '/home/deploy/.nvm/versions/node/v22.14.0/bin/node')
 set('bin/npm', '/home/deploy/.nvm/versions/node/v22.14.0/bin/npm')
@@ -180,7 +192,7 @@ set('bin/npm', '/home/deploy/.nvm/versions/node/v22.14.0/bin/npm')
 The `bin()` helper is also available in custom tasks:
 
 ```typescript
-import { task, bin, run, cd } from './bin/deployer.ts'
+import { task, bin, run, cd } from '@jrmc/catapult'
 
 task('my:task', () => {
   cd('{{release_path}}')
@@ -193,8 +205,8 @@ task('my:task', () => {
 Redefining a task replaces its implementation. Place it before `defineConfig`.
 
 ```typescript
-import { defineConfig, task, cd, run } from './bin/deployer.ts'
-import './bin/recipes/adonisjs.ts'
+import { defineConfig, task, cd, run } from '@jrmc/catapult'
+import '@jrmc/catapult/recipes/adonisjs'
 
 task('adonisjs:build', () => {
   cd('{{release_path}}')
@@ -221,9 +233,9 @@ Available in `cd()` and `run()`:
 ## Adding a task to the pipeline
 
 ```typescript
-import { defineConfig, task, run, after, before, remove } from './bin/deployer.ts'
-import './bin/recipes/adonisjs.ts'
-import './bin/recipes/pm2.ts'
+import { defineConfig, task, run, after, before, remove } from '@jrmc/catapult'
+import '@jrmc/catapult/recipes/adonisjs'
+import '@jrmc/catapult/recipes/pm2'
 
 task('cache:clear', () => {
   run('cd {{current_path}} && node ace cache:clear')
@@ -247,7 +259,7 @@ remove('deploy:healthcheck')          // remove from pipeline
 For operations that require more than a simple SSH command, use an async function with `getContext()`:
 
 ```typescript
-import { task, getContext } from './bin/deployer.ts'
+import { task, getContext } from '@jrmc/catapult'
 
 task('notify', async () => {
   const { deployCtx } = getContext()
@@ -263,7 +275,7 @@ after('deploy:healthcheck', 'notify')
 ## Replacing the entire pipeline
 
 ```typescript
-import { setPipeline } from './bin/deployer.ts'
+import { setPipeline } from '@jrmc/catapult'
 
 setPipeline([
   'deploy:release',
@@ -281,8 +293,8 @@ setPipeline([
 Any registered task — whether built-in, added by a recipe, or defined in `deploy.ts` — can be run directly from the terminal.
 
 ```bash
-node bin/cli.ts adonisjs:migrate
-node bin/cli.ts cache:clear --host staging
+ctp task adonisjs:migrate
+ctp task cache:clear --host staging
 ```
 
 ### `pm2` recipe tasks
@@ -295,8 +307,8 @@ node bin/cli.ts cache:clear --host staging
 | `pm2:restart` | Restarts applications                    |
 
 ```bash
-node bin/cli.ts pm2:logs
-node bin/cli.ts pm2:list --host staging
+ctp task pm2:logs
+ctp task pm2:list --host staging
 ```
 
 ## Hooks
@@ -381,7 +393,7 @@ hosts: [
 Deployment runs sequentially on each host. To target a single host:
 
 ```bash
-node bin/cli.ts deploy --host staging
+ctp deploy --host staging
 ```
 
 ## Inspiration
