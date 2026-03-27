@@ -1,0 +1,77 @@
+{
+  "name": "@jrmc/catapult",
+  "version": "0.0.1-alpha.1",
+  "type": "module",
+  "main": "index.js",
+  "bin": {
+    "ctp": "./build/bin/run.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/batosai/catapult.git"
+  },
+  "files": [
+    "build"
+  ],
+  "scripts": {
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "typecheck": "tsc --noEmit",
+    "build": "tsc"
+  },
+  "author": "Jeremy Chaufourier jeremy@chaufourier.fr",
+  "license": "MIT",
+  "description": "SSH deployment tool for Node.js applications",
+  "keywords": [
+    "deploy",
+    "deployment",
+    "ssh",
+    "nodejs",
+    "adonisjs",
+    "pm2",
+    "rsync",
+    "cli"
+  ],
+  "exports": {
+    ".": {
+      "types": "./index.ts",
+      "import": "./build/index.js"
+    },
+    "./recipes/adonisjs": {
+      "types": "./recipes/adonisjs.ts",
+      "import": "./build/recipes/adonisjs.js"
+    },
+    "./recipes/pm2": {
+      "types": "./recipes/pm2.ts",
+      "import": "./build/recipes/pm2.js"
+    },
+    "./recipes/rsync": {
+      "types": "./recipes/rsync.ts",
+      "import": "./build/recipes/rsync.js"
+    }
+  },
+  "devDependencies": {
+    "@adonisjs/eslint-config": "^3.0.0",
+    "@adonisjs/prettier-config": "^1.4.5",
+    "@adonisjs/tsconfig": "^2.0.0",
+    "@types/node": "^24.12.0",
+    "eslint": "^10.1.0",
+    "prettier": "^3.8.1",
+    "typescript": "^5.9.3"
+  },
+  "dependencies": {
+    "@adonisjs/ace": "^14.1.0",
+    "execa": "^9.6.1"
+  },
+  "eslintConfig": {
+    "extends": "@adonisjs/eslint-config/app"
+  },
+  "prettier": "@adonisjs/prettier-config",
+  "publishConfig": {
+    "access": "public",
+    "tag": "alpha"
+  },
+  "volta": {
+    "node": "24.13.0"
+  }
+}
