@@ -36,7 +36,10 @@ export default class Init extends BaseCommand {
     this.logger.action('create deploy.ts').succeeded()
 
     this.logger.info('Installing @jrmc/catapult...')
-    await execa('npm', ['install', '@jrmc/catapult'], { cwd: process.cwd(), stdio: 'inherit' })
+    await execa('npm', ['install', '-D', '@jrmc/catapult'], {
+      cwd: process.cwd(),
+      stdio: 'inherit',
+    })
     this.logger.action('install @jrmc/catapult').succeeded()
   }
 }
