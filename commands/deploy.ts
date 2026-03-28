@@ -42,7 +42,13 @@ export default class Deploy extends BaseCommand {
 
     if (ctx.hooks.beforeDeploy) await ctx.hooks.beforeDeploy({ hosts })
     for (const host of hosts) {
-      await deployHost(ctx, host)
+      try {
+        await deployHost(ctx, host)
+      } catch (error) {
+        this.logger.error((error as Error).message)
+        this.exitCode = 1
+        return
+      }
     }
     if (ctx.hooks.afterDeploy) await ctx.hooks.afterDeploy({ hosts })
 
