@@ -16,6 +16,7 @@ interface ExecCtx extends TaskContext {
 const _registry = new Map<string, TaskFn>()
 
 let _pipeline: string[] = [
+  'deploy:check_branch',
   'deploy:release',
   'deploy:upload',
   'deploy:publish',

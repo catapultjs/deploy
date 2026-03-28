@@ -6,6 +6,7 @@ import { task, run, getContext, runTask, getPipeline } from './task.ts'
 
 declare module './types.ts' {
   interface TaskRegistry {
+    'deploy:check_branch': true
     'deploy:release': true
     'deploy:upload': true
     'deploy:publish': true
@@ -32,6 +33,25 @@ export async function runHook(
 // ---------------------------------------------------------------------------
 // Built-in tasks (génériques)
 // ---------------------------------------------------------------------------
+
+task('deploy:check_branch', async () => {
+  const { host, deployCtx } = getContext()
+
+  if (!host.branch) return
+
+  const branchName = typeof host.branch === 'object' ? host.branch.name : host.branch
+
+  let repository = deployCtx.config.repository
+  if (!repository) {
+    repository = (await $`git remote get-url origin`).stdout.trim()
+  }
+
+  try {
+    await $`git ls-remote --exit-code --heads ${repository} ${branchName}`
+  } catch {
+    throw new Error(`[${host.name}] branch "${branchName}" does not exist on remote ${repository}`)
+  }
+})
 
 task('deploy:release', () => {
   run('mkdir -p {{release_path}}')

@@ -1,6 +1,8 @@
 import { $ } from 'execa'
 import type {} from '../src/types.ts'
-import { task, get, getContext } from '../index.ts'
+import { task, get, getContext, remove } from '../index.ts'
+
+remove('deploy:check_branch')
 
 declare module '../src/types.ts' {
   interface TaskRegistry {
