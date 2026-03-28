@@ -4,6 +4,7 @@ import { defineConfig } from 'vitepress'
 export default defineConfig({
   title: 'Catapult',
   description: 'SSH deployment tool for Node.js applications.',
+  base: '/catapult/',
   themeConfig: {
     nav: [
       { text: 'Home', link: '/' },
