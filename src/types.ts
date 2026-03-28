@@ -1,8 +1,13 @@
+export interface BranchWithPrompt {
+  name: string
+  ask: boolean
+}
+
 export interface Host {
   name: string
   ssh: string
   deployPath: string
-  branch?: string
+  branch?: string | BranchWithPrompt
   healthcheckUrl?: string
 }
 

@@ -9,10 +9,13 @@ export default class Deploy extends BaseCommand {
   @flags.string({ description: 'Deploy to a specific host' })
   declare host: string | undefined
 
+  @flags.string({ description: 'Override the branch to deploy' })
+  declare branch: string | undefined
+
   async run() {
     const ctx = getCtx()
 
-    const hosts = this.host
+    let hosts = this.host
       ? ctx.config.hosts.filter((h) => h.name === this.host)
       : ctx.config.hosts
 
@@ -21,6 +24,19 @@ export default class Deploy extends BaseCommand {
       this.exitCode = 1
       return
     }
+
+    hosts = await Promise.all(
+      hosts.map(async (host) => {
+        if (this.branch) return { ...host, branch: this.branch }
+        if (typeof host.branch === 'object' && host.branch.ask) {
+          const branch = await this.prompt.ask(`Branch to deploy for ${host.name}`, {
+            default: host.branch.name,
+          })
+          return { ...host, branch }
+        }
+        return host
+      })
+    )
 
     console.log(`🚀 deploy release ${ctx.release}`)
 

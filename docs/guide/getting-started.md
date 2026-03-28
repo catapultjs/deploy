@@ -87,6 +87,45 @@ cata task <task-name>
 
 # Target a specific host
 cata deploy --host staging
+
+# Override the branch to deploy
+cata deploy --branch feature/my-feature
+```
+
+## Branch
+
+The `branch` option on a host accepts a plain string or an object for interactive prompting.
+
+**Static branch:**
+
+```typescript
+hosts: [
+  {
+    name: 'production',
+    ssh: 'deploy@example.com',
+    deployPath: '/home/deploy/myapp',
+    branch: 'main',
+  },
+]
+```
+
+**Interactive prompt** — asks which branch to deploy at runtime, with a default value:
+
+```typescript
+hosts: [
+  {
+    name: 'production',
+    ssh: 'deploy@example.com',
+    deployPath: '/home/deploy/myapp',
+    branch: { name: 'main', ask: true },
+  },
+]
+```
+
+You can also override the branch for all hosts at deploy time:
+
+```bash
+cata deploy --branch feature/my-feature
 ```
 
 ## Server structure

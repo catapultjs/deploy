@@ -42,6 +42,8 @@ task('deploy:upload', async () => {
 
   if (!host.branch) throw new Error(`[${host.name}] git mode requires "branch" on host`)
 
+  const branchName = typeof host.branch === 'object' ? host.branch.name : host.branch
+
   let repository = deployCtx.config.repository
   if (!repository) {
     repository = (await $`git remote get-url origin`).stdout.trim()
@@ -49,7 +51,7 @@ task('deploy:upload', async () => {
 
   await ssh(
     host,
-    `set -e\ngit clone --depth 1 --branch ${q(host.branch)} ${q(repository)} ${q(paths.release)}`
+    `set -e\ngit clone --depth 1 --branch ${q(branchName)} ${q(repository)} ${q(paths.release)}`
   )
 })
 
