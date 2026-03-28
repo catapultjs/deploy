@@ -4,7 +4,8 @@
   "type": "module",
   "main": "index.js",
   "bin": {
-    "cata": "./build/bin/run.js"
+    "cata": "./build/bin/run.js",
+    "catapult": "./build/bin/run.js"
   },
   "repository": {
     "type": "git",
