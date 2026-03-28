@@ -2,8 +2,13 @@
 
 import { existsSync } from 'fs'
 import { resolve } from 'path'
-import { pathToFileURL } from 'url'
+import { pathToFileURL, fileURLToPath } from 'url'
+import { register } from 'node:module'
 import { Kernel, ListLoader, HelpCommand } from '@adonisjs/ace'
+
+register(
+  pathToFileURL(resolve(fileURLToPath(import.meta.url), '../../build/src/loader.js')).href
+)
 import Init from '../commands/init.js'
 import Setup from '../commands/setup.js'
 import Deploy from '../commands/deploy.js'
