@@ -25,9 +25,9 @@ await defineConfig({
 })
 ```
 
-| Hook               | When it runs                                              |
-| ------------------ | --------------------------------------------------------- |
-| `beforeDeploy`     | Before deploying to all hosts                             |
-| `afterDeploy`      | After deploying to all hosts                              |
-| `beforeHostDeploy` | Before the pipeline for each host                         |
-| `afterHostDeploy`  | After the pipeline for each host (even on error)          |
+| Hook               | When it runs                                     |
+| ------------------ | ------------------------------------------------ |
+| `beforeDeploy`     | Before deploying to all hosts                    |
+| `afterDeploy`      | After deploying to all hosts                     |
+| `beforeHostDeploy` | Before the pipeline for each host                |
+| `afterHostDeploy`  | After the pipeline for each host (even on error) |

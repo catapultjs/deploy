@@ -22,12 +22,12 @@ import '@jrmc/catapult/recipes/pm2'
 
 ### PM2 tasks
 
-| Task          | Description                              |
-| ------------- | ---------------------------------------- |
-| `pm2:logs`    | Displays the last 50 lines of PM2 logs   |
-| `pm2:list`    | Lists PM2 processes                      |
-| `pm2:stop`    | Stops applications                       |
-| `pm2:restart` | Restarts applications                    |
+| Task          | Description                            |
+| ------------- | -------------------------------------- |
+| `pm2:logs`    | Displays the last 50 lines of PM2 logs |
+| `pm2:list`    | Lists PM2 processes                    |
+| `pm2:stop`    | Stops applications                     |
+| `pm2:restart` | Restarts applications                  |
 
 ```bash
 cata task pm2:logs

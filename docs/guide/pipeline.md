@@ -17,18 +17,18 @@ deploy:release → deploy:upload → adonisjs:shared → adonisjs:build → adon
 
 ## Task descriptions
 
-| Task                 | Description                                                      |
-| -------------------- | ---------------------------------------------------------------- |
-| `deploy:release`     | Creates the release directory                                    |
-| `deploy:upload`      | Clones the git repository on the server                          |
-| `adonisjs:shared`    | Creates symlinks to shared directories (storage, logs, .env)     |
-| `adonisjs:build`     | Installs dependencies and compiles                               |
-| `adonisjs:migrate`   | Runs migrations                                                  |
-| `deploy:publish`     | Switches the `current` symlink to the new release                |
-| `deploy:log`         | Records the deployment in `revisions.log`                        |
-| `pm2:start`          | Starts or reloads the application via PM2                        |
-| `deploy:healthcheck` | Checks that the application is responding                        |
-| `deploy:cleanup`     | Removes old releases                                             |
+| Task                 | Description                                                  |
+| -------------------- | ------------------------------------------------------------ |
+| `deploy:release`     | Creates the release directory                                |
+| `deploy:upload`      | Clones the git repository on the server                      |
+| `adonisjs:shared`    | Creates symlinks to shared directories (storage, logs, .env) |
+| `adonisjs:build`     | Installs dependencies and compiles                           |
+| `adonisjs:migrate`   | Runs migrations                                              |
+| `deploy:publish`     | Switches the `current` symlink to the new release            |
+| `deploy:log`         | Records the deployment in `revisions.log`                    |
+| `pm2:start`          | Starts or reloads the application via PM2                    |
+| `deploy:healthcheck` | Checks that the application is responding                    |
+| `deploy:cleanup`     | Removes old releases                                         |
 
 ## Adding a task to the pipeline
 
@@ -49,9 +49,9 @@ await defineConfig({ ... })
 Available functions:
 
 ```typescript
-after('adonisjs:migrate', 'my-task')  // insert after
-before('deploy:publish', 'my-task')   // insert before
-remove('deploy:healthcheck')          // remove from pipeline
+after('adonisjs:migrate', 'my-task') // insert after
+before('deploy:publish', 'my-task') // insert before
+remove('deploy:healthcheck') // remove from pipeline
 ```
 
 ## Removing a task from the pipeline
@@ -129,14 +129,14 @@ cata task cache:clear --host staging
 Available in `cd()` and `run()`:
 
 ::: v-pre
-| Variable            | Value                                               |
+| Variable | Value |
 | ------------------- | --------------------------------------------------- |
-| `{{release_path}}`  | `/base/releases/<release>`                          |
-| `{{current_path}}`  | `/base/current`                                     |
-| `{{shared_path}}`   | `/base/shared`                                      |
-| `{{releases_path}}` | `/base/releases`                                    |
-| `{{base_path}}`     | `/base`                                             |
-| `{{release}}`       | Release name (e.g. `2024-01-15T10-30-00-000Z`)      |
+| `{{release_path}}` | `/base/releases/<release>` |
+| `{{current_path}}` | `/base/current` |
+| `{{shared_path}}` | `/base/shared` |
+| `{{releases_path}}` | `/base/releases` |
+| `{{base_path}}` | `/base` |
+| `{{release}}` | Release name (e.g. `2024-01-15T10-30-00-000Z`) |
 :::
 
 Where `/base` is the `deployPath` defined on the host.

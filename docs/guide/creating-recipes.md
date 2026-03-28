@@ -32,13 +32,16 @@ import { ssh, q, getPaths } from '@jrmc/catapult/utils'
 
 onSetup(async (ctx, host) => {
   const paths = getPaths(host.deployPath, ctx.release)
-  await ssh(host, `
+  await ssh(
+    host,
+    `
     set -e
     mkdir -p ${q(paths.shared + '/storage')}
     if [ ! -f ${q(paths.shared + '/.env')} ]; then
       touch ${q(paths.shared + '/.env')}
     fi
-  `)
+  `
+  )
 })
 ```
 

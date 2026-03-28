@@ -14,5 +14,5 @@ export default {
   },
   enhanceApp({ app }) {
     app.component('HomePage', HomePage)
-  }
+  },
 } satisfies Theme
