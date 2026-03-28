@@ -58,6 +58,10 @@ await defineConfig({
 ## Commands
 
 ```bash
+# Show the current version
+cata version
+cata -v
+
 # Create a deploy.ts configuration file
 cata init
 

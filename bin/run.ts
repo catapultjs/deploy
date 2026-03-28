@@ -9,6 +9,7 @@ import { Kernel, ListLoader, HelpCommand } from '@adonisjs/ace'
 register(
   pathToFileURL(resolve(dirname(fileURLToPath(import.meta.url)), '../src/loader.js')).href
 )
+import Version from '../commands/version.js'
 import Init from '../commands/init.js'
 import Setup from '../commands/setup.js'
 import Deploy from '../commands/deploy.js'
@@ -18,9 +19,9 @@ import ListReleases from '../commands/list_releases.js'
 import ListTasks from '../commands/list_tasks.js'
 import RunTask from '../commands/run_task.js'
 
-const isInit = process.argv[2] === 'init'
+const skipDeployFile = ['init', 'version', '-v'].includes(process.argv[2])
 
-if (!isInit) {
+if (!skipDeployFile) {
   const candidates = ['deploy.ts', 'deploy.js', 'bin/deploy.ts', 'bin/deploy.js']
   const deployFile = candidates.map((f) => resolve(process.cwd(), f)).find(existsSync)
 
@@ -82,7 +83,7 @@ kernel.on('ansi', async (_, $kernel, parsed) => {
  * Using the List loader to register our command
  */
 kernel.addLoader(
-  new ListLoader([Init, Setup, Deploy, Rollback, Status, ListReleases, ListTasks, RunTask])
+  new ListLoader([Version, Init, Setup, Deploy, Rollback, Status, ListReleases, ListTasks, RunTask])
 )
 
 /**
