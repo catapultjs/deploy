@@ -1,6 +1,6 @@
 {
   "name": "@jrmc/catapult",
-  "version": "0.0.1-alpha.5",
+  "version": "0.0.1-alpha.6",
   "type": "module",
   "main": "index.js",
   "bin": {
