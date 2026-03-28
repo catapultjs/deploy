@@ -8,7 +8,10 @@ import { withBase } from 'vitepress'
     <section class="hero">
       <div class="hero__glow" />
       <div class="hero__content">
-        <div class="hero__badge">SSH Deployment Tool</div>
+        <div class="hero__badges">
+          <div class="hero__badge">SSH Deployment Tool</div>
+          <div class="hero__alpha">⚠️ Alpha — API may change</div>
+        </div>
         <h1 class="hero__title">
           <span class="hero__title-main">Catapult JS</span>
         </h1>
@@ -214,6 +217,21 @@ import { withBase } from 'vitepress'
   max-width: 720px;
 }
 
+.hero__badges {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 24px;
+}
+
+@media (max-width: 480px) {
+  .hero__badges {
+    flex-direction: column;
+  }
+}
+
 .hero__badge {
   display: inline-block;
   padding: 4px 14px;
@@ -221,8 +239,17 @@ import { withBase } from 'vitepress'
   border-radius: 999px;
   font-size: 13px;
   color: var(--h-accent);
-  margin-bottom: 24px;
   letter-spacing: 0.05em;
+}
+
+.hero__alpha {
+  display: inline-block;
+  padding: 4px 14px;
+  border: 1px solid rgba(255, 165, 0, 0.4);
+  border-radius: 999px;
+  font-size: 12px;
+  color: #f59e0b;
+  letter-spacing: 0.04em;
 }
 
 .hero__title {
