@@ -38,22 +38,8 @@
     "cli"
   ],
   "exports": {
-    ".": {
-      "types": "./index.ts",
-      "import": "./build/index.js"
-    },
-    "./recipes/adonisjs": {
-      "types": "./recipes/adonisjs.ts",
-      "import": "./build/recipes/adonisjs.js"
-    },
-    "./recipes/pm2": {
-      "types": "./recipes/pm2.ts",
-      "import": "./build/recipes/pm2.js"
-    },
-    "./recipes/rsync": {
-      "types": "./recipes/rsync.ts",
-      "import": "./build/recipes/rsync.js"
-    }
+    ".": "./build/index.js",
+    "./recipes/*": "./build/recipes/*.js"
   },
   "devDependencies": {
     "@adonisjs/eslint-config": "^3.0.0",

@@ -1,12 +1,9 @@
-#!/usr/bin/env node
+#!/usr/bin/env node --import ./build/bin/bootstrap.js
 
 import { existsSync } from 'fs'
-import { resolve, dirname } from 'path'
-import { pathToFileURL, fileURLToPath } from 'url'
-import { register } from 'node:module'
+import { resolve } from 'path'
+import { pathToFileURL } from 'url'
 import { Kernel, ListLoader, HelpCommand } from '@adonisjs/ace'
-
-register(pathToFileURL(resolve(dirname(fileURLToPath(import.meta.url)), '../src/loader.js')).href)
 import Version from '../commands/version.js'
 import Init from '../commands/init.js'
 import Setup from '../commands/setup.js'
