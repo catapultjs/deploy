@@ -1,5 +1,5 @@
 import type {} from '../src/types.ts'
-import { task, cd, run, after, bin, set } from '../index.ts'
+import { task, cd, run, after, bin, get, set } from '../index.ts'
 
 declare module '../src/types.ts' {
   interface TaskRegistry {
@@ -10,9 +10,11 @@ declare module '../src/types.ts' {
 
 set('writable_dirs', ['storage', 'logs', 'tmp'])
 set('shared_files', ['.env'])
+set('adonisjs_path', '')
 
 task('adonisjs:build', () => {
-  cd('{{release_path}}')
+  const adonisjs_path = get('adonisjs_path')
+  cd(`{{release_path}}${adonisjs_path}`)
   run(`${bin('npm')} ci`)
   run(`${bin('node')} ace build`)
   run(
@@ -21,7 +23,8 @@ task('adonisjs:build', () => {
 })
 
 task('adonisjs:migrate', () => {
-  cd('{{release_path}}')
+  const adonisjs_path = get('adonisjs_path')
+  cd(`{{release_path}}${adonisjs_path}`)
   run(`${bin('node')} ace migration:run`)
 })
 
