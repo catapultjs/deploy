@@ -22,14 +22,22 @@ import '@jrmc/catapult/recipes/pm2'
 
 ### PM2 tasks
 
-| Task          | Description                            |
-| ------------- | -------------------------------------- |
-| `pm2:logs`    | Displays the last 50 lines of PM2 logs |
-| `pm2:list`    | Lists PM2 processes                    |
-| `pm2:stop`    | Stops applications                     |
-| `pm2:restart` | Restarts applications                  |
+| Task          | Description                                          |
+| ------------- | ---------------------------------------------------- |
+| `pm2:start`   | Starts or reloads via `startOrReload` (used in pipeline) |
+| `pm2:reload`  | Zero-downtime reload (graceful)                      |
+| `pm2:restart` | Hard restart                                         |
+| `pm2:stop`    | Stops applications                                   |
+| `pm2:logs`    | Displays the last 50 lines of PM2 logs               |
+| `pm2:list`    | Lists PM2 processes                                  |
+
+`pm2:start` is automatically inserted after `deploy:publish` in the pipeline. It uses `startOrReload` internally, which handles both first deployments (start) and subsequent ones (zero-downtime reload).
+
+`pm2:reload` and `pm2:restart` are available as manual tasks:
 
 ```bash
+cata task pm2:reload
+cata task pm2:restart --host staging
 cata task pm2:logs
 cata task pm2:list --host staging
 ```

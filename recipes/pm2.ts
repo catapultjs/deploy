@@ -5,6 +5,7 @@ import { task, after, onStatus, bin, getContext, getPaths, ssh, q } from '../ind
 declare module '../src/types.ts' {
   interface TaskRegistry {
     'pm2:start': true
+    'pm2:reload': true
     'pm2:logs': true
     'pm2:list': true
     'pm2:stop': true
@@ -60,6 +61,16 @@ task('pm2:stop', async () => {
   const paths = getPaths(host.deployPath, deployCtx.release)
   await ssh(host, `set -e\ncd ${q(paths.current)}\n${bin('pm2')} stop ecosystem.config.cjs`)
   console.log(`✅ [${host.name}] pm2 stopped`)
+})
+
+task('pm2:reload', async () => {
+  const { host, deployCtx } = getContext()
+  const paths = getPaths(host.deployPath, deployCtx.release)
+  await ssh(
+    host,
+    `set -e\ncd ${q(paths.current)}\n${bin('pm2')} reload ecosystem.config.cjs --update-env`
+  )
+  console.log(`✅ [${host.name}] pm2 reloaded`)
 })
 
 task('pm2:restart', async () => {
