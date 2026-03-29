@@ -4,10 +4,28 @@ Recipes add tasks to the pipeline automatically upon import.
 
 ## `recipes/adonisjs`
 
-Adds the `adonisjs:shared`, `adonisjs:build`, and `adonisjs:migrate` tasks for an AdonisJS application.
-Also creates shared directories (`storage`, `logs`, `tmp`, `.env`) during `deploy:setup`.
+Adds the `adonisjs:build` and `adonisjs:migrate` tasks for an AdonisJS application.
+Also sets the default values for `writable_dirs` and `shared_files`, and creates the corresponding directories and files on the server during `deploy:setup`.
 
 ```typescript
+import '@jrmc/catapult/recipes/adonisjs'
+```
+
+The recipe sets these defaults:
+
+```typescript
+set('writable_dirs', ['storage', 'logs', 'tmp'])
+set('shared_files', ['.env'])
+```
+
+Override them in your `deploy.ts` before importing the recipe:
+
+```typescript
+import { set } from '@jrmc/catapult'
+
+set('writable_dirs', ['uploads', 'logs', 'tmp'])
+set('shared_files', ['.env', '.env.production'])
+
 import '@jrmc/catapult/recipes/adonisjs'
 ```
 

@@ -19,6 +19,7 @@ let _pipeline: string[] = [
   'deploy:check_branch',
   'deploy:release',
   'deploy:update_code',
+  'deploy:shared',
   'deploy:publish',
   'deploy:log',
   'deploy:healthcheck',

@@ -2,13 +2,14 @@ import type { Host, DeployContext, Hooks, HookContext } from './types.ts'
 
 import { $ } from 'execa'
 import { q, getPaths, ssh, sleep } from './utils.ts'
-import { task, run, getContext, runTask, getPipeline } from './task.ts'
+import { task, run, getContext, runTask, getPipeline, get } from './task.ts'
 
 declare module './types.ts' {
   interface TaskRegistry {
     'deploy:check_branch': true
     'deploy:release': true
     'deploy:update_code': true
+    'deploy:shared': true
     'deploy:publish': true
     'deploy:log': true
     'deploy:healthcheck': true
@@ -75,6 +76,21 @@ task('deploy:update_code', async () => {
   )
 })
 
+task('deploy:shared', () => {
+  const dirs: string[] = get('writable_dirs', [])
+  const files: string[] = get('shared_files', [])
+
+  for (const dir of dirs) {
+    run(`rm -rf {{release_path}}/${dir}`)
+    run(`ln -sfn {{shared_path}}/${dir} {{release_path}}/${dir}`)
+  }
+
+  for (const file of files) {
+    run(`rm -f {{release_path}}/${file}`)
+    run(`ln -sfn {{shared_path}}/${file} {{release_path}}/${file}`)
+  }
+})
+
 task('deploy:publish', () => {
   run('ln -sfn {{release_path}} {{current_path}}')
 })
@@ -131,6 +147,17 @@ export async function setupHost(ctx: DeployContext, host: Host): Promise<void> {
 
   console.log(`==> [${host.name}] setup directories`)
 
+  const dirs: string[] = get('writable_dirs', [])
+  const files: string[] = get('shared_files', [])
+
+  const mkdirs = dirs.map((dir) => `mkdir -p ${q(paths.shared + '/' + dir)}`).join('\n    ')
+  const mkfiles = files
+    .map(
+      (file) =>
+        `if [ ! -f ${q(paths.shared + '/' + file)} ]; then touch ${q(paths.shared + '/' + file)}; fi`
+    )
+    .join('\n    ')
+
   await ssh(
     host,
     `
@@ -138,6 +165,8 @@ export async function setupHost(ctx: DeployContext, host: Host): Promise<void> {
     mkdir -p ${q(paths.base)}
     mkdir -p ${q(paths.releases)}
     mkdir -p ${q(paths.shared)}
+    ${mkdirs}
+    ${mkfiles}
   `
   )
 }

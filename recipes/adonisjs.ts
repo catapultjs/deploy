@@ -1,23 +1,15 @@
 import type {} from '../src/types.ts'
-import { task, cd, run, after, onSetup, bin } from '../index.ts'
+import { task, cd, run, after, bin, set } from '../index.ts'
 
 declare module '../src/types.ts' {
   interface TaskRegistry {
-    'adonisjs:shared': true
     'adonisjs:build': true
     'adonisjs:migrate': true
   }
 }
-import { ssh, q, getPaths } from '../src/utils.ts'
 
-task('adonisjs:shared', () => {
-  run('rm -rf {{release_path}}/storage {{release_path}}/logs {{release_path}}/tmp')
-  run('rm -f {{release_path}}/.env')
-  run('ln -sfn {{shared_path}}/storage {{release_path}}/storage')
-  run('ln -sfn {{shared_path}}/logs {{release_path}}/logs')
-  run('ln -sfn {{shared_path}}/tmp {{release_path}}/tmp')
-  run('ln -sfn {{shared_path}}/.env {{release_path}}/.env')
-})
+set('writable_dirs', ['storage', 'logs', 'tmp'])
+set('shared_files', ['.env'])
 
 task('adonisjs:build', () => {
   cd('{{release_path}}')
@@ -33,23 +25,5 @@ task('adonisjs:migrate', () => {
   run(`${bin('node')} ace migration:run`)
 })
 
-after('deploy:upload', 'adonisjs:shared')
-after('adonisjs:shared', 'adonisjs:build')
+after('deploy:shared', 'adonisjs:build')
 after('adonisjs:build', 'adonisjs:migrate')
-
-onSetup(async (ctx, host) => {
-  const paths = getPaths(host.deployPath, ctx.release)
-  await ssh(
-    host,
-    `
-    set -e
-    mkdir -p ${q(paths.shared + '/storage')}
-    mkdir -p ${q(paths.shared + '/logs')}
-    mkdir -p ${q(paths.shared + '/tmp')}
-
-    if [ ! -f ${q(paths.shared + '/.env')} ]; then
-      touch ${q(paths.shared + '/.env')}
-    fi
-  `
-  )
-})
