@@ -1,15 +1,17 @@
-import { BaseCommand } from '@adonisjs/ace'
 import { getCtx } from '../src/ctx.ts'
 import { setupHost } from '../src/host.ts'
 import { getSetupHooks } from '../src/task.ts'
+import { BaseDeployCommand } from '../src/base_command.ts'
 
-export default class Setup extends BaseCommand {
+export default class Setup extends BaseDeployCommand {
   static commandName = 'deploy:setup'
   static description = 'Initialize directories on servers'
 
   async run() {
     const ctx = getCtx()
-    for (const host of ctx.config.hosts) {
+    const hosts = await this.selectHosts()
+    if (!hosts) return
+    for (const host of hosts) {
       await setupHost(ctx, host)
       for (const hook of getSetupHooks()) {
         await hook(ctx, host)
