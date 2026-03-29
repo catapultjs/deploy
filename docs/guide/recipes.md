@@ -8,7 +8,7 @@ Adds the `adonisjs:build` and `adonisjs:migrate` tasks for an AdonisJS applicati
 Also sets the default values for `writable_dirs` and `shared_files`, and creates the corresponding directories and files on the server during `deploy:setup`.
 
 ```typescript
-import '@jrmc/catapult/recipes/adonisjs'
+import '@catapultjs/deploy/recipes/adonisjs'
 ```
 
 The recipe sets these defaults:
@@ -21,12 +21,12 @@ set('shared_files', ['.env'])
 Override them in your `deploy.ts` before importing the recipe:
 
 ```typescript
-import { set } from '@jrmc/catapult'
+import { set } from '@catapultjs/deploy'
 
 set('writable_dirs', ['uploads', 'logs', 'tmp'])
 set('shared_files', ['.env', '.env.production'])
 
-import '@jrmc/catapult/recipes/adonisjs'
+import '@catapultjs/deploy/recipes/adonisjs'
 ```
 
 ## `recipes/pm2`
@@ -35,7 +35,7 @@ Adds the `pm2:start` task to start or reload processes via PM2.
 The `ecosystem.config.cjs` file must be present in the project.
 
 ```typescript
-import '@jrmc/catapult/recipes/pm2'
+import '@catapultjs/deploy/recipes/pm2'
 ```
 
 ### PM2 tasks
@@ -65,8 +65,8 @@ cata task pm2:list --host staging
 Replaces the default transfer mode (git) with rsync.
 
 ```typescript
-import { set } from '@jrmc/catapult'
-import '@jrmc/catapult/recipes/rsync'
+import { set } from '@catapultjs/deploy'
+import '@catapultjs/deploy/recipes/rsync'
 
 set('rsync_excludes', ['.git', 'node_modules', '.env', 'storage', 'tmp', 'logs'])
 ```

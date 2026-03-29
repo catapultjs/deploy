@@ -1,11 +1,12 @@
 {
-  "name": "@jrmc/catapult",
+  "name": "@catapultjs/deploy",
   "version": "0.0.1-alpha.17",
   "type": "module",
   "main": "build/index.js",
   "bin": {
     "cata": "./build/bin/run.js",
-    "catapult": "./build/bin/run.js"
+    "catapult": "./build/bin/run.js",
+    "catapultjs": "./build/bin/run.js"
   },
   "repository": {
     "type": "git",

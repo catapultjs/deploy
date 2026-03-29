@@ -15,10 +15,7 @@ import { withBase } from 'vitepress'
         <h1 class="hero__title">
           <span class="hero__title-main">Catapult JS</span>
         </h1>
-        <p class="hero__tagline">
-          Deploy Node.js applications over SSH.<br />
-          Simple pipeline, zero server dependencies.
-        </p>
+        <p class="hero__tagline">Deploy Node.js applications over SSH.</p>
         <div class="hero__actions">
           <a :href="withBase('/guide/getting-started')" class="btn btn--primary">Get Started</a>
           <a href="https://github.com/batosai/catapult" class="btn btn--secondary" target="_blank">
@@ -31,7 +28,7 @@ import { withBase } from 'vitepress'
           </a>
         </div>
         <div class="hero__install">
-          <code>npx @jrmc/catapult init</code>
+          <code>npx @catapultjs/deploy init</code>
         </div>
       </div>
     </section>
@@ -94,14 +91,14 @@ import { withBase } from 'vitepress'
           <div class="step__number">1</div>
           <div class="step__content">
             <h4>Init</h4>
-            <pre><code>npx @jrmc/catapult init</code></pre>
+            <pre><code>npx @catapultjs/deploy init</code></pre>
           </div>
         </div>
         <div class="step">
           <div class="step__number">2</div>
           <div class="step__content">
             <h4>Configure</h4>
-            <pre><code><span class="c-keyword">import</span> { defineConfig } <span class="c-keyword">from</span> <span class="c-string">'@jrmc/catapult'</span>
+            <pre><code><span class="c-keyword">import</span> { defineConfig } <span class="c-keyword">from</span> <span class="c-string">'@catapultjs/deploy'</span>
 
 <span class="c-keyword">await</span> <span class="c-fn">defineConfig</span>({
   keepReleases: <span class="c-num">5</span>,

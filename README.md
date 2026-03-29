@@ -5,7 +5,7 @@ SSH deployment tool for Node.js applications.
 ## Installation
 
 ```bash
-npm install @jrmc/catapult
+npm install @catapultjs/deploy
 ```
 
 ## Quick start

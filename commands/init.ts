@@ -3,7 +3,7 @@ import { access, writeFile } from 'fs/promises'
 import { resolve } from 'path'
 import { execa } from 'execa'
 
-const TEMPLATE = `import { defineConfig } from '@jrmc/catapult'
+const TEMPLATE = `import { defineConfig } from '@catapultjs/deploy'
 
 await defineConfig({
   keepReleases: 5,
@@ -35,11 +35,11 @@ export default class Init extends BaseCommand {
     await writeFile(dest, TEMPLATE)
     this.logger.action('create deploy.ts').succeeded()
 
-    this.logger.info('Installing @jrmc/catapult...')
-    await execa('npm', ['install', '-D', '@jrmc/catapult'], {
+    this.logger.info('Installing @catapultjs/deploy...')
+    await execa('npm', ['install', '-D', '@catapultjs/deploy'], {
       cwd: process.cwd(),
       stdio: 'inherit',
     })
-    this.logger.action('install @jrmc/catapult').succeeded()
+    this.logger.action('install @catapultjs/deploy').succeeded()
   }
 }

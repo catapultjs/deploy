@@ -5,10 +5,10 @@
 Run the following command at the root of your project:
 
 ```bash
-npx @jrmc/catapult init
+npx @catapultjs/deploy init
 ```
 
-This creates a `deploy.ts` configuration file and installs `@jrmc/catapult` as a dev dependency. Once installed, the `cata` CLI is available:
+This creates a `deploy.ts` configuration file and installs `@catapultjs/deploy` as a dev dependency. Once installed, the `cata` CLI is available:
 
 ```bash
 npx cata deploy
@@ -19,9 +19,9 @@ npx cata deploy
 Edit the generated `deploy.ts` file, or create it manually:
 
 ```typescript
-import { defineConfig } from '@jrmc/catapult'
-import '@jrmc/catapult/recipes/adonisjs'
-import '@jrmc/catapult/recipes/pm2'
+import { defineConfig } from '@catapultjs/deploy'
+import '@catapultjs/deploy/recipes/adonisjs'
+import '@catapultjs/deploy/recipes/pm2'
 
 await defineConfig({
   keepReleases: 5,

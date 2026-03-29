@@ -44,9 +44,9 @@ deploy:lock → deploy:release → deploy:update_code → deploy:shared → depl
 ## Adding a task to the pipeline
 
 ```typescript
-import { defineConfig, task, run, after, before, remove } from '@jrmc/catapult'
-import '@jrmc/catapult/recipes/adonisjs'
-import '@jrmc/catapult/recipes/pm2'
+import { defineConfig, task, run, after, before, remove } from '@catapultjs/deploy'
+import '@catapultjs/deploy/recipes/adonisjs'
+import '@catapultjs/deploy/recipes/pm2'
 
 task('cache:clear', () => {
   run('cd {{current_path}} && node ace cache:clear')
@@ -70,7 +70,7 @@ remove('deploy:healthcheck') // remove from pipeline
 Use `remove()` to exclude a task from the pipeline:
 
 ```typescript
-import { remove } from '@jrmc/catapult'
+import { remove } from '@catapultjs/deploy'
 
 remove('deploy:healthcheck')
 ```
@@ -78,7 +78,7 @@ remove('deploy:healthcheck')
 ## Replacing the entire pipeline
 
 ```typescript
-import { setPipeline } from '@jrmc/catapult'
+import { setPipeline } from '@catapultjs/deploy'
 
 setPipeline([
   'deploy:release',
@@ -97,8 +97,8 @@ setPipeline([
 Redefining a task replaces its implementation. Place it before `defineConfig`.
 
 ```typescript
-import { defineConfig, task, cd, run } from '@jrmc/catapult'
-import '@jrmc/catapult/recipes/adonisjs'
+import { defineConfig, task, cd, run } from '@catapultjs/deploy'
+import '@catapultjs/deploy/recipes/adonisjs'
 
 task('adonisjs:build', () => {
   cd('{{release_path}}')
@@ -114,7 +114,7 @@ await defineConfig({ ... })
 For operations that require more than a simple SSH command, use an async function with `getContext()`:
 
 ```typescript
-import { task, getContext } from '@jrmc/catapult'
+import { task, getContext } from '@catapultjs/deploy'
 
 task('notify', async () => {
   const { deployCtx } = getContext()
@@ -154,7 +154,7 @@ Available in `cd()` and `run()`:
 Where `/base` is the `deployPath` defined on the host.
 
 ```typescript
-import { task, cd, run } from '@jrmc/catapult'
+import { task, cd, run } from '@catapultjs/deploy'
 
 task('my:task', () => {
   cd('{{release_path}}')

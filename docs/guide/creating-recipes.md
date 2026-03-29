@@ -5,7 +5,7 @@ A recipe is a regular TypeScript file that registers tasks and inserts them into
 ## Basic structure
 
 ```typescript
-import { task, cd, run, after } from '@jrmc/catapult'
+import { task, cd, run, after } from '@catapultjs/deploy'
 
 task('my-recipe:build', () => {
   cd('{{release_path}}')
@@ -27,8 +27,8 @@ import './recipes/my-recipe'
 Use `onSetup()` to run server-side initialization during `cata deploy:setup` (e.g. create shared directories):
 
 ```typescript
-import { onSetup } from '@jrmc/catapult'
-import { ssh, q, getPaths } from '@jrmc/catapult/utils'
+import { onSetup } from '@catapultjs/deploy'
+import { ssh, q, getPaths } from '@catapultjs/deploy/utils'
 
 onSetup(async (ctx, host) => {
   const paths = getPaths(host.deployPath, ctx.release)
@@ -50,8 +50,8 @@ onSetup(async (ctx, host) => {
 Use `onStatus()` to display additional information during `cata status` (e.g. process manager version, queue state):
 
 ```typescript
-import { onStatus } from '@jrmc/catapult'
-import { ssh } from '@jrmc/catapult/utils'
+import { onStatus } from '@catapultjs/deploy'
+import { ssh } from '@catapultjs/deploy/utils'
 
 onStatus(async (_ctx, host) => {
   const { stdout } = await ssh(host, `set +e\nmy-service --version || true`)
@@ -64,7 +64,7 @@ onStatus(async (_ctx, host) => {
 Expose configurable options via `set()` / `get()` so users can customize the recipe without modifying it:
 
 ```typescript
-import { task, run, get } from '@jrmc/catapult'
+import { task, run, get } from '@catapultjs/deploy'
 
 task('my-recipe:deploy', () => {
   const excludes = get<string[]>('my_recipe_excludes', [])
@@ -75,7 +75,7 @@ task('my-recipe:deploy', () => {
 Users configure it in their `deploy.ts`:
 
 ```typescript
-import { set } from '@jrmc/catapult'
+import { set } from '@catapultjs/deploy'
 import './recipes/my-recipe'
 
 set('my_recipe_excludes', ['.git', 'node_modules'])
@@ -86,7 +86,7 @@ set('my_recipe_excludes', ['.git', 'node_modules'])
 Use `bin()` to let users override binary paths (useful for nvm/fnm environments):
 
 ```typescript
-import { task, cd, run, bin } from '@jrmc/catapult'
+import { task, cd, run, bin } from '@catapultjs/deploy'
 
 task('my-recipe:build', () => {
   cd('{{release_path}}')
@@ -97,7 +97,7 @@ task('my-recipe:build', () => {
 Users override the path via:
 
 ```typescript
-import { set } from '@jrmc/catapult'
+import { set } from '@catapultjs/deploy'
 
 set('bin/node', '/home/deploy/.nvm/versions/node/v22.14.0/bin/node')
 ```
@@ -107,9 +107,9 @@ set('bin/node', '/home/deploy/.nvm/versions/node/v22.14.0/bin/node')
 To get type-safe task names, extend the `TaskRegistry` interface:
 
 ```typescript
-import type {} from '@jrmc/catapult'
+import type {} from '@catapultjs/deploy'
 
-declare module '@jrmc/catapult' {
+declare module '@catapultjs/deploy' {
   interface TaskRegistry {
     'my-recipe:build': true
     'my-recipe:deploy': true
