@@ -5,7 +5,7 @@ Recipes add tasks to the pipeline automatically upon import.
 ## `recipes/adonisjs`
 
 Adds the `adonisjs:build` and `adonisjs:migrate` tasks for an AdonisJS application.
-Also sets the default values for `writable_dirs` and `shared_files`, and creates the corresponding directories and files on the server during `deploy:setup`.
+Also sets the default values for `writable_dirs`, `shared_dirs` and `shared_files`, and creates the corresponding directories and files on the server during `deploy:setup`.
 
 ```typescript
 import '@catapultjs/deploy/recipes/adonisjs'
@@ -14,9 +14,14 @@ import '@catapultjs/deploy/recipes/adonisjs'
 The recipe sets these defaults:
 
 ```typescript
-set('writable_dirs', ['storage', 'logs', 'tmp'])
-set('shared_files', ['.env'])
+set('writable_dirs', ['storage', 'logs', 'tmp'])  // created during setup (mkdir)
+set('shared_dirs', ['storage', 'logs'])            // symlinked during deploy:shared
+set('shared_files', ['.env'])                      // files symlinked during deploy:shared
 ```
+
+- **`writable_dirs`** — directories created in `shared/` during `cata setup`. Use this for any directory the app needs to write to.
+- **`shared_dirs`** — directories symlinked from `shared/` into each release during `deploy:shared`. These persist across deployments.
+- **`shared_files`** — files symlinked from `shared/` into each release during `deploy:shared`.
 
 Override them in your `deploy.ts` before importing the recipe:
 
@@ -24,6 +29,7 @@ Override them in your `deploy.ts` before importing the recipe:
 import { set } from '@catapultjs/deploy'
 
 set('writable_dirs', ['uploads', 'logs', 'tmp'])
+set('shared_dirs', ['uploads', 'logs'])
 set('shared_files', ['.env', '.env.production'])
 
 import '@catapultjs/deploy/recipes/adonisjs'

@@ -112,7 +112,7 @@ task('deploy:update_code', async () => {
 })
 
 task('deploy:shared', () => {
-  const dirs: string[] = get('writable_dirs', [])
+  const dirs: string[] = get('shared_dirs', [])
   const files: string[] = get('shared_files', [])
 
   for (const dir of dirs) {

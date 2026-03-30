@@ -31,7 +31,7 @@ deploy:lock → deploy:release → deploy:update_code → deploy:shared → depl
 | `deploy:check_branch` | Verifies the branch exists on the remote repository     |
 | `deploy:release`      | Creates the release directory                           |
 | `deploy:update_code`  | Clones the git repository on the server                 |
-| `deploy:shared`       | Creates symlinks for `writable_dirs` and `shared_files` |
+| `deploy:shared`       | Creates symlinks for `shared_dirs` and `shared_files`   |
 | `adonisjs:build`      | Installs dependencies and compiles                      |
 | `adonisjs:migrate`    | Runs migrations                                         |
 | `deploy:publish`      | Switches the `current` symlink to the new release       |

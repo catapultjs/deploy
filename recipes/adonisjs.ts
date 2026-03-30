@@ -9,6 +9,7 @@ declare module '../src/types.ts' {
 }
 
 set('writable_dirs', ['storage', 'logs', 'tmp'])
+set('shared_dirs', ['storage', 'logs'])
 set('shared_files', ['.env'])
 set('adonisjs_path', '')
 
