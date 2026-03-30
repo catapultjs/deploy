@@ -10,7 +10,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/batosai/catapult.git"
+    "url": "git+https://github.com/catapultjs/deploy.git"
   },
   "files": [
     "build"

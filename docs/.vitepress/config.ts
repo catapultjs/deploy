@@ -35,6 +35,6 @@ export default defineConfig({
       ],
     },
 
-    socialLinks: [{ icon: 'github', link: 'https://github.com/batosai/catapult' }],
+    socialLinks: [{ icon: 'github', link: 'https://github.com/catapultjs/deploy' }],
   },
 })

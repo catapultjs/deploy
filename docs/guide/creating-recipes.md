@@ -106,7 +106,7 @@ set('bin/node', '/home/deploy/.nvm/versions/node/v22.14.0/bin/node')
 
 If your recipe could be useful to others, you're welcome to contribute it to the project.
 
-Open a pull request on [GitHub](https://github.com/batosai/catapult) and add your recipe file to the `contrib/` directory.
+Open a pull request on [GitHub](https://github.com/catapultjs/deploy) and add your recipe file to the `contrib/` directory.
 
 ## TypeScript: extending TaskRegistry
 
