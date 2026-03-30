@@ -102,6 +102,12 @@ import { set } from '@catapultjs/deploy'
 set('bin/node', '/home/deploy/.nvm/versions/node/v22.14.0/bin/node')
 ```
 
+## Contributing a recipe
+
+If your recipe could be useful to others, you're welcome to contribute it to the project.
+
+Open a pull request on [GitHub](https://github.com/batosai/catapult) and add your recipe file to the `contrib/` directory.
+
 ## TypeScript: extending TaskRegistry
 
 To get type-safe task names, extend the `TaskRegistry` interface:
