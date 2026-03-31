@@ -5,19 +5,19 @@ The pipeline is the sequence of tasks executed during a deployment.
 ## Default pipeline (without recipes)
 
 ```
-deploy:lock → deploy:check_branch → deploy:release → deploy:update_code → deploy:shared → deploy:publish → deploy:trace_release → deploy:healthcheck → deploy:cleanup → deploy:unlock
+deploy:lock → git:check → deploy:release → deploy:update_code → deploy:shared → deploy:publish → deploy:trace_release → deploy:healthcheck → deploy:cleanup → deploy:unlock
 ```
 
 ## With `adonisjs` + `pm2` recipes
 
 ```
-deploy:lock → deploy:check_branch → deploy:release → deploy:update_code → deploy:shared → adonisjs:build → adonisjs:migrate
+deploy:lock → git:check → deploy:release → deploy:update_code → deploy:shared → adonisjs:build → adonisjs:migrate
 → deploy:publish → deploy:trace_release → pm2:start → deploy:healthcheck → deploy:cleanup → deploy:unlock
 ```
 
 ## With `rsync` recipe
 
-The `rsync` recipe removes `deploy:check_branch` from the pipeline (no git clone involved):
+The `rsync` recipe removes `git:check` from the pipeline (no git clone involved):
 
 ```
 deploy:lock → deploy:release → deploy:update_code → deploy:shared → deploy:publish → deploy:trace_release → deploy:healthcheck → deploy:cleanup → deploy:unlock
@@ -28,7 +28,7 @@ deploy:lock → deploy:release → deploy:update_code → deploy:shared → depl
 | Task                  | Description                                             |
 | --------------------- | ------------------------------------------------------- |
 | `deploy:lock`         | Creates a lock file to prevent concurrent deployments   |
-| `deploy:check_branch` | Verifies the branch exists on the remote repository     |
+| `git:check` | Verifies the branch exists on the remote repository     |
 | `deploy:release`      | Creates the release directory                           |
 | `deploy:update_code`  | Clones the git repository on the server                 |
 | `deploy:shared`       | Creates symlinks for `shared_dirs` and `shared_files`   |
