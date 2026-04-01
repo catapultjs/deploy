@@ -1,3 +1,7 @@
+---
+description: Understand the Catapult deployment pipeline — the ordered sequence of SSH tasks that runs on every deploy, and how to customise it.
+---
+
 # Pipeline
 
 The pipeline is the sequence of tasks executed during a deployment.

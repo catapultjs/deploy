@@ -1,9 +1,18 @@
 import { defineConfig } from 'vitepress'
 
+const siteUrl = 'https://catapultjs.com'
+const siteDescription =
+  'Deploy Node.js applications over SSH with a composable task pipeline, auto-rollback, and multi-server support. No agents, no server dependencies.'
+
 // https://vitepress.dev/reference/site-config
 export default defineConfig({
   title: 'Catapult',
-  description: 'SSH deployment tool for Node.js applications.',
+  titleTemplate: ':title | Catapult',
+  description: siteDescription,
+  lang: 'en-US',
+  sitemap: {
+    hostname: siteUrl,
+  },
   head: [
     [
       'script',
@@ -13,6 +22,16 @@ export default defineConfig({
         'data-website-id': 'e3910dee-0a06-45bd-87f7-90623acdcd7c',
       },
     ],
+    // OpenGraph
+    ['meta', { property: 'og:type', content: 'website' }],
+    ['meta', { property: 'og:site_name', content: 'Catapult' }],
+    ['meta', { property: 'og:url', content: siteUrl }],
+    ['meta', { property: 'og:title', content: 'Catapult — SSH Deployment for Node.js' }],
+    ['meta', { property: 'og:description', content: siteDescription }],
+    // Twitter Card
+    ['meta', { name: 'twitter:card', content: 'summary' }],
+    ['meta', { name: 'twitter:title', content: 'Catapult — SSH Deployment for Node.js' }],
+    ['meta', { name: 'twitter:description', content: siteDescription }],
   ],
   themeConfig: {
     nav: [

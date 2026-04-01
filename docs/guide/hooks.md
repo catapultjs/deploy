@@ -1,3 +1,7 @@
+---
+description: Use Catapult hooks to run custom logic before or after a deployment, independently from the task pipeline.
+---
+
 # Hooks
 
 Hooks are global callbacks that run around the deployment, outside the pipeline.

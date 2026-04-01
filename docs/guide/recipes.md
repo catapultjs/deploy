@@ -1,3 +1,7 @@
+---
+description: Drop-in Catapult recipes for AdonisJS, PM2 and rsync. Import a recipe and its tasks are added to your pipeline automatically.
+---
+
 # Recipes
 
 Recipes add tasks to the pipeline automatically upon import.

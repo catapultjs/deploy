@@ -1,3 +1,7 @@
+---
+description: Install Catapult, configure your hosts and deploy your Node.js application over SSH in minutes.
+---
+
 # Getting Started
 
 ## Installation
