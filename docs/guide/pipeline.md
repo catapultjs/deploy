@@ -16,7 +16,7 @@ deploy:lock → git:check → deploy:release → deploy:update_code → deploy:s
 
 ```
 deploy:lock → git:check → deploy:release → deploy:update_code → deploy:shared → adonisjs:build → adonisjs:migrate
-→ deploy:publish → deploy:log_revision → pm2:start → deploy:healthcheck → deploy:cleanup → deploy:unlock
+→ deploy:publish → deploy:log_revision → pm2:start → pm2:save → deploy:healthcheck → deploy:cleanup → deploy:unlock
 ```
 
 ## With `rsync` recipe
@@ -41,6 +41,7 @@ deploy:lock → deploy:release → deploy:update_code → deploy:shared → depl
 | `deploy:publish`      | Switches the `current` symlink to the new release       |
 | `deploy:log_revision`          | Records the deployment in `revisions.log`               |
 | `pm2:start`           | Starts or reloads the application via PM2               |
+| `pm2:save`            | Persists the PM2 process list                           |
 | `deploy:healthcheck`  | Checks that the application is responding               |
 | `deploy:cleanup`      | Removes old releases                                    |
 | `deploy:unlock`       | Removes the lock file (also called on failure)          |
@@ -91,6 +92,7 @@ setPipeline([
   'adonisjs:build',
   'deploy:publish',
   'pm2:start',
+  'pm2:save',
   'deploy:healthcheck',
   'deploy:cleanup',
 ])

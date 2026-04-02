@@ -69,7 +69,7 @@ task('my:build', () => {
 
 ## `recipes/pm2`
 
-Adds the `pm2:start` task to start or reload processes via PM2.
+Adds `pm2:start` and `pm2:save` tasks to start or reload processes via PM2 and persist the process list.
 The `ecosystem.config.cjs` file must be present in the project.
 
 ```typescript
@@ -81,13 +81,14 @@ import '@catapultjs/deploy/recipes/pm2'
 | Task          | Description                                          |
 | ------------- | ---------------------------------------------------- |
 | `pm2:start`   | Starts or reloads via `startOrReload` (used in pipeline) |
+| `pm2:save`    | Persists the PM2 process list (used in pipeline)     |
 | `pm2:reload`  | Zero-downtime reload (graceful)                      |
 | `pm2:restart` | Hard restart                                         |
 | `pm2:stop`    | Stops applications                                   |
 | `pm2:logs`    | Displays the last 50 lines of PM2 logs               |
 | `pm2:list`    | Lists PM2 processes                                  |
 
-`pm2:start` is automatically inserted after `deploy:publish` in the pipeline. It uses `startOrReload` internally, which handles both first deployments (start) and subsequent ones (zero-downtime reload).
+`pm2:start` is automatically inserted after `deploy:publish` in the pipeline. It uses `startOrReload` internally, which handles both first deployments (start) and subsequent ones (zero-downtime reload). `pm2:save` runs immediately after to persist the process list.
 
 `pm2:reload` and `pm2:restart` are available as manual tasks:
 
