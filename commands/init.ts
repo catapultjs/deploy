@@ -1,7 +1,8 @@
 import { BaseCommand } from '@adonisjs/ace'
-import { access, writeFile } from 'fs/promises'
+import { writeFile } from 'fs/promises'
 import { resolve } from 'path'
 import { execa } from 'execa'
+import { findDeployFile } from '../src/utils.ts'
 
 const TEMPLATE = `import { defineConfig } from '@catapultjs/deploy'
 
@@ -21,19 +22,25 @@ await defineConfig({
 
 export default class Init extends BaseCommand {
   static commandName = 'init'
-  static description = 'Create a deploy.ts configuration file'
+  static description = 'Create a deploy configuration file'
 
   async run() {
-    const dest = resolve(process.cwd(), 'deploy.ts')
-
-    try {
-      await access(dest)
-      this.logger.warning('deploy.ts already exists')
+    const existing = await findDeployFile()
+    if (existing) {
+      this.logger.warning(`${existing} already exists`)
       return
-    } catch {}
+    }
+
+    const lang = await this.prompt.choice('Which language do you want to use?', [
+      { name: 'ts', message: 'TypeScript (deploy.ts)' },
+      { name: 'js', message: 'JavaScript (deploy.js)' },
+    ])
+
+    const filename = lang === 'ts' ? 'deploy.ts' : 'deploy.js'
+    const dest = resolve(process.cwd(), filename)
 
     await writeFile(dest, TEMPLATE)
-    this.logger.action('create deploy.ts').succeeded()
+    this.logger.action(`create ${filename}`).succeeded()
 
     this.logger.info('Installing @catapultjs/deploy...')
     await execa('npm', ['install', '-D', '@catapultjs/deploy'], {

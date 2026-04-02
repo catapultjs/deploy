@@ -1,9 +1,24 @@
 import { $ } from 'execa'
 import { tmpdir } from 'node:os'
-import { join } from 'node:path'
+import { join, resolve } from 'node:path'
 import { createHash } from 'node:crypto'
+import { access } from 'node:fs/promises'
 import { colors } from '@poppinss/cliui'
 import type { Host, Paths } from './types.ts'
+
+const DEPLOY_CANDIDATES = ['deploy.ts', 'deploy.js', 'bin/deploy.ts', 'bin/deploy.js']
+
+/** Returns the path of the first existing deploy config file, or null if none found. */
+export async function findDeployFile(cwd = process.cwd()): Promise<string | null> {
+  for (const candidate of DEPLOY_CANDIDATES) {
+    const full = resolve(cwd, candidate)
+    try {
+      await access(full)
+      return full
+    } catch {}
+  }
+  return null
+}
 
 export const yellow = (s: string) => colors.ansi().yellow(s)
 export const blue = (s: string) => colors.ansi().blue(s)

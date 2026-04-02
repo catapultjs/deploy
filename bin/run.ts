@@ -1,8 +1,7 @@
 #!/usr/bin/env node
 
-import { existsSync } from 'fs'
-import { resolve } from 'path'
 import { pathToFileURL } from 'url'
+import { findDeployFile } from '../src/utils.ts'
 import { Kernel, ListLoader, HelpCommand } from '@adonisjs/ace'
 import Version from '../commands/version.js'
 import Init from '../commands/init.js'
@@ -18,8 +17,7 @@ import RunTask from '../commands/run_task.js'
 const skipDeployFile = ['init', 'version'].includes(process.argv[2])
 
 if (!skipDeployFile) {
-  const candidates = ['deploy.ts', 'deploy.js', 'bin/deploy.ts', 'bin/deploy.js']
-  const deployFile = candidates.map((f) => resolve(process.cwd(), f)).find(existsSync)
+  const deployFile = await findDeployFile()
 
   if (!deployFile) {
     console.error(
