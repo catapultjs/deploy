@@ -1,6 +1,6 @@
 {
   "name": "@catapultjs/deploy",
-  "version": "0.0.1-alpha.22",
+  "version": "0.0.1",
   "type": "module",
   "main": "build/index.js",
   "bin": {
