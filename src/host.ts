@@ -2,7 +2,18 @@ import type { Host, DeployContext, Hooks, HookContext } from './types.ts'
 
 import { $ } from 'execa'
 import { q, getPaths, ssh, sleep } from './utils.ts'
-import { task, run, getContext, runTask, getPipeline, get, isVerbose, yellow, blue, gray } from './task.ts'
+import {
+  task,
+  run,
+  getContext,
+  runTask,
+  getPipeline,
+  get,
+  isVerbose,
+  yellow,
+  blue,
+  gray,
+} from './task.ts'
 
 declare module './types.ts' {
   interface TaskRegistry {
@@ -12,7 +23,7 @@ declare module './types.ts' {
     'deploy:update_code': true
     'deploy:shared': true
     'deploy:publish': true
-    'deploy:trace_release': true
+    'deploy:log_revision': true
     'deploy:healthcheck': true
     'deploy:unlock': true
     'deploy:cleanup': true
@@ -84,7 +95,8 @@ task('git:check', async () => {
   }
 
   try {
-    if (isVerbose()) console.log(yellow(`    $ git ls-remote --exit-code --heads ${repository} ${branchName}`))
+    if (isVerbose())
+      console.log(yellow(`    $ git ls-remote --exit-code --heads ${repository} ${branchName}`))
     await $`git ls-remote --exit-code --heads ${repository} ${branchName}`
   } catch {
     throw new Error(`[${host.name}] branch "${branchName}" does not exist on remote ${repository}`)
@@ -133,7 +145,7 @@ task('deploy:publish', () => {
   run('ln -sfn {{release_path}} {{current_path}}')
 })
 
-task('deploy:trace_release', async () => {
+task('deploy:log_revision', async () => {
   const { host, deployCtx } = getContext()
 
   const branch = typeof host.branch === 'object' ? host.branch.name : (host.branch ?? 'unknown')
@@ -224,10 +236,14 @@ async function healthcheckOrThrow(ctx: DeployContext, host: Host): Promise<void>
         curl --fail --silent --show-error --max-time 5 ${q(host.healthcheckUrl)} >/dev/null
       `
         )
-        console.log(`==> ${blue(`[${host.name}]`)} healthcheck OK (${i}/${ctx.config.healthcheckRetries})`)
+        console.log(
+          `==> ${blue(`[${host.name}]`)} healthcheck OK (${i}/${ctx.config.healthcheckRetries})`
+        )
         return
       } catch {
-        console.log(`==> ${blue(`[${host.name}]`)} healthcheck failed (${i}/${ctx.config.healthcheckRetries})`)
+        console.log(
+          `==> ${blue(`[${host.name}]`)} healthcheck failed (${i}/${ctx.config.healthcheckRetries})`
+        )
         if (i < ctx.config.healthcheckRetries) {
           await sleep(ctx.config.healthcheckDelayMs || 3_000)
         }
@@ -313,7 +329,9 @@ export async function rollbackHost(ctx: DeployContext, host: Host): Promise<void
 
 function elapsed(ms: number): string {
   const total = Math.round(ms / 1000)
-  const m = Math.floor(total / 60).toString().padStart(2, '0')
+  const m = Math.floor(total / 60)
+    .toString()
+    .padStart(2, '0')
   const s = (total % 60).toString().padStart(2, '0')
   return `${m}:${s}`
 }
@@ -326,12 +344,16 @@ export async function deployHost(ctx: DeployContext, host: Host): Promise<void> 
 
   try {
     for (const taskName of getPipeline()) {
-      console.log(`${gray(elapsed(Date.now() - deployStart))} ${blue(`[${host.name}]`)} ${taskName}`)
+      console.log(
+        `${gray(elapsed(Date.now() - deployStart))} ${blue(`[${host.name}]`)} ${taskName}`
+      )
       await runTask(taskName, ctx, host)
       if (taskName === 'deploy:publish') published = true
     }
 
-    console.log(`✅ ${blue(`[${host.name}]`)} deploy OK -> ${ctx.release} ${gray(`(${elapsed(Date.now() - deployStart)})`)}`)
+    console.log(
+      `✅ ${blue(`[${host.name}]`)} deploy OK -> ${ctx.release} ${gray(`(${elapsed(Date.now() - deployStart)})`)}`
+    )
   } catch (error) {
     console.error(`❌ ${blue(`[${host.name}]`)} deploy failed: ${(error as Error).message}`)
 
@@ -340,7 +362,9 @@ export async function deployHost(ctx: DeployContext, host: Host): Promise<void> 
         await rollbackHost(ctx, host)
         console.log(`↩️ ${blue(`[${host.name}]`)} auto rollback OK`)
       } catch (rollbackError) {
-        console.error(`💥 ${blue(`[${host.name}]`)} auto rollback failed: ${(rollbackError as Error).message}`)
+        console.error(
+          `💥 ${blue(`[${host.name}]`)} auto rollback failed: ${(rollbackError as Error).message}`
+        )
       }
     }
 

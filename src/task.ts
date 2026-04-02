@@ -27,7 +27,7 @@ let _pipeline: string[] = [
   'deploy:update_code',
   'deploy:shared',
   'deploy:publish',
-  'deploy:trace_release',
+  'deploy:log_revision',
   'deploy:healthcheck',
   'deploy:unlock',
   'deploy:cleanup',
@@ -210,7 +210,8 @@ export function isVerbose(): boolean {
 async function _flush(): Promise<void> {
   if (!_execCtx || _execCtx.commands.length === 0) return
   const cmds = _execCtx.commands.splice(0)
-  if (_execCtx.deployCtx.config.verbose) {
+  const verbose = _execCtx.deployCtx.config.verbose
+  if (verbose) {
     for (const cmd of cmds) console.log(yellow(`    $ ${cmd}`))
   }
   await ssh(_execCtx.host, ['set -e', ...cmds].join('\n'))
