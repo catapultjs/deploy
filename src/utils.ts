@@ -2,6 +2,7 @@ import { $ } from 'execa'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { createHash } from 'node:crypto'
+import { colors } from '@poppinss/cliui'
 import type { Host, Paths } from './types.ts'
 
 export function q(value: unknown): string {
@@ -39,7 +40,12 @@ export function rsyncSshFlag(host: Host): string {
   return `ssh${port} ${controlOpts}`
 }
 
-export async function ssh(host: Host, command: string, _opts?: { quiet?: boolean }) {
+export async function ssh(
+  host: Host,
+  command: string,
+  opts?: { quiet?: boolean; verbose?: boolean }
+) {
+  if (opts?.verbose && !opts?.quiet) console.log(colors.ansi().yellow(`    $ ${command}`))
   const b64 = Buffer.from(command).toString('base64')
   const args = [...sshControlArgs(host), ...resolveSshArgs(host)]
 
