@@ -8,7 +8,7 @@ Recipes add tasks to the pipeline automatically upon import.
 
 ## `recipes/adonisjs`
 
-Adds the `adonisjs:build` and `adonisjs:migrate` tasks for an AdonisJS application.
+Adds the `adonisjs:install`, `adonisjs:build` and `adonisjs:migrate` tasks for an AdonisJS application.
 Also sets the default values for `writable_dirs`, `shared_dirs` and `shared_files`, and creates the corresponding directories and files on the server during `deploy:setup`.
 
 ```typescript
@@ -99,9 +99,19 @@ cata task pm2:logs
 cata task pm2:list --host staging
 ```
 
+## `recipes/git`
+
+Overrides `deploy:update_code` to clone the repository on the server, and adds `git:check` to verify the branch exists before deploying.
+
+```typescript
+import '@catapultjs/deploy/recipes/git'
+```
+
+`branch` is required on each host when using this recipe. The `repository` is auto-detected from `git remote get-url origin` if not set in `defineConfig`.
+
 ## `recipes/rsync`
 
-Replaces the default transfer mode (git) with rsync.
+Overrides `deploy:update_code` to transfer files via rsync instead of git. Also removes `git:check` from the pipeline, so `branch` is no longer required on hosts.
 
 ```typescript
 import { set } from '@catapultjs/deploy'
@@ -110,23 +120,8 @@ import '@catapultjs/deploy/recipes/rsync'
 set('rsync_excludes', ['.git', 'node_modules', '.env', 'storage', 'tmp', 'logs'])
 ```
 
-> With this recipe, `branch` is no longer required on hosts.
-
-### Upload: git vs rsync
-
-By default, `deploy:update_code` performs a `git clone` on the server:
+Use `rsync_source_path` to change the local source directory (default: `./`):
 
 ```typescript
-hosts: [
-  {
-    name: 'staging',
-    ssh: 'deploy@staging.example.com',
-    deployPath: '/home/deploy/staging/myapp',
-    branch: 'develop', // required in git mode
-  },
-]
+set('rsync_source_path', './dist/')
 ```
-
-The `repository` is auto-detected from `git remote get-url origin` if not specified.
-
-To use rsync instead, import the `recipes/rsync` recipe (see above).

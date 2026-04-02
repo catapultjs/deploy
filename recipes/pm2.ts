@@ -40,9 +40,6 @@ task('pm2:save', async () => {
   console.log(`✅ [${host.name}] pm2 saved`)
 })
 
-after('deploy:publish', 'pm2:start')
-after('pm2:start', 'pm2:save')
-
 task('pm2:logs', async () => {
   const { host, deployCtx } = getContext()
   const paths = getPaths(host.deployPath, deployCtx.release)
@@ -89,3 +86,6 @@ task('pm2:restart', async () => {
   )
   console.log(`✅ [${host.name}] pm2 restarted`)
 })
+
+after('deploy:publish', 'pm2:start')
+after('pm2:start', 'pm2:save')

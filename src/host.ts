@@ -1,24 +1,11 @@
 import type { Host, DeployContext, Hooks, HookContext } from './types.ts'
 
-import { $ } from 'execa'
 import { q, getPaths, ssh, sleep } from './utils.ts'
-import {
-  task,
-  run,
-  getContext,
-  runTask,
-  getPipeline,
-  get,
-  isVerbose,
-  yellow,
-  blue,
-  gray,
-} from './task.ts'
+import { task, run, getContext, runTask, getPipeline, get, blue, gray } from './task.ts'
 
 declare module './types.ts' {
   interface TaskRegistry {
     'deploy:lock': true
-    'git:check': true
     'deploy:release': true
     'deploy:update_code': true
     'deploy:shared': true
@@ -81,50 +68,11 @@ task('deploy:unlock', async () => {
   )
 })
 
-task('git:check', async () => {
-  const { host, deployCtx } = getContext()
-
-  if (!host.branch) return
-
-  const branchName = typeof host.branch === 'object' ? host.branch.name : host.branch
-
-  let repository = deployCtx.config.repository
-  if (!repository) {
-    if (isVerbose()) console.log(yellow('    $ git remote get-url origin'))
-    repository = (await $`git remote get-url origin`).stdout.trim()
-  }
-
-  try {
-    if (isVerbose())
-      console.log(yellow(`    $ git ls-remote --exit-code --heads ${repository} ${branchName}`))
-    await $`git ls-remote --exit-code --heads ${repository} ${branchName}`
-  } catch {
-    throw new Error(`[${host.name}] branch "${branchName}" does not exist on remote ${repository}`)
-  }
-})
-
 task('deploy:release', () => {
   run('mkdir -p {{release_path}}')
 })
 
-task('deploy:update_code', async () => {
-  const { host, paths, deployCtx } = getContext()
-
-  if (!host.branch) throw new Error(`[${host.name}] git mode requires "branch" on host`)
-
-  const branchName = typeof host.branch === 'object' ? host.branch.name : host.branch
-
-  let repository = deployCtx.config.repository
-  if (!repository) {
-    if (isVerbose()) console.log(yellow('    $ git remote get-url origin'))
-    repository = (await $`git remote get-url origin`).stdout.trim()
-  }
-
-  await ssh(
-    host,
-    `set -e\ngit clone --depth 1 --branch ${q(branchName)} ${q(repository)} ${q(paths.release)}`
-  )
-})
+task('deploy:update_code', async () => {})
 
 task('deploy:shared', () => {
   const dirs: string[] = get('shared_dirs', [])
@@ -145,25 +93,7 @@ task('deploy:publish', () => {
   run('ln -sfn {{release_path}} {{current_path}}')
 })
 
-task('deploy:log_revision', async () => {
-  const { host, deployCtx } = getContext()
-
-  const branch = typeof host.branch === 'object' ? host.branch.name : (host.branch ?? 'unknown')
-  let commit = 'unknown'
-  let user = 'unknown'
-
-  try {
-    if (isVerbose()) console.log(yellow('    $ git rev-parse HEAD'))
-    commit = (await $`git rev-parse HEAD`).stdout.trim()
-    if (isVerbose()) console.log(yellow('    $ git config user.name'))
-    user = (await $`git config user.name`).stdout.trim()
-  } catch {}
-
-  const line = `Branch ${branch} (at ${commit}) deployed as release ${deployCtx.release} by ${user}`
-  const logFile = `${host.deployPath}/revisions.log`
-
-  await ssh(host, `echo ${q(line)} >> ${q(logFile)}`)
-})
+task('deploy:log_revision', async () => {})
 
 task('deploy:healthcheck', async () => {
   const { deployCtx, host } = getContext()

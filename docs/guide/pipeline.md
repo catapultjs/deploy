@@ -9,42 +9,52 @@ The pipeline is the sequence of tasks executed during a deployment.
 ## Default pipeline (without recipes)
 
 ```
-deploy:lock → git:check → deploy:release → deploy:update_code → deploy:shared → deploy:publish → deploy:log_revision → deploy:healthcheck → deploy:cleanup → deploy:unlock
+deploy:lock → deploy:release → deploy:update_code → deploy:shared → deploy:publish → deploy:log_revision → deploy:healthcheck → deploy:unlock → deploy:cleanup
 ```
 
-## With `adonisjs` + `pm2` recipes
+## With `git` recipe
+
+The `git` recipe overrides `deploy:update_code` to clone from a git repository and adds `git:check` after `deploy:lock`:
 
 ```
-deploy:lock → git:check → deploy:release → deploy:update_code → deploy:shared → adonisjs:build → adonisjs:migrate
-→ deploy:publish → deploy:log_revision → pm2:start → pm2:save → deploy:healthcheck → deploy:cleanup → deploy:unlock
+deploy:lock → git:check → deploy:release → deploy:update_code → deploy:shared → deploy:publish → deploy:log_revision → deploy:healthcheck → deploy:unlock → deploy:cleanup
+```
+
+## With `git` + `adonisjs` + `pm2` recipes
+
+```
+deploy:lock → git:check → deploy:release → deploy:update_code → deploy:shared → adonisjs:install → adonisjs:build → adonisjs:migrate → deploy:publish → deploy:log_revision → pm2:start → pm2:save → deploy:healthcheck → deploy:unlock → deploy:cleanup
 ```
 
 ## With `rsync` recipe
 
-The `rsync` recipe removes `git:check` from the pipeline (no git clone involved):
+The `rsync` recipe overrides `deploy:update_code` to transfer files via rsync. It removes `git:check` from the pipeline, so `branch` is no longer required on hosts:
 
 ```
-deploy:lock → deploy:release → deploy:update_code → deploy:shared → deploy:publish → deploy:log_revision → deploy:healthcheck → deploy:cleanup → deploy:unlock
+deploy:lock → deploy:release → deploy:update_code → deploy:shared → deploy:publish → deploy:log_revision → deploy:healthcheck → deploy:unlock → deploy:cleanup
 ```
 
 ## Task descriptions
 
 | Task                  | Description                                             |
 | --------------------- | ------------------------------------------------------- |
+| Task                  | Description                                             |
+| --------------------- | ------------------------------------------------------- |
 | `deploy:lock`         | Creates a lock file to prevent concurrent deployments   |
-| `git:check` | Verifies the branch exists on the remote repository     |
+| `git:check`           | Verifies the branch exists on the remote (`git` recipe) |
 | `deploy:release`      | Creates the release directory                           |
-| `deploy:update_code`  | Clones the git repository on the server                 |
+| `deploy:update_code`  | Transfers code to the server (git clone or rsync)       |
 | `deploy:shared`       | Creates symlinks for `shared_dirs` and `shared_files`   |
-| `adonisjs:build`      | Installs dependencies and compiles                      |
+| `adonisjs:install`    | Installs dependencies (frozen lockfile)                 |
+| `adonisjs:build`      | Compiles the application                                |
 | `adonisjs:migrate`    | Runs migrations                                         |
 | `deploy:publish`      | Switches the `current` symlink to the new release       |
-| `deploy:log_revision`          | Records the deployment in `revisions.log`               |
+| `deploy:log_revision` | Records the deployment in `revisions.log`               |
 | `pm2:start`           | Starts or reloads the application via PM2               |
 | `pm2:save`            | Persists the PM2 process list                           |
 | `deploy:healthcheck`  | Checks that the application is responding               |
-| `deploy:cleanup`      | Removes old releases                                    |
 | `deploy:unlock`       | Removes the lock file (also called on failure)          |
+| `deploy:cleanup`      | Removes old releases                                    |
 
 ## Adding a task to the pipeline
 
@@ -89,11 +99,13 @@ setPipeline([
   'deploy:release',
   'deploy:update_code',
   'deploy:shared',
+  'adonisjs:install',
   'adonisjs:build',
   'deploy:publish',
   'pm2:start',
   'pm2:save',
   'deploy:healthcheck',
+  'deploy:unlock',
   'deploy:cleanup',
 ])
 ```

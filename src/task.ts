@@ -19,7 +19,6 @@ const _registry = new Map<string, TaskFn>()
 
 let _pipeline: string[] = [
   'deploy:lock',
-  'git:check',
   'deploy:release',
   'deploy:update_code',
   'deploy:shared',
