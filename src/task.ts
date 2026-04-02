@@ -123,9 +123,9 @@ export function get<T>(key: string, defaultValue?: T): T {
   return (_vars.has(key) ? _vars.get(key) : defaultValue) as T
 }
 
-/** Returns the path to a binary, configurable via set('bin/<name>', '/path/to/bin'). */
+/** Returns the path to a binary. Checks the current host's bin config first, then falls back to the binary name. */
 export function bin(name: string): string {
-  return get(`bin/${name}`, name)
+  return _execCtx?.host.bin?.[name] ?? name
 }
 
 /** Returns the current package manager binary (npm, pnpm, yarn). */

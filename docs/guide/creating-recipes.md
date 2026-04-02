@@ -87,7 +87,7 @@ set('my_recipe_excludes', ['.git', 'node_modules'])
 
 ## Binaries: bin()
 
-Use `bin()` to let users override binary paths (useful for nvm/fnm environments):
+Use `bin()` to resolve binary paths. It checks the current host's `bin` config first, then falls back to the binary name:
 
 ```typescript
 import { task, cd, run, bin } from '@catapultjs/deploy'
@@ -98,12 +98,20 @@ task('my-recipe:build', () => {
 })
 ```
 
-Users override the path via:
+Users configure the path per host in `deploy.ts`:
 
 ```typescript
-import { set } from '@catapultjs/deploy'
-
-set('bin/node', '/home/deploy/.nvm/versions/node/v22.14.0/bin/node')
+hosts: [
+  {
+    name: 'production',
+    ssh: 'deploy@example.com',
+    deployPath: '/home/deploy/myapp',
+    bin: {
+      node: '/home/deploy/.nvm/versions/node/v22.14.0/bin/node',
+      php: '/usr/bin/php8.2',
+    },
+  },
+]
 ```
 
 ## Contributing a recipe

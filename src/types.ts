@@ -15,6 +15,7 @@ export interface Host {
   deployPath: string
   branch?: string | BranchWithPrompt
   healthcheckUrl?: string
+  bin?: Record<string, string>
 }
 
 export interface Paths {
