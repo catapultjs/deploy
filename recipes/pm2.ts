@@ -1,6 +1,6 @@
 import type {} from '../src/types.ts'
 import { createRequire } from 'module'
-import { task, after, onStatus, bin, getContext, getPaths, ssh, q } from '../index.ts'
+import { type TaskContext, task, after, onStatus, bin, getPaths, ssh, q } from '../index.ts'
 
 declare module '../src/types.ts' {
   interface TaskRegistry {
@@ -19,8 +19,7 @@ onStatus(async (_ctx, host) => {
   console.log(stdout.trim() ? `pm2 ${stdout.trim()}` : 'pm2 unavailable')
 })
 
-task('pm2:start', async () => {
-  const { host, deployCtx } = getContext()
+task('pm2:start', async ({ host, deployCtx }: TaskContext) => {
   const paths = getPaths(host.deployPath, deployCtx.release)
 
   await ssh(
@@ -34,14 +33,12 @@ task('pm2:start', async () => {
   console.log(`✅ [${host.name}] pm2 started`)
 })
 
-task('pm2:save', async () => {
-  const { host } = getContext()
+task('pm2:save', async ({ host }: TaskContext) => {
   await ssh(host, `set -e\n${bin('pm2')} save`)
   console.log(`✅ [${host.name}] pm2 saved`)
 })
 
-task('pm2:logs', async () => {
-  const { host, deployCtx } = getContext()
+task('pm2:logs', async ({ host, deployCtx }: TaskContext) => {
   const paths = getPaths(host.deployPath, deployCtx.release)
   const require = createRequire(import.meta.url)
   const ecosystem = require(process.cwd() + '/ecosystem.config.cjs')
@@ -53,22 +50,19 @@ task('pm2:logs', async () => {
   console.log(stdout.trim())
 })
 
-task('pm2:list', async () => {
-  const { host, deployCtx } = getContext()
+task('pm2:list', async ({ host, deployCtx }: TaskContext) => {
   const paths = getPaths(host.deployPath, deployCtx.release)
   const { stdout } = await ssh(host, `set -e\ncd ${q(paths.current)}\n${bin('pm2')} list`)
   console.log(stdout.trim())
 })
 
-task('pm2:stop', async () => {
-  const { host, deployCtx } = getContext()
+task('pm2:stop', async ({ host, deployCtx }: TaskContext) => {
   const paths = getPaths(host.deployPath, deployCtx.release)
   await ssh(host, `set -e\ncd ${q(paths.current)}\n${bin('pm2')} stop ecosystem.config.cjs`)
   console.log(`✅ [${host.name}] pm2 stopped`)
 })
 
-task('pm2:reload', async () => {
-  const { host, deployCtx } = getContext()
+task('pm2:reload', async ({ host, deployCtx }: TaskContext) => {
   const paths = getPaths(host.deployPath, deployCtx.release)
   await ssh(
     host,
@@ -77,8 +71,7 @@ task('pm2:reload', async () => {
   console.log(`✅ [${host.name}] pm2 reloaded`)
 })
 
-task('pm2:restart', async () => {
-  const { host, deployCtx } = getContext()
+task('pm2:restart', async ({ host, deployCtx }: TaskContext) => {
   const paths = getPaths(host.deployPath, deployCtx.release)
   await ssh(
     host,

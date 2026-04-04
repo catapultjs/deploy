@@ -20,6 +20,19 @@ task('my-recipe:build', () => {
 after('deploy:update_code', 'my-recipe:build')
 ```
 
+The task function receives a `ctx` argument with the current `host`, `paths`, and `deployCtx`. Use it when you need to access host information or run raw SSH commands:
+
+```typescript
+import { task, after } from '@catapultjs/deploy'
+import { ssh, q } from '@catapultjs/deploy/utils'
+
+task('my-recipe:build', async ({ host, paths, deployCtx }) => {
+  await ssh(host, `set -e\ncd ${q(paths.release)}\nnpm run build`)
+})
+
+after('deploy:update_code', 'my-recipe:build')
+```
+
 Importing the file is enough to activate it:
 
 ```typescript
@@ -95,6 +108,18 @@ import { task, cd, run, bin } from '@catapultjs/deploy'
 task('my-recipe:build', () => {
   cd('{{release_path}}')
   run(`${bin('node')} my-script.js`)
+})
+```
+
+`bin()` can also be called with the host from `ctx` for use outside of `cd()`/`run()`:
+
+```typescript
+import { task } from '@catapultjs/deploy'
+import { ssh } from '@catapultjs/deploy/utils'
+
+task('my-recipe:build', async ({ host }) => {
+  const node = host.bin?.node ?? 'node'
+  await ssh(host, `${node} my-script.js`)
 })
 ```
 

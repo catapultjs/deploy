@@ -1,6 +1,6 @@
 import type {} from '../src/types.ts'
 import { $ } from 'execa'
-import { task, after, getContext, isVerbose, yellow, q } from '../index.ts'
+import { type TaskContext, task, after, isVerbose, yellow, q } from '../index.ts'
 import { ssh } from '../src/utils.ts'
 
 declare module '../src/types.ts' {
@@ -9,9 +9,7 @@ declare module '../src/types.ts' {
   }
 }
 
-task('git:check', async () => {
-  const { host, deployCtx } = getContext()
-
+task('git:check', async ({ host, deployCtx }: TaskContext) => {
   if (!host.branch) return
 
   const branchName = typeof host.branch === 'object' ? host.branch.name : host.branch
@@ -31,9 +29,7 @@ task('git:check', async () => {
   }
 })
 
-task('deploy:update_code', async () => {
-  const { host, paths, deployCtx } = getContext()
-
+task('deploy:update_code', async ({ host, paths, deployCtx }: TaskContext) => {
   if (!host.branch) throw new Error(`[${host.name}] git mode requires "branch" on host`)
 
   const branchName = typeof host.branch === 'object' ? host.branch.name : host.branch
@@ -50,9 +46,7 @@ task('deploy:update_code', async () => {
   )
 })
 
-task('deploy:log_revision', async () => {
-  const { host, deployCtx } = getContext()
-
+task('deploy:log_revision', async ({ host, deployCtx }: TaskContext) => {
   const branch = typeof host.branch === 'object' ? host.branch.name : (host.branch ?? 'unknown')
   let commit = 'unknown'
   let user = 'unknown'

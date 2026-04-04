@@ -15,6 +15,10 @@ const PM_LOCK_FILES: [string, string][] = [
   ['package-lock.json', 'npm'],
 ]
 
+export const yellow = (s: string) => colors.ansi().yellow(s)
+export const blue = (s: string) => colors.ansi().blue(s)
+export const gray = (s: string) => colors.ansi().dim(s)
+
 /** Detects the package manager by checking for lock files in the given directory. */
 export async function detectPackageManager(cwd = process.cwd()): Promise<string> {
   for (const [lockFile, manager] of PM_LOCK_FILES) {
@@ -37,10 +41,6 @@ export async function findDeployFile(cwd = process.cwd()): Promise<string | null
   }
   return null
 }
-
-export const yellow = (s: string) => colors.ansi().yellow(s)
-export const blue = (s: string) => colors.ansi().blue(s)
-export const gray = (s: string) => colors.ansi().dim(s)
 
 export function q(value: unknown): string {
   return `'${String(value).replace(/'/g, `'\\''`)}'`

@@ -1,5 +1,6 @@
 import { BaseCommand } from '@adonisjs/ace'
-import { getPipeline, getTasks } from '../src/task.ts'
+import { getTasks } from '../src/task.ts'
+import { getPipeline } from '../src/pipeline.ts'
 
 export default class ListTasks extends BaseCommand {
   static commandName = 'list:tasks'

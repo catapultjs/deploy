@@ -1,6 +1,10 @@
 import type { Host, DeployContext, Hooks, HookContext } from './types.ts'
 import { q, getPaths, ssh, sleep } from './utils.ts'
-import { task, run, getContext, runTask, getPipeline, get, blue, gray } from './task.ts'
+import { task, run, runTask } from './task.ts'
+import type { TaskContext } from './task.ts'
+import { get } from './store.ts'
+import { blue, gray } from './utils.ts'
+import { getPipeline } from './pipeline.ts'
 
 declare module './types.ts' {
   interface TaskRegistry {
@@ -34,9 +38,7 @@ export async function runHook(
 // Built-in tasks
 // ---------------------------------------------------------------------------
 
-task('deploy:lock', async () => {
-  const { host, deployCtx, paths } = getContext()
-
+task('deploy:lock', async ({ host, deployCtx, paths }: TaskContext) => {
   try {
     await ssh(
       host,
@@ -55,8 +57,7 @@ task('deploy:lock', async () => {
   }
 })
 
-task('deploy:unlock', async () => {
-  const { host, paths } = getContext()
+task('deploy:unlock', async ({ host, paths }: TaskContext) => {
   await ssh(
     host,
     `
@@ -94,14 +95,11 @@ task('deploy:publish', () => {
 
 task('deploy:log_revision', async () => {})
 
-task('deploy:healthcheck', async () => {
-  const { deployCtx, host } = getContext()
+task('deploy:healthcheck', async ({ deployCtx, host }: TaskContext) => {
   await healthcheckOrThrow(deployCtx, host)
 })
 
-task('deploy:cleanup', async () => {
-  const { deployCtx, host } = getContext()
-  const paths = getPaths(host.deployPath, deployCtx.release)
+task('deploy:cleanup', async ({ deployCtx, host, paths }: TaskContext) => {
   await ssh(
     host,
     `

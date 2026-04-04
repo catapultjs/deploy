@@ -1,6 +1,8 @@
 import { Context } from '../src/context.ts'
 import { getCurrentRelease } from '../src/host.ts'
-import { getPipeline, getStatusHooks, bin } from '../src/task.ts'
+import { bin } from '../src/task.ts'
+import { getPipeline } from '../src/pipeline.ts'
+import { hooks } from '../src/pipeline/hooks.ts'
 import { q, getPaths, ssh, detectPackageManager } from '../src/utils.ts'
 import { BaseDeployCommand } from '../src/base_command.ts'
 
@@ -47,7 +49,7 @@ export default class Status extends BaseDeployCommand {
         this.logger.log(`Node     ${this.colors.dim(nodeVersion || 'unavailable')}`)
         this.logger.log(`${pm.padEnd(8)} ${this.colors.dim(pmVersion || 'unavailable')}`)
 
-        for (const hook of getStatusHooks()) {
+        for (const hook of hooks.getStatus()) {
           await hook(ctx, host)
         }
 

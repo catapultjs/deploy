@@ -1,6 +1,6 @@
 import { Context } from '../src/context.ts'
 import { setupHost } from '../src/host.ts'
-import { getSetupHooks } from '../src/task.ts'
+import { hooks } from '../src/pipeline/hooks.ts'
 import { BaseDeployCommand } from '../src/base_command.ts'
 
 export default class Setup extends BaseDeployCommand {
@@ -13,7 +13,7 @@ export default class Setup extends BaseDeployCommand {
     if (!hosts) return
     for (const host of hosts) {
       await setupHost(ctx, host)
-      for (const hook of getSetupHooks()) {
+      for (const hook of hooks.getSetup()) {
         await hook(ctx, host)
       }
     }
