@@ -1,4 +1,4 @@
-import { getCtx } from '../src/ctx.ts'
+import { Context } from '../src/context.ts'
 import { rollbackHost } from '../src/host.ts'
 import { runTask } from '../src/task.ts'
 import { BaseDeployCommand } from '../src/base_command.ts'
@@ -8,7 +8,7 @@ export default class Rollback extends BaseDeployCommand {
   static description = 'Rollback to the previous release'
 
   async run() {
-    const ctx = getCtx()
+    const ctx = Context.get()
 
     const hosts = await this.selectHosts()
     if (!hosts) return

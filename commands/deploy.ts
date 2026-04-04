@@ -1,5 +1,5 @@
 import { flags } from '@adonisjs/ace'
-import { getCtx } from '../src/ctx.ts'
+import { Context } from '../src/context.ts'
 import { deployHost } from '../src/host.ts'
 import { BaseDeployCommand } from '../src/base_command.ts'
 
@@ -12,7 +12,7 @@ export default class Deploy extends BaseDeployCommand {
   declare branch: string | undefined
 
   async run() {
-    const ctx = getCtx()
+    const ctx = Context.get()
 
     let hosts = await this.selectHosts()
     if (!hosts) return

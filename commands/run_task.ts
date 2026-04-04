@@ -1,5 +1,5 @@
 import { args } from '@adonisjs/ace'
-import { getCtx } from '../src/ctx.ts'
+import { Context } from '../src/context.ts'
 import { hasTask, runTask, getTasks } from '../src/task.ts'
 import { getCurrentRelease } from '../src/host.ts'
 import { BaseDeployCommand } from '../src/base_command.ts'
@@ -12,7 +12,7 @@ export default class RunTask extends BaseDeployCommand {
   declare taskName: string
 
   async run() {
-    const ctx = getCtx()
+    const ctx = Context.get()
 
     if (!hasTask(this.taskName)) {
       this.logger.error(`Unknown task: ${this.taskName}. Available: ${getTasks().join(', ')}`)

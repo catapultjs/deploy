@@ -1,4 +1,4 @@
-import { getCtx } from '../src/ctx.ts'
+import { Context } from '../src/context.ts'
 import { getCurrentRelease } from '../src/host.ts'
 import { getPipeline, getStatusHooks, bin } from '../src/task.ts'
 import { q, getPaths, ssh, detectPackageManager } from '../src/utils.ts'
@@ -9,7 +9,7 @@ export default class Status extends BaseDeployCommand {
   static description = 'Show server status'
 
   async run() {
-    const ctx = getCtx()
+    const ctx = Context.get()
 
     const hosts = await this.selectHosts()
     if (!hosts) return

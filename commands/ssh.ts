@@ -1,6 +1,6 @@
 import type { Host } from '../src/types.ts'
 import { execa } from 'execa'
-import { getCtx } from '../src/ctx.ts'
+import { Context } from '../src/context.ts'
 import { resolveSshArgs, sshControlArgs } from '../src/utils.ts'
 import { BaseDeployCommand } from '../src/base_command.ts'
 
@@ -9,7 +9,7 @@ export default class Ssh extends BaseDeployCommand {
   static description = 'Open an interactive SSH session on a host'
 
   protected async selectHost(): Promise<Host | null> {
-    const ctx = getCtx()
+    const ctx = Context.get()
 
     if (this.host) {
       const found = ctx.config.hosts.find((h) => h.name === this.host)

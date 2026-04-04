@@ -1,4 +1,4 @@
-import { getCtx } from '../src/ctx.ts'
+import { Context } from '../src/context.ts'
 import { setupHost } from '../src/host.ts'
 import { getSetupHooks } from '../src/task.ts'
 import { BaseDeployCommand } from '../src/base_command.ts'
@@ -8,7 +8,7 @@ export default class Setup extends BaseDeployCommand {
   static description = 'Initialize directories on servers'
 
   async run() {
-    const ctx = getCtx()
+    const ctx = Context.get()
     const hosts = await this.selectHosts()
     if (!hosts) return
     for (const host of hosts) {

@@ -1,13 +1,13 @@
 import type { Host } from './types.ts'
 import { BaseCommand, flags } from '@adonisjs/ace'
-import { getCtx } from './ctx.ts'
+import { Context } from './context.ts'
 
 export abstract class BaseDeployCommand extends BaseCommand {
   @flags.string({ description: 'Target a specific host' })
   declare host: string | undefined
 
   protected async selectHosts(): Promise<Host[] | null> {
-    const ctx = getCtx()
+    const ctx = Context.get()
 
     if (this.host) {
       const hosts = ctx.config.hosts.filter((h) => h.name === this.host)

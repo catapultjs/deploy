@@ -1,4 +1,4 @@
-import { getCtx } from '../src/ctx.ts'
+import { Context } from '../src/context.ts'
 import { getCurrentRelease } from '../src/host.ts'
 import { q, getPaths, ssh } from '../src/utils.ts'
 import { BaseDeployCommand } from '../src/base_command.ts'
@@ -8,7 +8,7 @@ export default class ListReleases extends BaseDeployCommand {
   static description = 'List releases on servers'
 
   async run() {
-    const ctx = getCtx()
+    const ctx = Context.get()
 
     const hosts = await this.selectHosts()
     if (!hosts) return

@@ -1,7 +1,7 @@
 import type { Config } from './types.ts'
-import { setCtx } from './ctx.ts'
+import { Context } from './context.ts'
 
 export async function defineConfig(config: Config): Promise<void> {
   const release = new Date().toISOString().replace(/[:.]/g, '-')
-  setCtx({ config, release, hooks: config.hooks ?? {} })
+  Context.set({ config, release, hooks: config.hooks ?? {} })
 }
