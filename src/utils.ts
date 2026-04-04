@@ -1,12 +1,30 @@
+import type { Host, Paths } from './types.ts'
 import { $ } from 'execa'
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 import { createHash } from 'node:crypto'
 import { access } from 'node:fs/promises'
 import { colors } from '@poppinss/cliui'
-import type { Host, Paths } from './types.ts'
 
 const DEPLOY_CANDIDATES = ['deploy.ts', 'deploy.js', 'bin/deploy.ts', 'bin/deploy.js']
+
+const PM_LOCK_FILES: [string, string][] = [
+  ['bun.lockb', 'bun'],
+  ['pnpm-lock.yaml', 'pnpm'],
+  ['yarn.lock', 'yarn'],
+  ['package-lock.json', 'npm'],
+]
+
+/** Detects the package manager by checking for lock files in the given directory. */
+export async function detectPackageManager(cwd = process.cwd()): Promise<string> {
+  for (const [lockFile, manager] of PM_LOCK_FILES) {
+    try {
+      await access(resolve(cwd, lockFile))
+      return manager
+    } catch {}
+  }
+  return 'npm'
+}
 
 /** Returns the path of the first existing deploy config file, or null if none found. */
 export async function findDeployFile(cwd = process.cwd()): Promise<string | null> {

@@ -2,7 +2,7 @@ import { BaseCommand } from '@adonisjs/ace'
 import { writeFile } from 'fs/promises'
 import { resolve } from 'path'
 import { execa } from 'execa'
-import { findDeployFile } from '../src/utils.ts'
+import { findDeployFile, detectPackageManager } from '../src/utils.ts'
 
 const TEMPLATE = `import { defineConfig } from '@catapultjs/deploy'
 
@@ -42,8 +42,9 @@ export default class Init extends BaseCommand {
     await writeFile(dest, TEMPLATE)
     this.logger.action(`create ${filename}`).succeeded()
 
+    const pm = await detectPackageManager()
     this.logger.info('Installing @catapultjs/deploy...')
-    await execa('npm', ['install', '-D', '@catapultjs/deploy'], {
+    await execa(pm, ['install', '-D', '@catapultjs/deploy'], {
       cwd: process.cwd(),
       stdio: 'inherit',
     })

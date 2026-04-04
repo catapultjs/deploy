@@ -1,7 +1,7 @@
 import { getCtx } from '../src/ctx.ts'
 import { getCurrentRelease } from '../src/host.ts'
 import { getPipeline, getStatusHooks, bin } from '../src/task.ts'
-import { q, getPaths, ssh } from '../src/utils.ts'
+import { q, getPaths, ssh, detectPackageManager } from '../src/utils.ts'
 import { BaseDeployCommand } from '../src/base_command.ts'
 
 export default class Status extends BaseDeployCommand {
@@ -13,6 +13,8 @@ export default class Status extends BaseDeployCommand {
 
     const hosts = await this.selectHosts()
     if (!hosts) return
+
+    const pm = await detectPackageManager()
 
     for (const host of hosts) {
       const paths = getPaths(host.deployPath, ctx.release)
@@ -37,13 +39,13 @@ export default class Status extends BaseDeployCommand {
 
         const { stdout: versionsStdout } = await ssh(
           host,
-          `set +e\ncd ${q(paths.current)}\necho "NODE:$(${bin('node')} --version 2>/dev/null || true)"\necho "NPM:$(${bin('npm')} --version 2>/dev/null || true)"`
+          `set +e\ncd ${q(paths.current)}\necho "NODE:$(${bin('node')} --version 2>/dev/null || true)"\necho "PM:$(${bin(pm)} --version 2>/dev/null || true)"`
         )
         const lines = versionsStdout.trim().split('\n')
         const nodeVersion = lines.find((l) => l.startsWith('NODE:'))?.slice(5) || ''
-        const npmVersion = lines.find((l) => l.startsWith('NPM:'))?.slice(4) || ''
+        const pmVersion = lines.find((l) => l.startsWith('PM:'))?.slice(3) || ''
         this.logger.log(`Node     ${this.colors.dim(nodeVersion || 'unavailable')}`)
-        this.logger.log(`npm      ${this.colors.dim(npmVersion || 'unavailable')}`)
+        this.logger.log(`${pm.padEnd(8)} ${this.colors.dim(pmVersion || 'unavailable')}`)
 
         for (const hook of getStatusHooks()) {
           await hook(ctx, host)
