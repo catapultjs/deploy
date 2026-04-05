@@ -18,9 +18,9 @@ import '@catapultjs/deploy/recipes/adonisjs'
 The recipe sets these defaults:
 
 ```typescript
-set('writable_dirs', ['storage', 'logs', 'tmp'])  // created during setup (mkdir)
-set('shared_dirs', ['storage', 'logs'])            // symlinked during deploy:shared
-set('shared_files', ['.env'])                      // files symlinked during deploy:shared
+set('writable_dirs', ['storage', 'logs', 'tmp']) // created during setup (mkdir)
+set('shared_dirs', ['storage', 'logs']) // symlinked during deploy:shared
+set('shared_files', ['.env']) // files symlinked during deploy:shared
 ```
 
 - **`writable_dirs`** — directories created in `shared/` during `cata setup`. Use this for any directory the app needs to write to.
@@ -49,10 +49,10 @@ set('package_manager', 'pnpm') // or 'yarn'
 import '@catapultjs/deploy/recipes/adonisjs'
 ```
 
-| Setting | Install command | Production install |
-| ------- | --------------- | ------------------ |
-| `npm`   | `npm ci` | `npm install --omit=dev` |
-| `pnpm`  | `pnpm install --frozen-lockfile` | `pnpm install --prod` |
+| Setting | Install command                  | Production install          |
+| ------- | -------------------------------- | --------------------------- |
+| `npm`   | `npm ci`                         | `npm install --omit=dev`    |
+| `pnpm`  | `pnpm install --frozen-lockfile` | `pnpm install --prod`       |
 | `yarn`  | `yarn install --frozen-lockfile` | `yarn install --production` |
 
 The `pm()`, `pmInstall()` and `pmInstallProd()` helpers are also available for your own tasks:
@@ -78,15 +78,15 @@ import '@catapultjs/deploy/recipes/pm2'
 
 ### PM2 tasks
 
-| Task          | Description                                          |
-| ------------- | ---------------------------------------------------- |
+| Task          | Description                                              |
+| ------------- | -------------------------------------------------------- |
 | `pm2:start`   | Starts or reloads via `startOrReload` (used in pipeline) |
-| `pm2:save`    | Persists the PM2 process list (used in pipeline)     |
-| `pm2:reload`  | Zero-downtime reload (graceful)                      |
-| `pm2:restart` | Hard restart                                         |
-| `pm2:stop`    | Stops applications                                   |
-| `pm2:logs`    | Displays the last 50 lines of PM2 logs               |
-| `pm2:list`    | Lists PM2 processes                                  |
+| `pm2:save`    | Persists the PM2 process list (used in pipeline)         |
+| `pm2:reload`  | Zero-downtime reload (graceful)                          |
+| `pm2:restart` | Hard restart                                             |
+| `pm2:stop`    | Stops applications                                       |
+| `pm2:logs`    | Displays the last 50 lines of PM2 logs                   |
+| `pm2:list`    | Lists PM2 processes                                      |
 
 `pm2:start` is automatically inserted after `deploy:publish` in the pipeline. It uses `startOrReload` internally, which handles both first deployments (start) and subsequent ones (zero-downtime reload). `pm2:save` runs immediately after to persist the process list.
 

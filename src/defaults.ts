@@ -126,4 +126,3 @@ task('deploy:cleanup', async ({ deployCtx, host, paths }: TaskContext) => {
   `
   )
 })
-
