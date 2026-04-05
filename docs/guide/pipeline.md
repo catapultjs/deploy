@@ -38,8 +38,6 @@ deploy:lock → deploy:release → deploy:update_code → deploy:shared → depl
 
 | Task                  | Description                                             |
 | --------------------- | ------------------------------------------------------- |
-| Task                  | Description                                             |
-| --------------------- | ------------------------------------------------------- |
 | `deploy:lock`         | Creates a lock file to prevent concurrent deployments   |
 | `git:check`           | Verifies the branch exists on the remote (`git` recipe) |
 | `deploy:release`      | Creates the release directory                           |
@@ -129,13 +127,12 @@ await defineConfig({ ... })
 
 ## Async task
 
-For operations that require more than a simple SSH command, use an async function with `getContext()`:
+For operations that require more than a simple SSH command, use an async function and destructure the `TaskContext` parameter:
 
 ```typescript
-import { task, getContext } from '@catapultjs/deploy'
+import { type TaskContext, task, after } from '@catapultjs/deploy'
 
-task('notify', async () => {
-  const { deployCtx } = getContext()
+task('notify', async ({ deployCtx }: TaskContext) => {
   await fetch(process.env.SLACK_WEBHOOK!, {
     method: 'POST',
     body: JSON.stringify({ text: `Deployed ${deployCtx.release}` }),
