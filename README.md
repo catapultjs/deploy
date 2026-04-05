@@ -5,14 +5,13 @@ SSH deployment tool for Node.js applications.
 ## Installation
 
 ```bash
-npm install @catapultjs/deploy
+npx @catapultjs/deploy init
 ```
 
 ## Quick start
 
 ```bash
-cata init    # create deploy.ts
-cata deploy  # deploy
+npx cata deploy  # deploy
 ```
 
 ## Documentation
