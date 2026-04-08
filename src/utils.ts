@@ -80,10 +80,11 @@ export function rsyncSshFlag(host: Host): string {
 export function ssh(
   host: Host,
   command: string,
-  opts?: { quiet?: boolean; verbose?: boolean }
+  opts?: { quiet?: boolean; verbose?: boolean; color?: boolean }
 ) {
   if (opts?.verbose && !opts?.quiet) console.log(yellow(`    $ ${command}`))
-  const b64 = Buffer.from(command).toString('base64')
+  const cmd = opts?.color ? `export FORCE_COLOR=1\n${command}` : command
+  const b64 = Buffer.from(cmd).toString('base64')
   const args = [...sshControlArgs(host), ...resolveSshArgs(host)]
 
   return $`ssh ${args} ${"bash -lc 'echo " + b64 + "|base64 -d|bash'"}`

@@ -59,7 +59,7 @@ export class TaskRunner {
     if (verbose >= 1) {
       for (const cmd of cmds) console.log(yellow(`    $ ${cmd}`))
     }
-    const subprocess = ssh(this.#ctx.host, ['set -e', ...cmds].join('\n'))
+    const subprocess = ssh(this.#ctx.host, ['set -e', ...cmds].join('\n'), { color: true })
     if (verbose >= 2) subprocess.stdout?.pipe(process.stdout)
     await subprocess
   }
