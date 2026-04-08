@@ -3,8 +3,6 @@ import { createRequire } from 'module'
 import { type TaskContext, task, cd, run, after, onStatus, bin } from '../index.ts'
 import { getPaths, ssh, q } from '../src/utils.ts'
 
-import { Logger } from '@poppinss/cliui'
-
 declare module '../src/types.ts' {
   interface TaskRegistry {
     'pm2:ecosystem': true
@@ -15,12 +13,13 @@ declare module '../src/types.ts' {
     'pm2:restart': true
     'pm2:logs': true
     'pm2:list': true
+    'pm2:show': true
   }
 }
 
-onStatus(async (_ctx, host) => {
+onStatus(async (_ctx, host, logger) => {
   const { stdout } = await ssh(host, `set +e\n${bin('pm2')} --version || true`)
-  console.log(stdout.trim() ? `pm2 ${stdout.trim()}` : 'pm2 unavailable')
+  logger.log(stdout.trim() ? `pm2 ${stdout.trim()}` : 'pm2 unavailable')
 })
 
 task('pm2:ecosystem', () => {
@@ -52,7 +51,7 @@ task('pm2:restart', async () => {
   run(`${bin('pm2')} restart ecosystem.config.cjs --update-env`)
 })
 
-task('pm2:logs', async ({ host, deployCtx }: TaskContext) => {
+task('pm2:logs', async ({ host, deployCtx, logger }: TaskContext) => {
   const { base } = getPaths(host.deployPath, deployCtx.release)
   const require = createRequire(import.meta.url)
   const ecosystem = require(process.cwd() + '/ecosystem.config.cjs')
@@ -62,15 +61,28 @@ task('pm2:logs', async ({ host, deployCtx }: TaskContext) => {
     `set -e\ncd ${q(base)}\n${bin('pm2')} logs ${names} --nostream --lines 50`,
     { color: true }
   )
-  console.log(stdout.trim())
+  logger.log(stdout.trim())
 })
 
-task('pm2:list', async ({ host, deployCtx }: TaskContext) => {
+task('pm2:list', async ({ host, deployCtx, logger }: TaskContext) => {
   const { base } = getPaths(host.deployPath, deployCtx.release)
   const { stdout } = await ssh(host, `set -e\ncd ${q(base)}\n${bin('pm2')} list`, {
     color: true,
   })
-  console.log(stdout.trim())
+  logger.log(stdout.trim())
+})
+
+task('pm2:show', async ({ host, deployCtx, logger }: TaskContext) => {
+  const { base } = getPaths(host.deployPath, deployCtx.release)
+  const require = createRequire(import.meta.url)
+  const ecosystem = require(process.cwd() + '/ecosystem.config.cjs')
+  const names = (ecosystem?.apps ?? []).map((a: { name: string }) => a.name)
+  for (const name of names) {
+    const { stdout } = await ssh(host, `set -e\ncd ${q(base)}\n${bin('pm2')} show ${q(name)}`, {
+      color: true,
+    })
+    logger.log(stdout.trim())
+  }
 })
 
 after('deploy:publish', 'pm2:ecosystem')
