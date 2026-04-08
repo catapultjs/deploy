@@ -1,4 +1,4 @@
-import { args } from '@adonisjs/ace'
+import { args, flags } from '@adonisjs/ace'
 import { Context } from '../src/context.ts'
 import { hasTask, runTask, getTasks } from '../src/task.ts'
 import { getCurrentRelease } from '../src/deployer.ts'
@@ -10,6 +10,9 @@ export default class RunTask extends BaseDeployCommand {
 
   @args.string({ description: 'Task name to run' })
   declare taskName: string
+
+  @flags.boolean({ alias: 'v', description: 'Verbose output (-v level 1, -vv level 2)' })
+  declare verbose: boolean
 
   async run() {
     const ctx = Context.get()
