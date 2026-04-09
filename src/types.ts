@@ -9,12 +9,18 @@ export interface SshConfig {
   port?: number
 }
 
+export interface Healthcheck {
+  url?: string
+  retries?: number
+  delayMs?: number
+}
+
 export interface Host {
   name: string
   ssh: string | SshConfig
   deployPath: string
   branch?: string | BranchWithPrompt
-  healthcheckUrl?: string
+  healthcheck?: Healthcheck
   bin?: Record<string, string>
 }
 
@@ -43,11 +49,9 @@ export interface Hooks {
 }
 
 export interface Config {
-  keepReleases: number
+  keepReleases?: number
   repository?: string
-
-  healthcheckRetries?: number
-  healthcheckDelayMs?: number
+  packageManager?: 'npm' | 'pnpm' | 'yarn' | 'bun'
   hosts: Host[]
 
   hooks?: Hooks

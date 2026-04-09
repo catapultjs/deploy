@@ -97,31 +97,33 @@ task('deploy:log_revision', async ({ host, deployCtx, logger }: TaskContext) => 
   await ssh(host, `echo ${q(line)} >> ${q(logFile)}`)
 })
 
-task('deploy:healthcheck', async ({ deployCtx, host, logger }: TaskContext) => {
-  logger.step(host.name, `healthcheck ${host.healthcheckUrl}`)
+task('deploy:healthcheck', async ({ host, logger }: TaskContext) => {
+  const { url, retries, delayMs = 3_000 } = host.healthcheck ?? {}
 
-  if (deployCtx.config.healthcheckRetries) {
-    for (let i = 1; i <= deployCtx.config.healthcheckRetries; i += 1) {
+  logger.step(host.name, `healthcheck ${url}`)
+
+  if (retries) {
+    for (let i = 1; i <= retries; i += 1) {
       try {
         await ssh(
           host,
           `
           set -e
-          curl --fail --silent --show-error --max-time 5 ${q(host.healthcheckUrl)} >/dev/null
+          curl --fail --silent --show-error --max-time 5 ${q(url)} >/dev/null
         `
         )
-        logger.step(host.name, `healthcheck OK (${i}/${deployCtx.config.healthcheckRetries})`)
+        logger.step(host.name, `healthcheck OK (${i}/${retries})`)
         return
       } catch {
-        logger.step(host.name, `healthcheck failed (${i}/${deployCtx.config.healthcheckRetries})`)
-        if (i < deployCtx.config.healthcheckRetries) {
-          await sleep(deployCtx.config.healthcheckDelayMs || 3_000)
+        logger.step(host.name, `healthcheck failed (${i}/${retries})`)
+        if (i < retries) {
+          await sleep(delayMs)
         }
       }
     }
   }
 
-  throw new Error(`[${host.name}] healthcheck failed: ${host.healthcheckUrl}`)
+  throw new Error(`[${host.name}] healthcheck failed: ${url}`)
 })
 
 task('deploy:cleanup', async ({ deployCtx, host, paths }: TaskContext) => {
