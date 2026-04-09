@@ -32,7 +32,7 @@ export default class Status extends BaseDeployCommand {
           try {
             await ssh(
               host,
-              `set -e\n${bin('curl')} --fail --silent --show-error --max-time 5 ${q(host.healthcheckUrl)} >/dev/null`
+              `set -e\n${bin('curl')} --fail --silent --show-error --max-time 5 ${q(host.healthcheck?.url)} >/dev/null`
             )
             this.logger.log(`Health   ${this.colors.green('OK')}`)
           } catch {
