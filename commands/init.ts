@@ -7,8 +7,6 @@ import { findDeployFile, detectPackageManager } from '../src/utils.ts'
 const TEMPLATE = `import { defineConfig } from '@catapultjs/deploy'
 
 export default defineConfig({
-  keepReleases: 5,
-
   hosts: [
     {
       name: 'production',
