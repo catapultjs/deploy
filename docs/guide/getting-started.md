@@ -36,8 +36,6 @@ export default defineConfig({
   keepReleases: 5,
 
   repository: 'git@github.com:user/myapp.git', // optional, auto-detected from origin
-  healthcheckRetries: 10,
-  healthcheckDelayMs: 3000,
 
   hosts: [
     {
@@ -48,14 +46,22 @@ export default defineConfig({
         name: 'develop',
         ask: true,
       },
-      healthcheckUrl: 'http://127.0.0.1:3333/health',
+      healthcheck: {
+        url: 'http://127.0.0.1:3333/health',
+        retries: 10,
+        delayMs: 3000,
+      },
     },
     {
       name: 'production',
       ssh: 'deploy@prod.example.com',
       deployPath: '/home/deploy/prod/myapp',
       branch: 'main',
-      healthcheckUrl: 'http://127.0.0.1:3333/health',
+      healthcheck: {
+        url: 'http://127.0.0.1:3333/health',
+        retries: 10,
+        delayMs: 3000,
+      },
     },
   ],
 
@@ -113,62 +119,6 @@ npx cata deploy --host staging
 npx cata deploy --branch feature/my-feature
 ```
 
-## SSH
-
-The `ssh` option accepts a connection string or an object:
-
-**Connection string:**
-
-```typescript
-ssh: 'deploy@example.com'
-```
-
-**Object — useful for non-standard ports:**
-
-```typescript
-ssh: {
-  user: 'deploy',
-  host: 'example.com',
-  port: 2222,
-}
-```
-
-## Branch
-
-The `branch` option on a host accepts a plain string or an object for interactive prompting.
-
-**Static branch:**
-
-```typescript
-hosts: [
-  {
-    name: 'production',
-    ssh: 'deploy@example.com',
-    deployPath: '/home/deploy/myapp',
-    branch: 'main',
-  },
-]
-```
-
-**Interactive prompt** — asks which branch to deploy at runtime, with a default value:
-
-```typescript
-hosts: [
-  {
-    name: 'production',
-    ssh: 'deploy@example.com',
-    deployPath: '/home/deploy/myapp',
-    branch: { name: 'main', ask: true },
-  },
-]
-```
-
-You can also override the branch for all hosts at deploy time:
-
-```bash
-npx cata deploy --branch feature/my-feature
-```
-
 ## Server structure
 
 After `cata deploy:setup`, the server will have the following structure:
@@ -189,25 +139,6 @@ After `cata deploy:setup`, the server will have the following structure:
 ```
 
 ## Multi-server
-
-```typescript
-hosts: [
-  {
-    name: 'staging',
-    ssh: 'deploy@staging.example.com',
-    deployPath: '/home/deploy/staging/myapp',
-    branch: 'develop',
-    healthcheckUrl: 'http://127.0.0.1:3333/health',
-  },
-  {
-    name: 'production',
-    ssh: 'deploy@prod.example.com',
-    deployPath: '/home/deploy/prod/myapp',
-    branch: 'main',
-    healthcheckUrl: 'http://127.0.0.1:3333/health',
-  },
-],
-```
 
 When multiple hosts are configured, most commands prompt you to select which host(s) to target:
 

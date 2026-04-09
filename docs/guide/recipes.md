@@ -1,5 +1,5 @@
 ---
-description: Drop-in Catapult recipes for AdonisJS, PM2, git and rsync.
+description: Drop-in Catapult recipes for Node.js, Bun, AdonisJS, PM2, git and rsync.
 ---
 
 # Recipes
@@ -27,6 +27,64 @@ import '@catapultjs/deploy/recipes/git'
 | `deploy:log_revision` | —                    | Overrides the built-in task to log branch + commit |
 
 `branch` is required on each host. The `repository` is auto-detected from `git remote get-url origin` if not set in `defineConfig`.
+
+---
+
+## `recipes/nodejs`
+
+[View source on GitHub](https://github.com/catapultjs/deploy/blob/main/recipes/nodejs.ts)
+
+```typescript
+import '@catapultjs/deploy/recipes/nodejs'
+```
+
+Adds Node.js install and build steps to the pipeline. The package manager is configured via `packageManager` in `defineConfig` (defaults to `npm`).
+
+**Tasks**
+
+| Task                       | Inserted                    | Description                                         |
+| -------------------------- | --------------------------- | --------------------------------------------------- |
+| `nodejs:install`           | after `deploy:shared`       | Installs dependencies (frozen lockfile)             |
+| `nodejs:install:production`| —                           | Installs production-only dependencies (manual)      |
+| `nodejs:build`             | after `nodejs:install`      | Runs `<pm> run build`                               |
+
+```typescript
+import '@catapultjs/deploy/recipes/nodejs'
+
+export default defineConfig({
+  packageManager: 'pnpm',
+  // ...
+})
+```
+
+---
+
+## `recipes/bun`
+
+[View source on GitHub](https://github.com/catapultjs/deploy/blob/main/recipes/bun.ts)
+
+```typescript
+import '@catapultjs/deploy/recipes/bun'
+```
+
+Adds Bun install and build steps to the pipeline.
+
+**Tasks**
+
+| Task                      | Inserted                 | Description                                         |
+| ------------------------- | ------------------------ | --------------------------------------------------- |
+| `bun:install`             | after `deploy:shared`    | Installs dependencies (frozen lockfile)             |
+| `bun:install:production`  | —                        | Installs production-only dependencies (manual)      |
+| `bun:build`               | after `bun:install`      | Runs `bun run build`                                |
+
+```typescript
+import '@catapultjs/deploy/recipes/bun'
+
+export default defineConfig({
+  packageManager: 'bun',
+  // ...
+})
+```
 
 ---
 

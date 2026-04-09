@@ -4,12 +4,13 @@ import type { Theme } from 'vitepress'
 import DefaultTheme from 'vitepress/theme'
 import './style.css'
 import HomePage from './components/HomePage.vue'
+import NavVersion from './components/NavVersion.vue'
 
 export default {
   extends: DefaultTheme,
   Layout: () => {
     return h(DefaultTheme.Layout, null, {
-      // https://vitepress.dev/guide/extending-default-theme#layout-slots
+      'nav-bar-title-after': () => h(NavVersion),
     })
   },
   enhanceApp({ app }) {

@@ -35,10 +35,72 @@ export default defineConfig({
 | Option                | Type              | Description                                         |
 | --------------------- | ----------------- | --------------------------------------------------- |
 | `hosts`               | `Host[]`          | List of servers to deploy to                        |
-| `keepReleases`        | `number`          | Number of releases to keep (default: `5`)           |
-| `repository`          | `string`          | Git repository URL (auto-detected from origin)      |
-| `hooks`               | `Hooks`           | Lifecycle hooks (`beforeDeploy`, `afterDeploy`, …)  |
-| `verbose`             | `0 \| 1 \| 2`    | Verbosity level: `1` prints SSH commands, `2` also prints stdout (default: `0`) |
+| `keepReleases?`       | `number`          | Number of releases to keep (default: `5`)           |
+| `repository?`         | `string`          | Git repository URL (auto-detected from origin)      |
+| `packageManager?`     | `'npm' \| 'pnpm' \| 'yarn' \| 'bun'` | Package manager used by `pm()`, `pmInstall()`, `pmInstallProd()` (default: `'npm'`) |
+| `hooks?`              | `Hooks`           | Lifecycle hooks (`beforeDeploy`, `afterDeploy`, …)  |
+| `verbose?`            | `0 \| 1 \| 2`    | Verbosity level: `1` prints SSH commands, `2` also prints stdout (default: `0`) |
+
+**Host options**
+
+| Option              | Type                          | Description                                              |
+| ------------------- | ----------------------------- | -------------------------------------------------------- |
+| `name`              | `string`                      | Host identifier                                          |
+| `ssh`               | `string \| SshConfig`         | SSH connection string or object                          |
+| `deployPath`        | `string`                      | Absolute path on the server                              |
+| `branch?`           | `string \| BranchWithPrompt`  | Branch to deploy                                         |
+| `healthcheck?`      | `Healthcheck`                 | Healthcheck configuration (see below)                    |
+| `bin?`              | `Record<string, string>`      | Per-host binary path overrides                           |
+
+**SshConfig options**
+
+| Option    | Type     | Description                      |
+| --------- | -------- | -------------------------------- |
+| `user`    | `string` | SSH user                         |
+| `host`    | `string` | SSH host                         |
+| `port?`   | `number` | SSH port (default: `22`)         |
+
+```typescript
+ssh: { user: 'deploy', host: 'example.com', port: 2222 }
+```
+
+**BranchWithPrompt options**
+
+| Option  | Type      | Description                                                              |
+| ------- | --------- | ------------------------------------------------------------------------ |
+| `name`  | `string`  | Default branch name                                                      |
+| `ask`   | `boolean` | Prompt the user to enter a branch name, with `name` as the default value |
+
+```typescript
+branch: { name: 'develop', ask: true }
+```
+
+**Healthcheck options**
+
+| Option     | Type     | Description                                        |
+| ---------- | -------- | -------------------------------------------------- |
+| `url?`     | `string` | URL to check after deployment                      |
+| `retries?` | `number` | Number of attempts before failing                  |
+| `delayMs?` | `number` | Delay between retries in ms (default: `3000`)      |
+
+```typescript
+healthcheck: {
+  url: 'http://127.0.0.1:3333/health',
+  retries: 10,
+  delayMs: 3000,
+}
+```
+
+**bin options**
+
+Map of binary name to absolute path on the server. Used by `bin()` to resolve the correct executable per host.
+
+```typescript
+bin: {
+  node: '/home/deploy/.nvm/versions/node/v22/bin/node',
+  npm: '/home/deploy/.nvm/versions/node/v22/bin/npm',
+}
+```
 
 ---
 
@@ -237,7 +299,6 @@ Key/value store for sharing configuration between `deploy.ts` and recipes.
 
 | Key               | Type       | Default | Used by                                    |
 | ----------------- | ---------- | ------- | ------------------------------------------ |
-| `package_manager` | `string`   | `'npm'` | `pm()`, `pmInstall()`, `pmInstallProd()`   |
 | `shared_dirs`     | `string[]` | `[]`    | `deploy:shared`                            |
 | `shared_files`    | `string[]` | `[]`    | `deploy:shared`                            |
 | `writable_dirs`   | `string[]` | `[]`    | `deploy:setup` (via `onSetup`)             |
@@ -249,7 +310,6 @@ Stores a value under the given key.
 ```typescript
 import { set } from '@catapultjs/deploy'
 
-set('package_manager', 'pnpm')
 set('shared_dirs', ['storage', 'logs'])
 ```
 
@@ -263,7 +323,6 @@ Retrieves a value from the store. Returns `defaultValue` if the key is not set.
 import { get } from '@catapultjs/deploy'
 
 const dirs = get<string[]>('shared_dirs', [])
-const pm = get('package_manager', 'npm')
 ```
 
 ---
@@ -272,7 +331,7 @@ const pm = get('package_manager', 'npm')
 
 ### `pm()`
 
-Returns the current package manager binary (`npm`, `pnpm` or `yarn`). Reads the `package_manager` store key, defaults to `npm`.
+Returns the current package manager binary. Reads `packageManager` from `defineConfig`, defaults to `npm`.
 
 ```typescript
 run(`${pm()} run build`)
@@ -284,11 +343,11 @@ run(`${pm()} run build`)
 
 Returns the install command with frozen lockfile for the current package manager.
 
-| `package_manager` | Command                          |
-| ----------------- | -------------------------------- |
-| `npm`             | `npm ci`                         |
-| `pnpm`            | `pnpm install --frozen-lockfile` |
-| `yarn`            | `yarn install --frozen-lockfile` |
+| `packageManager` | Command                          |
+| ---------------- | -------------------------------- |
+| `npm`            | `npm ci`                         |
+| `pnpm`           | `pnpm install --frozen-lockfile` |
+| `yarn`           | `yarn install --frozen-lockfile` |
 
 ```typescript
 run(pmInstall())
@@ -300,11 +359,11 @@ run(pmInstall())
 
 Returns the production-only install command for the current package manager.
 
-| `package_manager` | Command                     |
-| ----------------- | --------------------------- |
-| `npm`             | `npm install --omit=dev`    |
-| `pnpm`            | `pnpm install --prod`       |
-| `yarn`            | `yarn install --production` |
+| `packageManager` | Command                     |
+| ---------------- | --------------------------- |
+| `npm`            | `npm install --omit=dev`    |
+| `pnpm`           | `pnpm install --prod`       |
+| `yarn`           | `yarn install --production` |
 
 ```typescript
 run(pmInstallProd())
