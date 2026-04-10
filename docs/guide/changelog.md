@@ -4,6 +4,15 @@ description: Catapult changelog — release history and notable changes.
 
 # Changelog
 
+## 0.0.5
+
+- Added `recipes/nodejs` — registers `nodejs:install`, `nodejs:install:production`, `nodejs:build` and `nodejs:test` tasks, inserted automatically after `deploy:shared`
+- Added `recipes/bun` — same tasks prefixed with `bun:`, for Bun-based projects
+- `packageManager` is now a `defineConfig` option (`'npm' | 'pnpm' | 'yarn' | 'bun'`, default `'npm'`) instead of a store key — `pm()`, `pmInstall()` and `pmInstallProd()` read from config
+- `pmInstall()` and `pmInstallProd()` now handle `bun` (`bun install --frozen-lockfile`, `bun install --production`)
+- `healthcheckUrl`, `healthcheckRetries` and `healthcheckDelayMs` replaced by a `healthcheck` object on each `Host` (`{ url?, retries?, delayMs? }`) — allows per-host healthcheck configuration
+- `keepReleases` is now optional in `defineConfig` (default: `5`)
+
 ## 0.0.4
 
 - `defineConfig` now returns a function and must be used as `export default defineConfig({...})` — the CLI calls it explicitly, giving full control over execution order
