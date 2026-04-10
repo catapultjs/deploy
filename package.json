@@ -27,6 +27,7 @@
     "test": "node bin/test.ts"
   },
   "author": "Jeremy Chaufourier jeremy@chaufourier.fr",
+  "homepage": "https://catapultjs.com",
   "license": "MIT",
   "description": "SSH deployment tool for Node.js applications",
   "keywords": [
