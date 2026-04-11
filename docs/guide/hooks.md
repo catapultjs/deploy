@@ -19,11 +19,11 @@ export default defineConfig({
     },
 
     async afterDeploy({ hosts }) {
-      await notify({ message: `Deploy succeeded` })
+      // runs after all hosts deployed successfully
     },
 
     async afterFailure({ hosts, error }) {
-      await notify({ message: `Deploy failed: ${error?.message}` })
+      console.log(`Deploy failed: ${error?.message}`)
     },
 
     async beforeHostDeploy({ host }) {
@@ -37,36 +37,10 @@ export default defineConfig({
 })
 ```
 
-| Hook               | Context                    | When it runs                                     |
-| ------------------ | -------------------------- | ------------------------------------------------ |
-| `beforeDeploy`     | `{ hosts }`                | Before deploying to all hosts                    |
-| `afterDeploy`      | `{ hosts }`                | After all hosts deployed successfully            |
-| `afterFailure`     | `{ hosts, error }`         | When a deployment fails                          |
-| `beforeHostDeploy` | `{ host }`                 | Before the pipeline for each host                |
-| `afterHostDeploy`  | `{ host }`                 | After the pipeline for each host (even on error) |
-
-## Desktop notifications
-
-`notify()` sends a native desktop notification. Supports macOS, Linux (`notify-send`) and Windows.
-
-```typescript
-import { defineConfig, notify } from '@catapultjs/deploy'
-
-export default defineConfig({
-  hooks: {
-    async afterDeploy() {
-      await notify({ message: 'Deploy succeeded' })
-    },
-    async afterFailure({ error }) {
-      await notify({ title: 'Deploy failed', message: error?.message ?? 'Unknown error' })
-    },
-  },
-})
-```
-
-**Options**
-
-| Option    | Type     | Description                              |
-| --------- | -------- | ---------------------------------------- |
-| `message` | `string` | Notification body                        |
-| `title?`  | `string` | Notification title (default: `Catapult`) |
+| Hook               | Context             | When it runs                                     |
+| ------------------ | ------------------- | ------------------------------------------------ |
+| `beforeDeploy`     | `{ hosts }`         | Before deploying to all hosts                    |
+| `afterDeploy`      | `{ hosts }`         | After all hosts deployed successfully            |
+| `afterFailure`     | `{ hosts, error }`  | When a deployment fails                          |
+| `beforeHostDeploy` | `{ host }`          | Before the pipeline for each host                |
+| `afterHostDeploy`  | `{ host }`          | After the pipeline for each host (even on error) |
