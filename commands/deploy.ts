@@ -39,7 +39,8 @@ export default class Deploy extends BaseDeployCommand {
     for (const host of hosts) {
       try {
         await deployHost(ctx, host)
-      } catch {
+      } catch (error) {
+        if (ctx.hooks.afterFailure) await ctx.hooks.afterFailure({ hosts, error: error as Error })
         this.exitCode = 1
         return
       }

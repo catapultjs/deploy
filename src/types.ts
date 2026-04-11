@@ -38,7 +38,7 @@ export interface TaskRegistry {}
 
 export type TaskName = keyof TaskRegistry | (string & {})
 
-export type HookContext = { host?: Host; hosts?: Host[] }
+export type HookContext = { host?: Host; hosts?: Host[]; error?: Error }
 export type HookFn = (context: HookContext) => Promise<void>
 
 export type PackageManager = 'npm' | 'pnpm' | 'yarn' | 'bun'
@@ -46,6 +46,7 @@ export type PackageManager = 'npm' | 'pnpm' | 'yarn' | 'bun'
 export interface Hooks {
   beforeDeploy?: HookFn
   afterDeploy?: HookFn
+  afterFailure?: HookFn
   beforeHostDeploy?: HookFn
   afterHostDeploy?: HookFn
 }

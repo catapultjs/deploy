@@ -4,7 +4,7 @@ import { resolve } from 'path'
 import { execa } from 'execa'
 import { findDeployFile, detectPackageManager } from '../src/utils.ts'
 
-const TEMPLATE = `import { defineConfig } from '@catapultjs/deploy'
+const TEMPLATE = `import { defineConfig, notify } from '@catapultjs/deploy'
 
 export default defineConfig({
   hosts: [
@@ -15,6 +15,15 @@ export default defineConfig({
       branch: 'main',
     },
   ],
+
+  hooks: {
+    async afterDeploy() {
+      await notify({ message: 'Deploy succeeded' })
+    },
+    async afterFailure({ error }) {
+      await notify({ title: 'Deploy failed', message: error?.message ?? 'Unknown error' })
+    },
+  },
 })
 `
 
