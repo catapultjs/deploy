@@ -1,5 +1,5 @@
 import type {} from '../src/types.ts'
-import { task, cd, run, bin, after, pm, pmInstall, pmInstallProd } from '../index.ts'
+import { task, desc, cd, run, bin, after, pm, pmInstall, pmInstallProd } from '../index.ts'
 
 declare module '../src/types.ts' {
   interface TaskRegistry {
@@ -10,21 +10,25 @@ declare module '../src/types.ts' {
   }
 }
 
+desc('Installs dependencies with frozen lockfile')
 task('nodejs:install', () => {
   cd('{{release_path}}')
   run(pmInstall())
 })
 
+desc('Installs production-only dependencies')
 task('nodejs:install:production', () => {
   cd('{{release_path}}')
   run(pmInstallProd())
 })
 
+desc('Builds the application')
 task('nodejs:build', () => {
   cd('{{release_path}}')
   run(`${bin(pm())} run build`)
 })
 
+desc('Runs the test suite')
 task('nodejs:test', () => {
   cd('{{release_path}}')
   run(`${bin(pm())} test`)

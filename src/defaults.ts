@@ -1,6 +1,6 @@
 import { $ } from 'execa'
 import { q, ssh, sleep } from './utils.ts'
-import { type TaskContext, task, run, isVerbose } from './task.ts'
+import { type TaskContext, task, desc, run, isVerbose } from './task.ts'
 import { get } from './store.ts'
 
 declare module './types.ts' {
@@ -21,6 +21,7 @@ declare module './types.ts' {
 // Built-in tasks
 // ---------------------------------------------------------------------------
 
+desc('Creates a deploy lock to prevent concurrent deployments')
 task('deploy:lock', async ({ host, deployCtx, paths }: TaskContext) => {
   try {
     await ssh(
@@ -40,6 +41,7 @@ task('deploy:lock', async ({ host, deployCtx, paths }: TaskContext) => {
   }
 })
 
+desc('Removes the deploy lock')
 task('deploy:unlock', async ({ host, paths }: TaskContext) => {
   await ssh(
     host,
@@ -52,12 +54,15 @@ task('deploy:unlock', async ({ host, paths }: TaskContext) => {
   )
 })
 
+desc('Creates the release directory on the server')
 task('deploy:release', () => {
   run('mkdir -p {{release_path}}')
 })
 
+desc('Transfers code to the release directory (overridden by git or rsync recipe)')
 task('deploy:update_code', async () => {})
 
+desc('Symlinks shared directories and files into the release')
 task('deploy:shared', () => {
   const dirs: string[] = get('shared_dirs', [])
   const files: string[] = get('shared_files', [])
@@ -75,10 +80,12 @@ task('deploy:shared', () => {
   }
 })
 
+desc('Switches current symlink to the new release')
 task('deploy:publish', () => {
   run('ln -sfn {{release_path}} {{current_path}}')
 })
 
+desc('Appends branch, commit and user info to revisions.log')
 task('deploy:log_revision', async ({ host, deployCtx, logger }: TaskContext) => {
   const branch = typeof host.branch === 'object' ? host.branch.name : (host.branch ?? 'unknown')
   let commit = 'unknown'
@@ -97,6 +104,7 @@ task('deploy:log_revision', async ({ host, deployCtx, logger }: TaskContext) => 
   await ssh(host, `echo ${q(line)} >> ${q(logFile)}`)
 })
 
+desc('Checks that the application is responding after deployment')
 task('deploy:healthcheck', async ({ host, logger }: TaskContext) => {
   const { url, retries, delayMs = 3_000 } = host.healthcheck ?? {}
 
@@ -126,6 +134,7 @@ task('deploy:healthcheck', async ({ host, logger }: TaskContext) => {
   throw new Error(`[${host.name}] healthcheck failed: ${url}`)
 })
 
+desc('Removes old releases, keeping the last N defined by keepReleases')
 task('deploy:cleanup', async ({ deployCtx, host, paths }: TaskContext) => {
   await ssh(
     host,

@@ -1,6 +1,6 @@
 import type {} from '../src/types.ts'
 import { $ } from 'execa'
-import { type TaskContext, task, after, isVerbose } from '../index.ts'
+import { type TaskContext, task, desc, after, isVerbose } from '../index.ts'
 import { ssh, q } from '../src/utils.ts'
 
 declare module '../src/types.ts' {
@@ -9,6 +9,7 @@ declare module '../src/types.ts' {
   }
 }
 
+desc('Verifies the branch exists on the remote repository')
 task('git:check', async ({ host, deployCtx, logger }: TaskContext) => {
   if (!host.branch) return
 
@@ -29,6 +30,7 @@ task('git:check', async ({ host, deployCtx, logger }: TaskContext) => {
   }
 })
 
+desc('Clones the repository into the release directory')
 task('deploy:update_code', async ({ host, paths, deployCtx, logger }: TaskContext) => {
   if (!host.branch) throw new Error(`[${host.name}] git mode requires "branch" on host`)
 

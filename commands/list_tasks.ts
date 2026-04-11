@@ -1,5 +1,5 @@
 import { BaseCommand } from '@adonisjs/ace'
-import { getTasks } from '../src/task.ts'
+import { getTasks, getTaskDescription } from '../src/task.ts'
 import { getPipeline } from '../src/pipeline.ts'
 
 export default class ListTasks extends BaseCommand {
@@ -12,15 +12,15 @@ export default class ListTasks extends BaseCommand {
 
     this.logger.log('Pipeline')
     const pipelineTable = this.ui.table()
-    pipelineTable.head(['Task'])
-    pipeline.forEach((name) => pipelineTable.row([name]))
+    pipelineTable.head(['Task', 'Description'])
+    pipeline.forEach((name) => pipelineTable.row([name, getTaskDescription(name)]))
     pipelineTable.render()
 
     if (extra.length > 0) {
       this.logger.log('Extra tasks')
       const extraTable = this.ui.table()
-      extraTable.head(['Task'])
-      extra.forEach((name) => extraTable.row([name]))
+      extraTable.head(['Task', 'Description'])
+      extra.forEach((name) => extraTable.row([name, getTaskDescription(name)]))
       extraTable.render()
     }
   }

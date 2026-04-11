@@ -8,6 +8,10 @@ export type { TaskContext } from './task/runner.ts'
 const runner = new TaskRunner()
 const store = new TaskStore(runner)
 
+export function desc(description: string): void {
+  store.describe(description)
+}
+
 export function task(name: TaskName, fn: TaskFn): void {
   store.register(name, fn)
 }
@@ -18,6 +22,10 @@ export function hasTask(name: TaskName): boolean {
 
 export function getTasks(): string[] {
   return store.list()
+}
+
+export function getTaskDescription(name: TaskName): string {
+  return store.getDescription(name)
 }
 
 export async function runTask(name: TaskName, deployCtx: DeployContext, host: Host): Promise<void> {

@@ -1,8 +1,9 @@
 import type {} from '../src/types.ts'
 import { $ } from 'execa'
-import { type TaskContext, task, get, isVerbose } from '../index.ts'
+import { type TaskContext, task, desc, get, isVerbose } from '../index.ts'
 import { rsyncSshFlag, resolveSshArgs } from '../src/utils.ts'
 
+desc('Transfers files to the release directory via rsync')
 task('deploy:update_code', async ({ host, paths, logger }: TaskContext) => {
   const [target] = resolveSshArgs(host)
   const source = get('rsync_source_path', './')

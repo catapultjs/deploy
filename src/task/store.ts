@@ -5,14 +5,24 @@ import { logger } from '../logger.ts'
 
 export class TaskStore {
   #registry = new Map<string, TaskFn>()
+  #descriptions = new Map<string, string>()
+  #pendingDescription: string | null = null
   #runner: TaskRunner
 
   constructor(runner: TaskRunner) {
     this.#runner = runner
   }
 
+  describe(description: string): void {
+    this.#pendingDescription = description
+  }
+
   register(name: TaskName, fn: TaskFn): void {
     this.#registry.set(name, fn)
+    if (this.#pendingDescription !== null) {
+      this.#descriptions.set(name, this.#pendingDescription)
+      this.#pendingDescription = null
+    }
   }
 
   has(name: TaskName): boolean {
@@ -21,6 +31,10 @@ export class TaskStore {
 
   list(): string[] {
     return [...this.#registry.keys()]
+  }
+
+  getDescription(name: TaskName): string {
+    return this.#descriptions.get(name) ?? ''
   }
 
   async run(name: TaskName, deployCtx: DeployContext, host: Host): Promise<void> {

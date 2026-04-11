@@ -108,6 +108,22 @@ bin: {
 
 These functions are used inside task callbacks to build the SSH command sequence.
 
+### `desc(description)`
+
+Sets a description for the next `task()` call. Used by `cata list:tasks` to display a description column. Optional.
+
+```typescript
+import { desc, task, cd, run } from '@catapultjs/deploy'
+
+desc('Builds the application assets')
+task('my:build', () => {
+  cd('{{release_path}}')
+  run('npm run build')
+})
+```
+
+---
+
 ### `task(name, fn)`
 
 Registers a task. If a task with the same name already exists, it is replaced.
