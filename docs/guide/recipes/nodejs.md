@@ -19,6 +19,7 @@ Adds Node.js install and build steps to the pipeline. The package manager is con
 | `nodejs:install`            | after `deploy:shared`   | Installs dependencies (frozen lockfile)        |
 | `nodejs:install:production` | —                       | Installs production-only dependencies (manual) |
 | `nodejs:build`              | after `nodejs:install`  | Runs `<pm> run build`                          |
+| `nodejs:test`               | —                       | Runs `<pm> test` (manual)                      |
 
 ```typescript
 import '@catapultjs/deploy/recipes/nodejs'
