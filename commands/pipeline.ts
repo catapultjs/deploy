@@ -2,7 +2,7 @@ import { BaseCommand } from '@adonisjs/ace'
 import { getPipeline } from '../src/pipeline.ts'
 
 export default class ListPipeline extends BaseCommand {
-  static commandName = 'list:pipeline'
+  static commandName = 'pipeline'
   static description = 'Show the current deployment pipeline'
 
   async run() {
