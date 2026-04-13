@@ -7,3 +7,7 @@ export function set(key: string, value: unknown): void {
 export function get<T>(key: string, defaultValue?: T): T {
   return (store.has(key) ? store.get(key) : defaultValue) as T
 }
+
+export function has(key: string): boolean {
+  return store.has(key)
+}

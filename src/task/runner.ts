@@ -1,4 +1,5 @@
 import type { Host, DeployContext, Paths } from '../types.ts'
+import { Strategy } from '../enums.ts'
 import { ssh } from '../utils.ts'
 import { logger, type CatapultLogger } from '../logger.ts'
 
@@ -45,8 +46,11 @@ export class TaskRunner {
   resolve(str: string): string {
     if (!this.#ctx) return str
     const p = this.#ctx.paths
+    const strategy = this.#ctx.deployCtx.config.strategy ?? Strategy.Direct
+    const buildPath = strategy === Strategy.Build ? p.build : p.release
     return str
       .replace(/\{\{release_path\}\}/g, p.release)
+      .replace(/\{\{build_path\}\}/g, buildPath)
       .replace(/\{\{current_path\}\}/g, p.current)
       .replace(/\{\{shared_path\}\}/g, p.shared)
       .replace(/\{\{releases_path\}\}/g, p.releases)
