@@ -46,6 +46,7 @@ export async function setupHost(ctx: DeployContext, host: Host): Promise<void> {
     mkdir -p ${q(paths.base)}
     mkdir -p ${q(paths.releases)}
     mkdir -p ${q(paths.shared)}
+    mkdir -p ${q(paths.cataConfig)}
     ${mkdirs}
     ${mkfiles}
   `
