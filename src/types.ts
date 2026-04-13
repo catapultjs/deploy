@@ -1,3 +1,5 @@
+import { Strategy, PackageManager } from './enums.ts'
+
 export interface BranchWithPrompt {
   name: string
   ask: boolean
@@ -30,6 +32,9 @@ export interface Paths {
   releases: string
   release: string
   shared: string
+  cataConfig: string
+  repo: string
+  build: string
   lock: string
 }
 
@@ -40,8 +45,6 @@ export type TaskName = keyof TaskRegistry | (string & {})
 
 export type HookContext = { host?: Host; hosts?: Host[]; error?: Error }
 export type HookFn = (context: HookContext) => Promise<void>
-
-export type PackageManager = 'npm' | 'pnpm' | 'yarn' | 'bun'
 
 export interface Hooks {
   beforeDeploy?: HookFn
@@ -54,6 +57,8 @@ export interface Hooks {
 export interface Config {
   keepReleases?: number
   repository?: string
+  strategy?: Strategy
+
   packageManager?: PackageManager
   hosts: Host[]
 
