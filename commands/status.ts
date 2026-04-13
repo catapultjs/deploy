@@ -54,6 +54,21 @@ export default class Status extends BaseDeployCommand {
           await hook(ctx, host, logger)
         }
 
+        const { stdout: revStdout } = await ssh(
+          host,
+          `set +e\n[ -f ${q(paths.cataConfig + '/revisions.log')} ] && tail -1 ${q(paths.cataConfig + '/revisions.log')} || true`
+        )
+        const rev = revStdout.trim()
+        if (rev) {
+          try {
+            const { branch, commit, user, date } = JSON.parse(rev)
+            this.logger.log(`Branch   ${this.colors.dim(branch ?? '—')}`)
+            this.logger.log(`Commit   ${this.colors.dim(commit ? commit.slice(0, 7) : '—')}`)
+            this.logger.log(`By       ${this.colors.dim(user ?? '—')}`)
+            this.logger.log(`Date     ${this.colors.dim(date ? new Date(date).toLocaleString() : '—')}`)
+          } catch {}
+        }
+
         const { stdout: lockStdout } = await ssh(
           host,
           `set +e\n[ -f ${q(paths.lock)} ] && cat ${q(paths.lock)} || true`
