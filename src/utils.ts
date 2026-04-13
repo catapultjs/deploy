@@ -1,4 +1,5 @@
-import type { Host, Paths, PackageManager } from './types.ts'
+import type { Host, Paths } from './types.ts'
+import { PackageManager } from './enums.ts'
 import { $ } from 'execa'
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
@@ -8,12 +9,12 @@ import { logger } from './logger.ts'
 
 const DEPLOY_CANDIDATES = ['deploy.ts', 'deploy.js']
 
-const PM_LOCK_FILES: [string, string][] = [
-  ['bun.lock', 'bun'],
-  ['bun.lockb', 'bun'],
-  ['pnpm-lock.yaml', 'pnpm'],
-  ['yarn.lock', 'yarn'],
-  ['package-lock.json', 'npm'],
+const PM_LOCK_FILES: [string, PackageManager][] = [
+  ['bun.lock', PackageManager.Bun],
+  ['bun.lockb', PackageManager.Bun],
+  ['pnpm-lock.yaml', PackageManager.Pnpm],
+  ['yarn.lock', PackageManager.Yarn],
+  ['package-lock.json', PackageManager.Npm],
 ]
 
 /** Detects the package manager by checking for lock files in the given directory. */
@@ -21,10 +22,10 @@ export async function detectPackageManager(cwd = process.cwd()): Promise<Package
   for (const [lockFile, manager] of PM_LOCK_FILES) {
     try {
       await access(resolve(cwd, lockFile))
-      return manager as PackageManager
+      return manager
     } catch {}
   }
-  return 'npm' as PackageManager
+  return PackageManager.Npm
 }
 
 /** Returns the path of the first existing deploy config file, or null if none found. */
@@ -50,7 +51,10 @@ export function getPaths(baseDir: string, releaseName: string): Paths {
     releases: `${baseDir}/releases`,
     release: `${baseDir}/releases/${releaseName}`,
     shared: `${baseDir}/shared`,
-    lock: `${baseDir}/deploy.lock`,
+    cataConfig: `${baseDir}/.catapult`,
+    repo: `${baseDir}/.catapult/repo`,
+    build: `${baseDir}/.catapult/build`,
+    lock: `${baseDir}/.catapult/deploy.lock`,
   }
 }
 
