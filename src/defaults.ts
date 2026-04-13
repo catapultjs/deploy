@@ -8,6 +8,7 @@ declare module './types.ts' {
     'deploy:lock': true
     'deploy:release': true
     'deploy:update_code': true
+    'deploy:copy_build': true
     'deploy:shared': true
     'deploy:publish': true
     'deploy:log_revision': true
@@ -80,14 +81,44 @@ task('deploy:shared', () => {
   }
 })
 
+desc('Symlinks shared directories and files into the build')
+task('deploy:build:shared', () => {
+  const dirs: string[] = get('shared_dirs', [])
+  const files: string[] = get('shared_files', [])
+
+  for (const dir of dirs) {
+    const d = dir.replace(/^\//, '')
+    run(`rm -rf {{build_path}}/${d}`)
+    run(`ln -sfn {{shared_path}}/${d} {{build_path}}/${d}`)
+  }
+
+  for (const file of files) {
+    const f = file.replace(/^\//, '')
+    run(`rm -f {{build_path}}/${f}`)
+    run(`ln -sfn {{shared_path}}/${f} {{build_path}}/${f}`)
+  }
+})
+
+desc('Copies build output from build directory to the release')
+task('deploy:copy_build', () => {
+  const output: string = get('build_output', 'build')
+  run(`cp -r {{build_path}}/${output}/. {{release_path}}/`)
+})
+
 desc('Switches current symlink to the new release')
 task('deploy:publish', () => {
   run('ln -sfn {{release_path}} {{current_path}}')
 })
 
 desc('Appends branch, commit and user info to revisions.log')
-task('deploy:log_revision', async ({ host, deployCtx, logger }: TaskContext) => {
-  const branch = typeof host.branch === 'object' ? host.branch.name : (host.branch ?? 'unknown')
+task('deploy:log_revision', async ({ host, paths, deployCtx, logger }: TaskContext) => {
+  let branch = typeof host.branch === 'object' ? host.branch.name : (host.branch ?? 'unknown')
+  if (branch === 'unknown') {
+    try {
+      if (isVerbose()) logger.cmd('git rev-parse --abbrev-ref HEAD')
+      branch = (await $`git rev-parse --abbrev-ref HEAD`).stdout.trim()
+    } catch {}
+  }
   let commit = 'unknown'
   let user = 'unknown'
 
@@ -98,8 +129,14 @@ task('deploy:log_revision', async ({ host, deployCtx, logger }: TaskContext) => 
     user = (await $`git config user.name`).stdout.trim()
   } catch {}
 
-  const line = `Branch ${branch} (at ${commit}) deployed as release ${deployCtx.release} by ${user}`
-  const logFile = `${host.deployPath}/revisions.log`
+  const line = JSON.stringify({
+    release: deployCtx.release,
+    branch,
+    commit,
+    user,
+    date: new Date().toISOString(),
+  })
+  const logFile = `${paths.cataConfig}/revisions.log`
 
   await ssh(host, `echo ${q(line)} >> ${q(logFile)}`)
 })
