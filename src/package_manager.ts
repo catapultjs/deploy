@@ -21,7 +21,7 @@ export function pmInstall(): string {
 /** Returns the production-only install command. */
 export function pmInstallProd(): string {
   const manager = getManager()
-  if (manager === 'pnpm') return `${pm()} install --prod`
-  if (manager === 'yarn') return `${pm()} install --production`
-  return `${pm()} install --omit=dev`
+  if (manager === 'pnpm') return `${pm()} install --frozen-lockfile --prod`
+  if (manager === 'yarn') return `${pm()} install --frozen-lockfile --production`
+  return `${pm()} ci --omit=dev`
 }
