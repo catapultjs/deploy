@@ -26,7 +26,7 @@ declare module '../src/types.ts' {
 desc('Installs dependencies with frozen lockfile')
 task('nodejs:install', ({ config }: TaskContext) => {
   if (config.strategy === Strategy.Build) {
-    cd('{{build_path}}')
+    cd('{{builder_path}}')
   } else {
     cd('{{release_path}}')
   }
@@ -43,7 +43,7 @@ task('nodejs:install:production', () => {
 desc('Builds the application')
 task('nodejs:build', ({ config }: TaskContext) => {
   if (config.strategy === Strategy.Build) {
-    cd('{{build_path}}')
+    cd('{{builder_path}}')
   } else {
     cd('{{release_path}}')
   }
@@ -53,7 +53,7 @@ task('nodejs:build', ({ config }: TaskContext) => {
 desc('Runs the test suite')
 task('nodejs:test', ({ config }: TaskContext) => {
   if (config.strategy === Strategy.Build) {
-    cd('{{build_path}}')
+    cd('{{builder_path}}')
   } else {
     cd('{{release_path}}')
   }

@@ -10,19 +10,19 @@ declare module '../src/types.ts' {
 
 desc('Installs dependencies with frozen lockfile')
 task('bun:install', () => {
-  cd('{{build_path}}')
+  cd('{{builder_path}}')
   run(pmInstall())
 })
 
 desc('Installs production-only dependencies')
 task('bun:install:production', () => {
-  cd('{{build_path}}')
+  cd('{{builder_path}}')
   run(pmInstallProd())
 })
 
 desc('Builds the application')
 task('bun:build', () => {
-  cd('{{build_path}}')
+  cd('{{builder_path}}')
   run(`${bin(pm())} run build`)
 })
 

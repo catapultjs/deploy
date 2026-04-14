@@ -51,7 +51,7 @@ export class TaskRunner {
     const buildPath = strategy === Strategy.Build ? p.builder : p.release
     return str
       .replace(/\{\{release_path\}\}/g, p.release)
-      .replace(/\{\{build_path\}\}/g, buildPath)
+      .replace(/\{\{builder_path\}\}/g, buildPath)
       .replace(/\{\{current_path\}\}/g, p.current)
       .replace(/\{\{shared_path\}\}/g, p.shared)
       .replace(/\{\{releases_path\}\}/g, p.releases)

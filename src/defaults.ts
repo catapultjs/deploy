@@ -88,21 +88,21 @@ task('deploy:build:shared', () => {
 
   for (const dir of dirs) {
     const d = dir.replace(/^\//, '')
-    run(`rm -rf {{build_path}}/${d}`)
-    run(`ln -sfn {{shared_path}}/${d} {{build_path}}/${d}`)
+    run(`rm -rf {{builder_path}}/${d}`)
+    run(`ln -sfn {{shared_path}}/${d} {{builder_path}}/${d}`)
   }
 
   for (const file of files) {
     const f = file.replace(/^\//, '')
-    run(`rm -f {{build_path}}/${f}`)
-    run(`ln -sfn {{shared_path}}/${f} {{build_path}}/${f}`)
+    run(`rm -f {{builder_path}}/${f}`)
+    run(`ln -sfn {{shared_path}}/${f} {{builder_path}}/${f}`)
   }
 })
 
 desc('Copies build output from build directory to the release')
 task('deploy:build:copy', () => {
   const output: string = get('build_output', 'build')
-  run(`cp -r {{build_path}}/${output}/. {{release_path}}/`)
+  run(`cp -r {{builder_path}}/${output}/. {{release_path}}/`)
 })
 
 desc('Switches current symlink to the new release')

@@ -31,7 +31,7 @@ desc('Installs dependencies')
 task('adonisjs:install', ({ config }: TaskContext) => {
   const adonisjs_path = get('adonisjs_path')
   if (config.strategy === Strategy.Build) {
-    cd(`{{build_path}}${adonisjs_path}`)
+    cd(`{{builder_path}}${adonisjs_path}`)
   } else {
     cd(`{{release_path}}${adonisjs_path}`)
   }
@@ -42,7 +42,7 @@ desc('Builds the AdonisJS application')
 task('adonisjs:build', ({ config }: TaskContext) => {
   const adonisjs_path = get('adonisjs_path')
   if (config.strategy === Strategy.Build) {
-    cd(`{{build_path}}${adonisjs_path}`)
+    cd(`{{builder_path}}${adonisjs_path}`)
   } else {
     cd(`{{release_path}}${adonisjs_path}`)
   }
@@ -53,7 +53,7 @@ desc('Runs database migrations')
 task('adonisjs:migrate', ({ config }: TaskContext) => {
   const adonisjs_path = get('adonisjs_path')
   if (config.strategy === Strategy.Build) {
-    cd(`{{build_path}}${adonisjs_path}`)
+    cd(`{{builder_path}}${adonisjs_path}`)
   } else {
     cd(`{{release_path}}${adonisjs_path}`)
   }
