@@ -8,7 +8,7 @@ import './defaults.ts'
 const initialConfigValues = {
   keepReleases: 5,
   verbose: 1 as const,
-  strategy: Strategy.Build,
+  strategy: Strategy.Direct,
 }
 
 export function defineConfig(config: Config): () => Promise<void> {
