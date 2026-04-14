@@ -13,22 +13,26 @@ The pipeline is the ordered sequence of tasks executed on each server during a d
 ## Default pipeline
 
 ```
-deploy:lock → deploy:release → deploy:update_code → deploy:shared → deploy:publish → deploy:log_revision → deploy:healthcheck → deploy:unlock → deploy:cleanup
+deploy:lock → deploy:release → deploy:update_code → deploy:build:shared → deploy:build:copy → deploy:shared → deploy:publish → deploy:log_revision → deploy:healthcheck → deploy:unlock → deploy:cleanup
 ```
 
-| Task                  | Description                                           |
-| --------------------- | ----------------------------------------------------- |
-| `deploy:lock`         | Creates a lock file to prevent concurrent deployments |
-| `deploy:release`      | Creates the release directory                         |
-| `deploy:update_code`  | Transfers code to the server                          |
-| `deploy:shared`       | Creates symlinks for `shared_dirs` and `shared_files` |
-| `deploy:publish`      | Switches the `current` symlink to the new release     |
-| `deploy:log_revision` | Records the deployment in `revisions.log`             |
-| `deploy:healthcheck`  | Checks that the application is responding             |
-| `deploy:unlock`       | Removes the lock file (also called on failure)        |
-| `deploy:cleanup`      | Removes old releases                                  |
+| Task                    | Description                                                        |
+| ----------------------- | ------------------------------------------------------------------ |
+| `deploy:lock`           | Creates a lock file to prevent concurrent deployments              |
+| `deploy:release`        | Creates the release directory                                      |
+| `deploy:update_code`    | Transfers code to the server (overridden by recipe)                |
+| `deploy:build:shared`   | Symlinks `shared_dirs` and `shared_files` into the build directory |
+| `deploy:build:copy`     | Copies build output from the build directory into the release      |
+| `deploy:shared`         | Symlinks `shared_dirs` and `shared_files` into the release         |
+| `deploy:publish`        | Switches the `current` symlink to the new release                  |
+| `deploy:log_revision`   | Records the deployment as JSON in `.catapult/revisions.log`        |
+| `deploy:healthcheck`    | Checks that the application is responding                          |
+| `deploy:unlock`         | Removes the lock file (also called on failure)                     |
+| `deploy:cleanup`        | Removes old releases                                               |
 
-`deploy:healthcheck` is automatically removed from the pipeline if no host defines a `healthcheckUrl`.
+`deploy:build:shared` and `deploy:build:copy` are automatically removed from the pipeline when `strategy` is not `Strategy.Build`.
+
+`deploy:healthcheck` is automatically removed from the pipeline if no host defines a `healthcheck`.
 
 ## Adding a task
 
@@ -91,10 +95,10 @@ For operations that require more than SSH commands, use an async function and de
 ```typescript
 import { type TaskContext, task, after } from '@catapultjs/deploy'
 
-task('notify', async ({ deployCtx }: TaskContext) => {
+task('notify', async ({ release }: TaskContext) => {
   await fetch(process.env.SLACK_WEBHOOK!, {
     method: 'POST',
-    body: JSON.stringify({ text: `Deployed ${deployCtx.release}` }),
+    body: JSON.stringify({ text: `Deployed ${release}` }),
   })
 })
 
@@ -121,6 +125,7 @@ Available in `cd()` and `run()`:
 | `{{current_path}}`  | `/base/current`                                |
 | `{{shared_path}}`   | `/base/shared`                                 |
 | `{{releases_path}}` | `/base/releases`                               |
+| `{{builder_path}}`    | `/base/.catapult/builder`                      |
 | `{{base_path}}`     | `/base`                                        |
 | `{{release}}`       | Release name (e.g. `2024-01-15T10-30-00-000Z`) |
 :::

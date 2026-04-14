@@ -12,11 +12,11 @@ import '@catapultjs/deploy/recipes/adonisjs'
 
 **Tasks**
 
-| Task                 | Inserted                 | Description                           |
-| -------------------- | ------------------------ | ------------------------------------- |
-| `adonisjs:install`   | after `deploy:shared`    | Installs dependencies                 |
-| `adonisjs:build`     | after `adonisjs:install` | Runs `node ace build`                 |
-| `adonisjs:migrate`   | after `adonisjs:build`   | Runs `node ace migration:run`         |
+| Task                 | Inserted                                                             | Description                                                                                     |
+| -------------------- | -------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| `adonisjs:install`   | after `deploy:shared`                                                | Installs dependencies — runs in `{{builder_path}}` or `{{release_path}}` depending on `strategy` |
+| `adonisjs:build`     | after `adonisjs:install`                                             | Runs `node ace build` — runs in `{{builder_path}}` or `{{release_path}}` depending on `strategy` |
+| `adonisjs:migrate`   | after `deploy:build:copy` (Build strategy) or `adonisjs:build` (Direct) | Runs `node ace migration:run`                                                              |
 
 **Configuration**
 

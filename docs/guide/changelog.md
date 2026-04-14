@@ -4,6 +4,23 @@ description: Catapult changelog — release history and notable changes.
 
 # Changelog
 
+## 0.1.0
+
+- Added `Strategy` enum (`Strategy.Build` | `Strategy.Direct`) — controls where install/build tasks run before being copied to the release
+- Added `strategy` option to `defineConfig` (default: `Strategy.Direct`) — when set to `Strategy.Build`, two new tasks are inserted into the pipeline: `deploy:build:shared` (symlinks shared paths into the build directory) and `deploy:build:copy` (copies build output into the release)
+- Added `{{builder_path}}` template variable — resolves to `{deployPath}/.catapult/builder`
+- Added `git:update` task in `recipes/git` — maintains a cached bare mirror of the repository on the server; `deploy:update_code` now clones from this local mirror instead of the remote
+- `TaskContext`: replaced `deployCtx` with two top-level fields — `config` (the resolved config object) and `release` (the release name string)
+- `deploy:log_revision` now writes structured JSON to `.catapult/revisions.log` instead of a plain text line in `revisions.log`
+- `cata status` now displays the last deployment revision (branch, commit, author, date) when available
+- Renamed CLI command `list:pipeline` → `pipeline`
+- Server paths reorganised under `.catapult/` — `deploy.lock` is now at `.catapult/deploy.lock`, and new paths `repo` (`.catapult/repo`) and `builder` (`.catapult/builder`) are exposed on `TaskContext.paths`
+- `paths.cataConfig` added — resolves to `{deployPath}/.catapult`
+- Added `has(key)` to the store — returns `true` if the key is set
+- `recipes/pm2`: removed `pm2:ecosystem` task — `ecosystem.config.cjs` is now read directly from the release path; renamed `pm2:start` → `pm2:startOrReload` (starts or reloads); added a new `pm2:start` task that only starts processes
+- `recipes/nodejs`, `recipes/bun`: tasks now operate on `{{builder_path}}` when `strategy` is `Build`; pipeline positions updated (`nodejs:install`/`bun:install` after `deploy:update_code`, build task after `deploy:build:shared`)
+- `recipes/adonisjs`: tasks are now strategy-aware; `adonisjs:migrate` is inserted after `deploy:build:copy` when using the Build strategy
+
 ## 0.0.6
 
 - Added `run` command — executes a shell command on one or more hosts via SSH (`npx cata run "pm2 list"`)

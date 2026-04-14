@@ -98,7 +98,7 @@ npx cata status
 npx cata list:releases
 
 # Show the current deployment pipeline
-npx cata list:pipeline
+npx cata pipeline
 
 # List registered tasks
 npx cata list:tasks
@@ -138,8 +138,11 @@ After `cata deploy:setup`, the server will have the following structure:
     storage/        (AdonisJS recipe)
     logs/           (AdonisJS recipe)
     tmp/            (AdonisJS recipe)
-  revisions.log
-  deploy.lock       ← present during a deployment
+  .catapult/
+    repo/           ← bare git mirror (git recipe)
+    builder/        ← build workspace (Strategy.Build)
+    revisions.log   ← JSON deployment history
+    deploy.lock     ← present during a deployment
 ```
 
 ## Multi-server

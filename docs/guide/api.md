@@ -37,9 +37,10 @@ export default defineConfig({
 | `hosts`               | `Host[]`          | List of servers to deploy to                        |
 | `keepReleases?`       | `number`          | Number of releases to keep (default: `5`)           |
 | `repository?`         | `string`          | Git repository URL (auto-detected from origin)      |
-| `packageManager?`     | `'npm' \| 'pnpm' \| 'yarn' \| 'bun'` | Package manager used by `pm()`, `pmInstall()`, `pmInstallProd()` (default: `'npm'`) |
+| `strategy?`           | `Strategy`        | Deployment strategy: `Strategy.Build` (default) builds in a separate directory then copies to the release; `Strategy.Direct` installs and builds in the release directory directly |
+| `packageManager?`     | `PackageManager`  | Package manager used by `pm()`, `pmInstall()`, `pmInstallProd()` (auto-detected from lock files, defaults to `PackageManager.Npm`) |
 | `hooks?`              | `Hooks`           | Lifecycle hooks (`beforeDeploy`, `afterDeploy`, …)  |
-| `verbose?`            | `0 \| 1 \| 2`    | Verbosity level: `1` prints SSH commands, `2` also prints stdout (default: `0`) |
+| `verbose?`            | `0 \| 1 \| 2`    | Verbosity level: `1` prints SSH commands, `2` also prints stdout (default: `1`) |
 
 **Host options**
 
@@ -141,10 +142,34 @@ task('my:build', () => {
 The callback receives a [`TaskContext`](#taskcontext) as its first argument:
 
 ```typescript
-task('my:build', async ({ host, paths, deployCtx, logger }) => {
+task('my:build', async ({ host, paths, config, release, logger }) => {
   // ...
 })
 ```
+
+**TaskContext fields**
+
+| Field     | Type      | Description                                   |
+| --------- | --------- | --------------------------------------------- |
+| `host`    | `Host`    | The host being deployed to                    |
+| `paths`   | `Paths`   | Resolved server paths (see below)             |
+| `config`  | `Config`  | The resolved deploy configuration             |
+| `release` | `string`  | The release name (e.g. `2024-01-15T10-30-00-000Z`) |
+| `logger`  | `Logger`  | Logger instance for output                    |
+
+**Paths fields**
+
+| Field          | Value                               |
+| -------------- | ----------------------------------- |
+| `base`         | `{deployPath}`                      |
+| `current`      | `{deployPath}/current`              |
+| `releases`     | `{deployPath}/releases`             |
+| `release`      | `{deployPath}/releases/{release}`   |
+| `shared`       | `{deployPath}/shared`               |
+| `cataConfig`   | `{deployPath}/.catapult`            |
+| `repo`         | `{deployPath}/.catapult/repo`       |
+| `builder`      | `{deployPath}/.catapult/builder`    |
+| `lock`         | `{deployPath}/.catapult/deploy.lock`|
 
 ---
 
@@ -313,11 +338,12 @@ Key/value store for sharing configuration between `deploy.ts` and recipes.
 
 **Reserved keys**
 
-| Key               | Type       | Default | Used by                                    |
-| ----------------- | ---------- | ------- | ------------------------------------------ |
-| `shared_dirs`     | `string[]` | `[]`    | `deploy:shared`                            |
-| `shared_files`    | `string[]` | `[]`    | `deploy:shared`                            |
-| `writable_dirs`   | `string[]` | `[]`    | `deploy:setup` (via `onSetup`)             |
+| Key               | Type       | Default | Used by                                          |
+| ----------------- | ---------- | ------- | ------------------------------------------------ |
+| `shared_dirs`     | `string[]` | `[]`    | `deploy:shared`, `deploy:build:shared`           |
+| `shared_files`    | `string[]` | `[]`    | `deploy:shared`, `deploy:build:shared`           |
+| `writable_dirs`   | `string[]` | `[]`    | `deploy:setup` (via `onSetup`)                   |
+| `build_output`    | `string`   | `'build'` | `deploy:build:copy` — subdirectory to copy from the build directory into the release |
 
 ### `set(key, value)`
 
@@ -339,6 +365,20 @@ Retrieves a value from the store. Returns `defaultValue` if the key is not set.
 import { get } from '@catapultjs/deploy'
 
 const dirs = get<string[]>('shared_dirs', [])
+```
+
+---
+
+### `has(key)`
+
+Returns `true` if the key is set in the store.
+
+```typescript
+import { has } from '@catapultjs/deploy'
+
+if (has('build_output')) {
+  // ...
+}
 ```
 
 ---
@@ -398,6 +438,7 @@ Available in `cd()` and `run()`:
 | `{{current_path}}`  | `/base/current`                                |
 | `{{shared_path}}`   | `/base/shared`                                 |
 | `{{releases_path}}` | `/base/releases`                               |
+| `{{builder_path}}`    | `/base/.catapult/builder`                      |
 | `{{base_path}}`     | `/base`                                        |
 | `{{release}}`       | Release name (e.g. `2024-01-15T10-30-00-000Z`) |
 :::
