@@ -57,7 +57,7 @@ task('adonisjs:migrate', ({ config }: TaskContext) => {
   } else {
     cd(`{{release_path}}${adonisjs_path}`)
   }
-  run(`${bin('node')} ace migration:run`)
+  run(`${bin('node')} ace migration:run --force`)
 })
 
 after('deploy:shared', 'adonisjs:install')
