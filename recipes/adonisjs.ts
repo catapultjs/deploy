@@ -3,10 +3,10 @@ import {
   type TaskContext,
   task,
   desc,
-  hasTask,
   cd,
   run,
   after,
+  before,
   bin,
   get,
   set,
@@ -62,9 +62,4 @@ task('adonisjs:migrate', ({ config }: TaskContext) => {
 
 after('deploy:shared', 'adonisjs:install')
 after('adonisjs:install', 'adonisjs:build')
-
-if (hasTask('deploy:build:copy')) {
-  after('deploy:build:copy', 'adonisjs:migrate')
-} else {
-  after('adonisjs:build', 'adonisjs:migrate')
-}
+before('deploy:publish', 'adonisjs:migrate')
