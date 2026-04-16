@@ -1,6 +1,6 @@
 import type { Host, DeployContext, TaskName } from '../types.ts'
 import { getPaths } from '../utils.ts'
-import { type TaskFn, TaskRunner } from './runner.ts'
+import type { TaskFn, TaskRunner } from './runner.ts'
 import { logger } from '../logger.ts'
 
 export class TaskStore {

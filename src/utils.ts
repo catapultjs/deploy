@@ -92,7 +92,7 @@ export function ssh(
 }
 
 export async function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms))
+  return new Promise((res) => setTimeout(res, ms))
 }
 
 export function elapsed(ms: number): string {

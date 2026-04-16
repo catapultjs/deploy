@@ -65,7 +65,9 @@ export default class Status extends BaseDeployCommand {
             this.logger.log(`Branch   ${this.colors.dim(branch ?? '—')}`)
             this.logger.log(`Commit   ${this.colors.dim(commit ? commit.slice(0, 7) : '—')}`)
             this.logger.log(`By       ${this.colors.dim(user ?? '—')}`)
-            this.logger.log(`Date     ${this.colors.dim(date ? new Date(date).toLocaleString() : '—')}`)
+            this.logger.log(
+              `Date     ${this.colors.dim(date ? new Date(date).toLocaleString() : '—')}`
+            )
           } catch {}
         }
 

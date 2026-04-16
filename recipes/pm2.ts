@@ -1,5 +1,5 @@
 import type {} from '../src/types.ts'
-import { createRequire } from 'module'
+import { createRequire } from 'node:module'
 import { type TaskContext, task, desc, cd, run, after, onStatus, bin } from '../index.ts'
 import { ssh, q } from '../src/utils.ts'
 

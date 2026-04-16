@@ -29,33 +29,33 @@ set('adonisjs_path', '')
 
 desc('Installs dependencies')
 task('adonisjs:install', ({ config }: TaskContext) => {
-  const adonisjs_path = get('adonisjs_path')
+  const adonisjsPath = get('adonisjs_path')
   if (config.strategy === Strategy.Build) {
-    cd(`{{builder_path}}${adonisjs_path}`)
+    cd(`{{builder_path}}${adonisjsPath}`)
   } else {
-    cd(`{{release_path}}${adonisjs_path}`)
+    cd(`{{release_path}}${adonisjsPath}`)
   }
   run(pmInstall())
 })
 
 desc('Builds the AdonisJS application')
 task('adonisjs:build', ({ config }: TaskContext) => {
-  const adonisjs_path = get('adonisjs_path')
+  const adonisjsPath = get('adonisjs_path')
   if (config.strategy === Strategy.Build) {
-    cd(`{{builder_path}}${adonisjs_path}`)
+    cd(`{{builder_path}}${adonisjsPath}`)
   } else {
-    cd(`{{release_path}}${adonisjs_path}`)
+    cd(`{{release_path}}${adonisjsPath}`)
   }
   run(`${bin('node')} ace build`)
 })
 
 desc('Runs database migrations')
 task('adonisjs:migrate', ({ config }: TaskContext) => {
-  const adonisjs_path = get('adonisjs_path')
+  const adonisjsPath = get('adonisjs_path')
   if (config.strategy === Strategy.Build) {
-    cd(`{{builder_path}}${adonisjs_path}`)
+    cd(`{{builder_path}}${adonisjsPath}`)
   } else {
-    cd(`{{release_path}}${adonisjs_path}`)
+    cd(`{{release_path}}${adonisjsPath}`)
   }
   run(`${bin('node')} ace migration:run --force`)
 })

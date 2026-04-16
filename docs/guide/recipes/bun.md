@@ -14,11 +14,11 @@ Adds Bun install and build steps to the pipeline.
 
 **Tasks**
 
-| Task                      | Inserted                    | Description                                                        |
-| ------------------------- | --------------------------- | ------------------------------------------------------------------ |
-| `bun:install`             | after `deploy:update_code`  | Installs dependencies (frozen lockfile) — runs in `{{builder_path}}` |
-| `bun:install:production`  | after `deploy:build:copy`   | Installs production-only dependencies (only when `Strategy.Build`) |
-| `bun:build`               | after `deploy:build:shared` | Runs `bun run build` — runs in `{{builder_path}}`                    |
+| Task                     | Inserted                    | Description                                                          |
+| ------------------------ | --------------------------- | -------------------------------------------------------------------- |
+| `bun:install`            | after `deploy:update_code`  | Installs dependencies (frozen lockfile) — runs in `{{builder_path}}` |
+| `bun:install:production` | after `deploy:build:copy`   | Installs production-only dependencies (only when `Strategy.Build`)   |
+| `bun:build`              | after `deploy:build:shared` | Runs `bun run build` — runs in `{{builder_path}}`                    |
 
 ```typescript
 import '@catapultjs/deploy/recipes/bun'

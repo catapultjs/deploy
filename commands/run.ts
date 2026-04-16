@@ -15,8 +15,8 @@ export default class Run extends BaseDeployCommand {
     if (!host) return
 
     for (const h of host) {
-      const args = [...sshControlArgs(h), ...resolveSshArgs(h), this.command]
-      await execa('ssh', args, { stdio: 'inherit' })
+      const sshArgs = [...sshControlArgs(h), ...resolveSshArgs(h), this.command]
+      await execa('ssh', sshArgs, { stdio: 'inherit' })
     }
   }
 }

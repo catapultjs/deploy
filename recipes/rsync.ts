@@ -11,7 +11,6 @@ task('deploy:update_code', async ({ host, paths, logger }: TaskContext) => {
   for (const pattern of get<string[]>('rsync_excludes', [])) {
     args.push(`--exclude=${pattern}`)
   }
-  if (isVerbose())
-    logger.cmd(`rsync ${args.join(' ')} ${source} ${target}:${paths.release}/`)
+  if (isVerbose()) logger.cmd(`rsync ${args.join(' ')} ${source} ${target}:${paths.release}/`)
   await $`rsync ${args} ${source} ${target}:${paths.release}/`
 })

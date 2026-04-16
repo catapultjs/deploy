@@ -55,7 +55,9 @@ test.group('package_manager', (group) => {
     assert.equal(pmInstallProd(), 'pnpm install --frozen-lockfile --prod')
   })
 
-  test('pmInstallProd() returns yarn install --frozen-lockfile --production for yarn', ({ assert }) => {
+  test('pmInstallProd() returns yarn install --frozen-lockfile --production for yarn', ({
+    assert,
+  }) => {
     setManager(PackageManager.Yarn)
     assert.equal(pmInstallProd(), 'yarn install --frozen-lockfile --production')
   })

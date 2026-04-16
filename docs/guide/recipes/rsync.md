@@ -12,16 +12,16 @@ import '@catapultjs/deploy/recipes/rsync'
 
 **Tasks**
 
-| Task                 | Inserted | Description                                              |
-| -------------------- | -------- | -------------------------------------------------------- |
-| `deploy:update_code` | —        | Overrides the built-in task to transfer files via rsync  |
+| Task                 | Inserted | Description                                             |
+| -------------------- | -------- | ------------------------------------------------------- |
+| `deploy:update_code` | —        | Overrides the built-in task to transfer files via rsync |
 
 **Configuration**
 
-| Key                  | Type       | Default | Description                              |
-| -------------------- | ---------- | ------- | ---------------------------------------- |
-| `rsync_source_path`  | `string`   | `./`    | Local source directory                   |
-| `rsync_excludes`     | `string[]` | `[]`    | Patterns passed to `--exclude`           |
+| Key                 | Type       | Default | Description                    |
+| ------------------- | ---------- | ------- | ------------------------------ |
+| `rsync_source_path` | `string`   | `./`    | Local source directory         |
+| `rsync_excludes`    | `string[]` | `[]`    | Patterns passed to `--exclude` |
 
 ```typescript
 import { set } from '@catapultjs/deploy'

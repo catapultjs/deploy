@@ -1,6 +1,6 @@
 import { BaseCommand } from '@adonisjs/ace'
-import { writeFile } from 'fs/promises'
-import { resolve } from 'path'
+import { writeFile } from 'node:fs/promises'
+import { resolve } from 'node:path'
 import { execa } from 'execa'
 import { findDeployFile, detectPackageManager } from '../src/utils.ts'
 

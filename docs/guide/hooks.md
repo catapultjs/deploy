@@ -37,10 +37,10 @@ export default defineConfig({
 })
 ```
 
-| Hook               | Context             | When it runs                                     |
-| ------------------ | ------------------- | ------------------------------------------------ |
-| `beforeDeploy`     | `{ hosts }`         | Before deploying to all hosts                    |
-| `afterDeploy`      | `{ hosts }`         | After all hosts deployed successfully            |
-| `afterFailure`     | `{ hosts, error }`  | When a deployment fails                          |
-| `beforeHostDeploy` | `{ host }`          | Before the pipeline for each host                |
-| `afterHostDeploy`  | `{ host }`          | After the pipeline for each host (even on error) |
+| Hook               | Context            | When it runs                                     |
+| ------------------ | ------------------ | ------------------------------------------------ |
+| `beforeDeploy`     | `{ hosts }`        | Before deploying to all hosts                    |
+| `afterDeploy`      | `{ hosts }`        | After all hosts deployed successfully            |
+| `afterFailure`     | `{ hosts, error }` | When a deployment fails                          |
+| `beforeHostDeploy` | `{ host }`         | Before the pipeline for each host                |
+| `afterHostDeploy`  | `{ host }`         | After the pipeline for each host (even on error) |

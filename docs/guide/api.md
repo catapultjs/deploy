@@ -32,34 +32,34 @@ export default defineConfig({
 
 **Options**
 
-| Option                | Type              | Description                                         |
-| --------------------- | ----------------- | --------------------------------------------------- |
-| `hosts`               | `Host[]`          | List of servers to deploy to                        |
-| `keepReleases?`       | `number`          | Number of releases to keep (default: `5`)           |
-| `repository?`         | `string`          | Git repository URL (auto-detected from origin)      |
-| `strategy?`           | `Strategy`        | Deployment strategy: `Strategy.Build` builds in a separate directory then copies to the release; `Strategy.Direct` (default) installs and builds in the release directory directly |
-| `packageManager?`     | `PackageManager`  | Package manager used by `pm()`, `pmInstall()`, `pmInstallProd()` (auto-detected from lock files, defaults to `PackageManager.Npm`) |
-| `hooks?`              | `Hooks`           | Lifecycle hooks (`beforeDeploy`, `afterDeploy`, …)  |
-| `verbose?`            | `0 \| 1 \| 2`    | Verbosity level: `1` prints SSH commands, `2` also prints stdout (default: `1`) |
+| Option            | Type             | Description                                                                                                                                                                        |
+| ----------------- | ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `hosts`           | `Host[]`         | List of servers to deploy to                                                                                                                                                       |
+| `keepReleases?`   | `number`         | Number of releases to keep (default: `5`)                                                                                                                                          |
+| `repository?`     | `string`         | Git repository URL (auto-detected from origin)                                                                                                                                     |
+| `strategy?`       | `Strategy`       | Deployment strategy: `Strategy.Build` builds in a separate directory then copies to the release; `Strategy.Direct` (default) installs and builds in the release directory directly |
+| `packageManager?` | `PackageManager` | Package manager used by `pm()`, `pmInstall()`, `pmInstallProd()` (auto-detected from lock files, defaults to `PackageManager.Npm`)                                                 |
+| `hooks?`          | `Hooks`          | Lifecycle hooks (`beforeDeploy`, `afterDeploy`, …)                                                                                                                                 |
+| `verbose?`        | `0 \| 1 \| 2`    | Verbosity level: `1` prints SSH commands, `2` also prints stdout (default: `1`)                                                                                                    |
 
 **Host options**
 
-| Option              | Type                          | Description                                              |
-| ------------------- | ----------------------------- | -------------------------------------------------------- |
-| `name`              | `string`                      | Host identifier                                          |
-| `ssh`               | `string \| SshConfig`         | SSH connection string or object                          |
-| `deployPath`        | `string`                      | Absolute path on the server                              |
-| `branch?`           | `string \| BranchWithPrompt`  | Branch to deploy                                         |
-| `healthcheck?`      | `Healthcheck`                 | Healthcheck configuration (see below)                    |
-| `bin?`              | `Record<string, string>`      | Per-host binary path overrides                           |
+| Option         | Type                         | Description                           |
+| -------------- | ---------------------------- | ------------------------------------- |
+| `name`         | `string`                     | Host identifier                       |
+| `ssh`          | `string \| SshConfig`        | SSH connection string or object       |
+| `deployPath`   | `string`                     | Absolute path on the server           |
+| `branch?`      | `string \| BranchWithPrompt` | Branch to deploy                      |
+| `healthcheck?` | `Healthcheck`                | Healthcheck configuration (see below) |
+| `bin?`         | `Record<string, string>`     | Per-host binary path overrides        |
 
 **SshConfig options**
 
-| Option    | Type     | Description                      |
-| --------- | -------- | -------------------------------- |
-| `user`    | `string` | SSH user                         |
-| `host`    | `string` | SSH host                         |
-| `port?`   | `number` | SSH port (default: `22`)         |
+| Option  | Type     | Description              |
+| ------- | -------- | ------------------------ |
+| `user`  | `string` | SSH user                 |
+| `host`  | `string` | SSH host                 |
+| `port?` | `number` | SSH port (default: `22`) |
 
 ```typescript
 ssh: { user: 'deploy', host: 'example.com', port: 2222 }
@@ -67,10 +67,10 @@ ssh: { user: 'deploy', host: 'example.com', port: 2222 }
 
 **BranchWithPrompt options**
 
-| Option  | Type      | Description                                                              |
-| ------- | --------- | ------------------------------------------------------------------------ |
-| `name`  | `string`  | Default branch name                                                      |
-| `ask`   | `boolean` | Prompt the user to enter a branch name, with `name` as the default value |
+| Option | Type      | Description                                                              |
+| ------ | --------- | ------------------------------------------------------------------------ |
+| `name` | `string`  | Default branch name                                                      |
+| `ask`  | `boolean` | Prompt the user to enter a branch name, with `name` as the default value |
 
 ```typescript
 branch: { name: 'develop', ask: true }
@@ -78,11 +78,11 @@ branch: { name: 'develop', ask: true }
 
 **Healthcheck options**
 
-| Option     | Type     | Description                                        |
-| ---------- | -------- | -------------------------------------------------- |
-| `url?`     | `string` | URL to check after deployment                      |
-| `retries?` | `number` | Number of attempts before failing                  |
-| `delayMs?` | `number` | Delay between retries in ms (default: `3000`)      |
+| Option     | Type     | Description                                   |
+| ---------- | -------- | --------------------------------------------- |
+| `url?`     | `string` | URL to check after deployment                 |
+| `retries?` | `number` | Number of attempts before failing             |
+| `delayMs?` | `number` | Delay between retries in ms (default: `3000`) |
 
 ```typescript
 healthcheck: {
@@ -149,27 +149,27 @@ task('my:build', async ({ host, paths, config, release, logger }) => {
 
 **TaskContext fields**
 
-| Field     | Type      | Description                                   |
-| --------- | --------- | --------------------------------------------- |
-| `host`    | `Host`    | The host being deployed to                    |
-| `paths`   | `Paths`   | Resolved server paths (see below)             |
-| `config`  | `Config`  | The resolved deploy configuration             |
-| `release` | `string`  | The release name (e.g. `2024-01-15T10-30-00-000Z`) |
-| `logger`  | `Logger`  | Logger instance for output                    |
+| Field     | Type     | Description                                        |
+| --------- | -------- | -------------------------------------------------- |
+| `host`    | `Host`   | The host being deployed to                         |
+| `paths`   | `Paths`  | Resolved server paths (see below)                  |
+| `config`  | `Config` | The resolved deploy configuration                  |
+| `release` | `string` | The release name (e.g. `2024-01-15T10-30-00-000Z`) |
+| `logger`  | `Logger` | Logger instance for output                         |
 
 **Paths fields**
 
-| Field          | Value                               |
-| -------------- | ----------------------------------- |
-| `base`         | `{deployPath}`                      |
-| `current`      | `{deployPath}/current`              |
-| `releases`     | `{deployPath}/releases`             |
-| `release`      | `{deployPath}/releases/{release}`   |
-| `shared`       | `{deployPath}/shared`               |
-| `cataConfig`   | `{deployPath}/.catapult`            |
-| `repo`         | `{deployPath}/.catapult/repo`       |
-| `builder`      | `{deployPath}/.catapult/builder`    |
-| `lock`         | `{deployPath}/.catapult/deploy.lock`|
+| Field        | Value                                |
+| ------------ | ------------------------------------ |
+| `base`       | `{deployPath}`                       |
+| `current`    | `{deployPath}/current`               |
+| `releases`   | `{deployPath}/releases`              |
+| `release`    | `{deployPath}/releases/{release}`    |
+| `shared`     | `{deployPath}/shared`                |
+| `cataConfig` | `{deployPath}/.catapult`             |
+| `repo`       | `{deployPath}/.catapult/repo`        |
+| `builder`    | `{deployPath}/.catapult/builder`     |
+| `lock`       | `{deployPath}/.catapult/deploy.lock` |
 
 ---
 
@@ -352,12 +352,12 @@ Key/value store for sharing configuration between `deploy.ts` and recipes.
 
 **Reserved keys**
 
-| Key               | Type       | Default | Used by                                          |
-| ----------------- | ---------- | ------- | ------------------------------------------------ |
-| `shared_dirs`     | `string[]` | `[]`    | `deploy:shared`, `deploy:build:shared`           |
-| `shared_files`    | `string[]` | `[]`    | `deploy:shared`, `deploy:build:shared`           |
-| `writable_dirs`   | `string[]` | `[]`    | `deploy:setup` (via `onSetup`)                   |
-| `build_output`    | `string`   | `'build'` | `deploy:build:copy` — subdirectory to copy from the build directory into the release |
+| Key             | Type       | Default   | Used by                                                                              |
+| --------------- | ---------- | --------- | ------------------------------------------------------------------------------------ |
+| `shared_dirs`   | `string[]` | `[]`      | `deploy:shared`, `deploy:build:shared`                                               |
+| `shared_files`  | `string[]` | `[]`      | `deploy:shared`, `deploy:build:shared`                                               |
+| `writable_dirs` | `string[]` | `[]`      | `deploy:setup` (via `onSetup`)                                                       |
+| `build_output`  | `string`   | `'build'` | `deploy:build:copy` — subdirectory to copy from the build directory into the release |
 
 ### `set(key, value)`
 
@@ -446,15 +446,15 @@ run(pmInstallProd())
 Available in `cd()` and `run()`:
 
 ::: v-pre
-| Variable            | Value                                          |
+| Variable | Value |
 | ------------------- | ---------------------------------------------- |
-| `{{release_path}}`  | `/base/releases/<release>`                     |
-| `{{current_path}}`  | `/base/current`                                |
-| `{{shared_path}}`   | `/base/shared`                                 |
-| `{{releases_path}}` | `/base/releases`                               |
-| `{{builder_path}}`    | `/base/.catapult/builder`                      |
-| `{{base_path}}`     | `/base`                                        |
-| `{{release}}`       | Release name (e.g. `2024-01-15T10-30-00-000Z`) |
+| `{{release_path}}` | `/base/releases/<release>` |
+| `{{current_path}}` | `/base/current` |
+| `{{shared_path}}` | `/base/shared` |
+| `{{releases_path}}` | `/base/releases` |
+| `{{builder_path}}` | `/base/.catapult/builder` |
+| `{{base_path}}` | `/base` |
+| `{{release}}` | Release name (e.g. `2024-01-15T10-30-00-000Z`) |
 :::
 
 Where `/base` is the `deployPath` defined on the host.

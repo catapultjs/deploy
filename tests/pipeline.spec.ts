@@ -1,5 +1,13 @@
 import { test } from '@japa/runner'
-import { getPipeline, setPipeline, before, after, remove, onSetup, onStatus } from '../src/pipeline.ts'
+import {
+  getPipeline,
+  setPipeline,
+  before,
+  after,
+  remove,
+  onSetup,
+  onStatus,
+} from '../src/pipeline.ts'
 import { hooks } from '../src/pipeline/hooks.ts'
 
 const DEFAULT_PIPELINE = [

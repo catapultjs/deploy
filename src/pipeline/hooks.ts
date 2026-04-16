@@ -1,7 +1,11 @@
 import type { Host, DeployContext } from '../types.ts'
 import type { CatapultLogger } from '../logger.ts'
 
-export type LifecycleHook = (ctx: DeployContext, host: Host, logger: CatapultLogger) => Promise<void> | void
+export type LifecycleHook = (
+  ctx: DeployContext,
+  host: Host,
+  logger: CatapultLogger
+) => Promise<void> | void
 
 export class PipelineHookStore {
   #setupHooks: LifecycleHook[] = []

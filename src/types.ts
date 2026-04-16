@@ -1,4 +1,4 @@
-import { Strategy, PackageManager } from './enums.ts'
+import type { Strategy, PackageManager } from './enums.ts'
 
 export interface BranchWithPrompt {
   name: string
@@ -38,7 +38,6 @@ export interface Paths {
   lock: string
 }
 
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface TaskRegistry {}
 
 export type TaskName = keyof TaskRegistry | (string & {})

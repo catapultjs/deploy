@@ -42,8 +42,12 @@ test.group('task — registration', () => {
 
   test('registering a task twice overwrites it', ({ assert }) => {
     let result = 'none'
-    task('test:overwrite', () => { result = 'first' })
-    task('test:overwrite', () => { result = 'second' })
+    task('test:overwrite', () => {
+      result = 'first'
+    })
+    task('test:overwrite', () => {
+      result = 'second'
+    })
     assert.isTrue(hasTask('test:overwrite'))
     // verify the second registration is the active one
     assert.equal(result, 'none') // not called yet
@@ -53,14 +57,18 @@ test.group('task — registration', () => {
 test.group('task — runTask', () => {
   test('runTask calls the registered task function', async ({ assert }) => {
     let called = false
-    task('test:run_sync', async () => { called = true })
+    task('test:run_sync', async () => {
+      called = true
+    })
     await runTask('test:run_sync', makeDeployCtx(), makeHost())
     assert.isTrue(called)
   })
 
   test('runTask passes TaskContext to the task function', async ({ assert }) => {
     let receivedHost: Host | undefined
-    task('test:run_ctx', async ({ host }) => { receivedHost = host })
+    task('test:run_ctx', async ({ host }) => {
+      receivedHost = host
+    })
     const host = makeHost()
     await runTask('test:run_ctx', makeDeployCtx(), host)
     assert.equal(receivedHost?.name, host.name)
@@ -107,7 +115,9 @@ test.group('task — DSL', () => {
 
   test('isVerbose returns the config value when inside a task', async ({ assert }) => {
     let result: 0 | 1 | 2 | undefined
-    task('test:verbose_ctx', async () => { result = isVerbose() })
+    task('test:verbose_ctx', async () => {
+      result = isVerbose()
+    })
     const ctx = makeDeployCtx()
     ctx.config.verbose = 2
     await runTask('test:verbose_ctx', ctx, makeHost())

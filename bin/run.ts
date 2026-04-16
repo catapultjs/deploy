@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { pathToFileURL } from 'url'
+import { pathToFileURL } from 'node:url'
 import { findDeployFile } from '../src/utils.ts'
 import { Context } from '../src/context.ts'
 import { logger } from '../src/logger.ts'

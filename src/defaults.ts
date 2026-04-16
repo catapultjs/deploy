@@ -116,7 +116,8 @@ task('deploy:log_revision', async ({ host, paths, release, logger }: TaskContext
   if (branch === 'unknown') {
     try {
       if (isVerbose()) logger.cmd('git rev-parse --abbrev-ref HEAD')
-      branch = (await $`git rev-parse --abbrev-ref HEAD`).stdout.trim()
+      const branchResult = await $`git rev-parse --abbrev-ref HEAD`
+      branch = branchResult.stdout.trim()
     } catch {}
   }
   let commit = 'unknown'
@@ -124,9 +125,11 @@ task('deploy:log_revision', async ({ host, paths, release, logger }: TaskContext
 
   try {
     if (isVerbose()) logger.cmd('git rev-parse HEAD')
-    commit = (await $`git rev-parse HEAD`).stdout.trim()
+    const commitResult = await $`git rev-parse HEAD`
+    commit = commitResult.stdout.trim()
     if (isVerbose()) logger.cmd('git config user.name')
-    user = (await $`git config user.name`).stdout.trim()
+    const userResult = await $`git config user.name`
+    user = userResult.stdout.trim()
   } catch {}
 
   const line = JSON.stringify({

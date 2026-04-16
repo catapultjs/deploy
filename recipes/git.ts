@@ -20,7 +20,8 @@ task('git:check', async ({ host, config, logger }: TaskContext) => {
   let repository = config.repository
   if (!repository) {
     if (isVerbose()) logger.cmd('git remote get-url origin')
-    repository = (await $`git remote get-url origin`).stdout.trim()
+    const result = await $`git remote get-url origin`
+    repository = result.stdout.trim()
   }
 
   try {
@@ -64,7 +65,8 @@ task('git:update', async ({ host, paths, config, logger }: TaskContext) => {
 
   if (!repository) {
     if (isVerbose()) logger.cmd('git remote get-url origin')
-    repository = (await $`git remote get-url origin`).stdout.trim()
+    const result = await $`git remote get-url origin`
+    repository = result.stdout.trim()
   }
 
   const cacheExists = await ssh(host, `[ -d ${q(cache)} ] && echo 'yes' || echo 'no'`, {
