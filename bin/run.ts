@@ -71,29 +71,6 @@ kernel.on('help', async (command, $kernel, parsed) => {
 })
 
 /**
- * Register a global --ansi flag
- */
-kernel.defineFlag('ansi', {
-  type: 'boolean',
-  showNegatedVariantInHelp: true,
-  description: 'Force enable or disable colored output',
-})
-
-/**
- * Listen for the presence of --ansi flag and disable/enable the colored
- * output.
- */
-kernel.on('ansi', async (_, $kernel, parsed) => {
-  if (parsed.flags.ansi === false) {
-    $kernel.ui.switchMode('silent')
-  }
-
-  if (parsed.flags.ansi === true) {
-    $kernel.ui.switchMode('normal')
-  }
-})
-
-/**
  * Using the List loader to register our command
  */
 kernel.addLoader(
