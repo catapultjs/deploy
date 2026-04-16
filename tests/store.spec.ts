@@ -1,5 +1,5 @@
 import { test } from '@japa/runner'
-import { set, get } from '../src/store.ts'
+import { set, get, has } from '../src/store.ts'
 
 test.group('store', () => {
   test('get returns undefined when key is not set', ({ assert }) => {
@@ -44,5 +44,19 @@ test.group('store', () => {
   test('set and get an object', ({ assert }) => {
     set('store__obj', { a: 1, b: 'x' })
     assert.deepEqual(get<object>('store__obj'), { a: 1, b: 'x' })
+  })
+
+  test('has returns false when key is not set', ({ assert }) => {
+    assert.isFalse(has('store__has_missing'))
+  })
+
+  test('has returns true after set', ({ assert }) => {
+    set('store__has_key', 'value')
+    assert.isTrue(has('store__has_key'))
+  })
+
+  test('has returns true for falsy values', ({ assert }) => {
+    set('store__has_falsy', false)
+    assert.isTrue(has('store__has_falsy'))
   })
 })

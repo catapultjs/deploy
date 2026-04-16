@@ -5,6 +5,7 @@ import {
   before,
   after,
   remove,
+  inPipeline,
   onSetup,
   onStatus,
 } from '../src/pipeline.ts'
@@ -72,18 +73,32 @@ test.group('pipeline', (group) => {
   test('remove throws when the task does not exist', ({ assert }) => {
     assert.throws(() => remove('nonexistent:task'), /not found in pipeline/)
   })
+
+  test('inPipeline returns true when task is present', ({ assert }) => {
+    assert.isTrue(inPipeline('deploy:publish'))
+  })
+
+  test('inPipeline returns false when task is absent', ({ assert }) => {
+    assert.isFalse(inPipeline('nonexistent:task'))
+  })
+
+  test('inPipeline reflects pipeline changes', ({ assert }) => {
+    assert.isTrue(inPipeline('deploy:healthcheck'))
+    remove('deploy:healthcheck')
+    assert.isFalse(inPipeline('deploy:healthcheck'))
+  })
 })
 
 test.group('pipeline — hooks', () => {
   test('onSetup registers a setup hook', ({ assert }) => {
-    const before = hooks.getSetup().length
+    const count = hooks.getSetup().length
     onSetup(async () => {})
-    assert.equal(hooks.getSetup().length, before + 1)
+    assert.equal(hooks.getSetup().length, count + 1)
   })
 
   test('onStatus registers a status hook', ({ assert }) => {
-    const before = hooks.getStatus().length
+    const count = hooks.getStatus().length
     onStatus(async () => {})
-    assert.equal(hooks.getStatus().length, before + 1)
+    assert.equal(hooks.getStatus().length, count + 1)
   })
 })
