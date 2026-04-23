@@ -11,7 +11,7 @@ export default class Deploy extends BaseDeployCommand {
   @flags.string({ description: 'Override the branch to deploy' })
   declare branch: string | undefined
 
-  @flags.boolean({ alias: 'v', description: 'Verbose output (-v level 1, -vv level 2)' })
+  @flags.boolean({ alias: 'v', description: 'Verbose output (-v, -vv, -vvv)' })
   declare verbose: boolean
 
   async run() {

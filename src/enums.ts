@@ -15,6 +15,7 @@ export type PackageManager = (typeof PackageManager)[keyof typeof PackageManager
 export const Verbose = {
   SILENT: 0,
   NORMAL: 1,
-  DEBUG: 2,
+  TRACE: 2,
+  DEBUG: 3,
 } as const
 export type Verbose = (typeof Verbose)[keyof typeof Verbose]

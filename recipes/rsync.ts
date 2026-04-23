@@ -1,5 +1,6 @@
 import type {} from '../src/types.ts'
 import { $ } from 'execa'
+import { Verbose } from '../src/enums.ts'
 import { type TaskContext, task, desc, get, isVerbose } from '../index.ts'
 import { rsyncSshFlag, resolveSshArgs } from '../src/utils.ts'
 
@@ -11,6 +12,7 @@ task('deploy:update_code', async ({ host, paths, logger }: TaskContext) => {
   for (const pattern of get<string[]>('rsync_excludes', [])) {
     args.push(`--exclude=${pattern}`)
   }
-  if (isVerbose()) logger.cmd(`rsync ${args.join(' ')} ${source} ${target}:${paths.release}/`)
+  if (isVerbose(Verbose.TRACE))
+    logger.cmd(`rsync ${args.join(' ')} ${source} ${target}:${paths.release}/`)
   await $`rsync ${args} ${source} ${target}:${paths.release}/`
 })

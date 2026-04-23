@@ -40,8 +40,8 @@ export class TaskRunner {
     return this.#ctx?.host.bin?.[name] ?? name
   }
 
-  isVerbose(): 0 | 1 | 2 {
-    return this.#ctx?.config.verbose ?? 0
+  isVerbose(level: Verbose): boolean {
+    return (this.#ctx?.config.verbose ?? 0) >= level
   }
 
   resolve(str: string): string {
@@ -63,7 +63,7 @@ export class TaskRunner {
     if (!this.#ctx || this.#commands.length === 0) return
     const cmds = this.#commands.splice(0)
     const verbose = this.#ctx.config.verbose ?? Verbose.SILENT
-    if (verbose >= Verbose.NORMAL) {
+    if (verbose >= Verbose.TRACE) {
       for (const cmd of cmds) logger.cmd(cmd)
     }
     const subprocess = ssh(this.#ctx.host, ['set -e', ...cmds].join('\n'), { color: true })

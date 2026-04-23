@@ -11,7 +11,7 @@ export default class RunTask extends BaseDeployCommand {
   @args.string({ description: 'Task name to run' })
   declare taskName: string
 
-  @flags.boolean({ alias: 'v', description: 'Verbose output (-v level 1, -vv level 2)' })
+  @flags.boolean({ alias: 'v', description: 'Verbose output (-v, -vv, -vvv)' })
   declare verbose: boolean
 
   async run() {

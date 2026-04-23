@@ -46,7 +46,7 @@ export default defineConfig({
 | `strategy?`       | `Strategy`       | Deployment strategy: `Strategy.BUILD` builds in a separate directory then copies to the release; `Strategy.DIRECT` (default) installs and builds in the release directory directly |
 | `packageManager?` | `PackageManager` | Package manager used by `pm()`, `pmInstall()`, `pmInstallProd()` (auto-detected from lock files, defaults to `PackageManager.NPM`)                                                 |
 | `hooks?`          | `Hooks`          | Lifecycle hooks (`beforeDeploy`, `afterDeploy`, …)                                                                                                                                 |
-| `verbose?`        | `Verbose`        | Verbosity level: `Verbose.NORMAL` prints SSH commands, `Verbose.DEBUG` also prints stdout (default: `Verbose.NORMAL`)                                                              |
+| `verbose?`        | `Verbose`        | Verbosity level: `Verbose.SILENT` nothing, `Verbose.NORMAL` shows task progress, `Verbose.TRACE` also prints SSH commands, `Verbose.DEBUG` also streams stdout (default: `Verbose.NORMAL`) |
 
 **Host options**
 
@@ -231,15 +231,17 @@ Per-host binary paths are configured in `defineConfig`:
 
 ---
 
-### `isVerbose()`
+### `isVerbose(level)`
 
-Returns the current verbosity level (`0`, `1` or `2`). Truthy when verbose is enabled. Useful for conditional logging inside async tasks.
+Returns `true` if the current verbosity is at least `level`. Useful for conditional logging inside async tasks.
 
 ```typescript
 import { task, isVerbose } from '@catapultjs/deploy'
+import { Verbose } from '@catapultjs/deploy/enums'
 
 task('my:task', async ({ host, logger }) => {
-  if (isVerbose()) logger.step(host.name, 'doing something')
+  if (isVerbose(Verbose.NORMAL)) logger.step(host.name, 'doing something')
+  if (isVerbose(Verbose.TRACE)) logger.cmd('my-command --flag')
 })
 ```
 

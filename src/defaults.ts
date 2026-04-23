@@ -1,6 +1,7 @@
 import { $ } from 'execa'
 import { q, ssh, sleep } from './utils.ts'
 import { type TaskContext, task, desc, run, isVerbose } from './task.ts'
+import { Verbose } from './enums.ts'
 import { get } from './store.ts'
 
 declare module './types.ts' {
@@ -115,7 +116,7 @@ task('deploy:log_revision', async ({ host, paths, release, logger }: TaskContext
   let branch = typeof host.branch === 'object' ? host.branch.name : (host.branch ?? 'unknown')
   if (branch === 'unknown') {
     try {
-      if (isVerbose()) logger.cmd('git rev-parse --abbrev-ref HEAD')
+      if (isVerbose(Verbose.TRACE)) logger.cmd('git rev-parse --abbrev-ref HEAD')
       const branchResult = await $`git rev-parse --abbrev-ref HEAD`
       branch = branchResult.stdout.trim()
     } catch {}
@@ -124,10 +125,10 @@ task('deploy:log_revision', async ({ host, paths, release, logger }: TaskContext
   let user = 'unknown'
 
   try {
-    if (isVerbose()) logger.cmd('git rev-parse HEAD')
+    if (isVerbose(Verbose.TRACE)) logger.cmd('git rev-parse HEAD')
     const commitResult = await $`git rev-parse HEAD`
     commit = commitResult.stdout.trim()
-    if (isVerbose()) logger.cmd('git config user.name')
+    if (isVerbose(Verbose.TRACE)) logger.cmd('git config user.name')
     const userResult = await $`git config user.name`
     user = userResult.stdout.trim()
   } catch {}
@@ -145,10 +146,11 @@ task('deploy:log_revision', async ({ host, paths, release, logger }: TaskContext
 })
 
 desc('Checks that the application is responding after deployment')
-task('deploy:healthcheck', async ({ host, logger }: TaskContext) => {
+task('deploy:healthcheck', async ({ host, config, logger }: TaskContext) => {
   const { url, retries, delayMs = 3_000 } = host.healthcheck ?? {}
+  const verbose = config.verbose ?? 0
 
-  logger.step(host.name, `healthcheck ${url}`)
+  if (verbose >= Verbose.NORMAL) logger.step(host.name, `healthcheck ${url}`)
 
   if (retries) {
     for (let i = 1; i <= retries; i += 1) {
@@ -160,10 +162,11 @@ task('deploy:healthcheck', async ({ host, logger }: TaskContext) => {
           curl --fail --silent --show-error --max-time 5 ${q(url)} >/dev/null
         `
         )
-        logger.step(host.name, `healthcheck OK (${i}/${retries})`)
+        if (verbose >= Verbose.NORMAL) logger.step(host.name, `healthcheck OK (${i}/${retries})`)
         return
       } catch {
-        logger.step(host.name, `healthcheck failed (${i}/${retries})`)
+        if (verbose >= Verbose.NORMAL)
+          logger.step(host.name, `healthcheck failed (${i}/${retries})`)
         if (i < retries) {
           await sleep(delayMs)
         }

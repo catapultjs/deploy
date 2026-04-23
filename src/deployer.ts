@@ -1,4 +1,5 @@
 import type { Host, DeployContext, Hooks, HookContext } from './types.ts'
+import { Verbose } from './enums.ts'
 import { q, getPaths, ssh, elapsed } from './utils.ts'
 import { runTask } from './task.ts'
 import { get } from './store.ts'
@@ -15,7 +16,7 @@ async function runHook(
   context: HookContext = {}
 ): Promise<void> {
   if (!ctx.hooks[name]) return
-  logger.step(`hook: ${name}`)
+  if ((ctx.config.verbose ?? 0) >= Verbose.NORMAL) logger.step(`hook: ${name}`)
   await ctx.hooks[name]!(context)
 }
 
@@ -26,7 +27,7 @@ async function runHook(
 export async function setupHost(ctx: DeployContext, host: Host): Promise<void> {
   const paths = getPaths(host.deployPath, ctx.release)
 
-  logger.step(host.name, 'setup directories')
+  if ((ctx.config.verbose ?? 0) >= Verbose.NORMAL) logger.step(host.name, 'setup directories')
 
   const dirs: string[] = get('writable_dirs', [])
   const files: string[] = get('shared_files', [])
@@ -110,7 +111,7 @@ export async function rollbackHost(ctx: DeployContext, host: Host): Promise<void
     throw new Error(`[${host.name}] no previous release available`)
   }
 
-  logger.step(host.name, `rollback to ${previous}`)
+  if ((ctx.config.verbose ?? 0) >= Verbose.NORMAL) logger.step(host.name, `rollback to ${previous}`)
 
   await ssh(host, `set -e\nln -sfn ${q(paths.releases + '/' + previous)} ${q(paths.current)}`)
 
@@ -131,8 +132,10 @@ export async function deployHost(ctx: DeployContext, host: Host): Promise<void> 
   await runHook(ctx, 'beforeHostDeploy', { host })
 
   try {
+    const verbose = ctx.config.verbose ?? 0
     for (const taskName of getPipeline()) {
-      logger.task(elapsed(Date.now() - deployStart), host.name, taskName)
+      if (verbose >= Verbose.NORMAL)
+        logger.task(elapsed(Date.now() - deployStart), host.name, taskName)
       await runTask(taskName, ctx, host)
       if (taskName === 'deploy:lock') locked = true
       if (taskName === 'deploy:publish') published = true

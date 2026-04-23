@@ -4,6 +4,13 @@ description: Catapult changelog — release history and notable changes.
 
 # Changelog
 
+## 0.4.0
+
+- Added `Verbose.TRACE` level (`2`) between `NORMAL` and `DEBUG` — `NORMAL` now only shows task progress, `TRACE` shows SSH commands, `DEBUG` streams stdout; existing indices shifted (`DEBUG` is now `3`)
+- `Verbose.SILENT` (`0`) no longer displays anything — task progress previously shown at `SILENT` is now gated at `NORMAL`
+- CLI flags extended: `-vvv` sets `Verbose.DEBUG` (level 3); `-v` → `NORMAL`, `-vv` → `TRACE`
+- `isVerbose()` signature changed: now takes a `Verbose` level and returns `boolean` — e.g. `isVerbose(Verbose.TRACE)`
+
 ## 0.3.0
 
 - Added `list:revisions` command — displays the last 10 deployments from `.catapult/revisions.log` in a table (release, branch, commit, author, date)

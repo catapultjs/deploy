@@ -1,6 +1,7 @@
 import { test } from '@japa/runner'
 import { task, hasTask, getTasks, runTask, cd, run, bin, isVerbose } from '../src/task.ts'
 import type { DeployContext, Host } from '../src/types.ts'
+import { Verbose } from '../src/enums.ts'
 
 function makeDeployCtx(): DeployContext {
   return {
@@ -109,18 +110,18 @@ test.group('task — DSL', () => {
     assert.equal(resolved, '/home/deploy/.nvm/versions/node/v22/bin/node')
   })
 
-  test('isVerbose returns 0 when no context is set', ({ assert }) => {
-    assert.equal(isVerbose(), 0)
+  test('isVerbose returns false when no context is set', ({ assert }) => {
+    assert.equal(isVerbose(Verbose.NORMAL), false)
   })
 
-  test('isVerbose returns the config value when inside a task', async ({ assert }) => {
-    let result: 0 | 1 | 2 | undefined
+  test('isVerbose returns true when level matches config verbose', async ({ assert }) => {
+    let result: boolean | undefined
     task('test:verbose_ctx', async () => {
-      result = isVerbose()
+      result = isVerbose(Verbose.TRACE)
     })
     const ctx = makeDeployCtx()
-    ctx.config.verbose = 2
+    ctx.config.verbose = Verbose.TRACE
     await runTask('test:verbose_ctx', ctx, makeHost())
-    assert.equal(result, 2)
+    assert.equal(result, true)
   })
 })

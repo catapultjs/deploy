@@ -1,6 +1,6 @@
 import type {} from '../src/types.ts'
 import { $ } from 'execa'
-import { Strategy } from '../src/enums.ts'
+import { Strategy, Verbose } from '../src/enums.ts'
 import { type TaskContext, task, desc, after, before, isVerbose } from '../index.ts'
 import { ssh, q } from '../src/utils.ts'
 
@@ -19,13 +19,14 @@ task('git:check', async ({ host, config, logger }: TaskContext) => {
 
   let repository = config.repository
   if (!repository) {
-    if (isVerbose()) logger.cmd('git remote get-url origin')
+    if (isVerbose(Verbose.TRACE)) logger.cmd('git remote get-url origin')
     const result = await $`git remote get-url origin`
     repository = result.stdout.trim()
   }
 
   try {
-    if (isVerbose()) logger.cmd(`git ls-remote --exit-code --heads ${repository} ${branchName}`)
+    if (isVerbose(Verbose.TRACE))
+      logger.cmd(`git ls-remote --exit-code --heads ${repository} ${branchName}`)
     await $`git ls-remote --exit-code --heads ${repository} ${branchName}`
   } catch {
     throw new Error(`[${host.name}] branch "${branchName}" does not exist on remote ${repository}`)
@@ -45,13 +46,14 @@ task('deploy:update_code', async ({ host, paths, config, logger }: TaskContext) 
   })
 
   if (targetExists.stdout.trim() === 'yes') {
-    if (isVerbose()) logger.cmd(`git fetch ${branchName} + reset --hard FETCH_HEAD → ${target}`)
+    if (isVerbose(Verbose.TRACE))
+      logger.cmd(`git fetch ${branchName} + reset --hard FETCH_HEAD → ${target}`)
     await ssh(
       host,
       `set -e\ngit -C ${q(target)} fetch origin ${q(branchName)}\ngit -C ${q(target)} reset --hard FETCH_HEAD`
     )
   } else {
-    if (isVerbose()) logger.cmd(`git clone ${branchName} → ${target}`)
+    if (isVerbose(Verbose.TRACE)) logger.cmd(`git clone ${branchName} → ${target}`)
     await ssh(host, `set -e\ngit clone --local --branch ${q(branchName)} ${q(cache)} ${q(target)}`)
   }
 })
@@ -64,7 +66,7 @@ task('git:update', async ({ host, paths, config, logger }: TaskContext) => {
   const cache = paths.repo
 
   if (!repository) {
-    if (isVerbose()) logger.cmd('git remote get-url origin')
+    if (isVerbose(Verbose.TRACE)) logger.cmd('git remote get-url origin')
     const result = await $`git remote get-url origin`
     repository = result.stdout.trim()
   }
@@ -74,10 +76,10 @@ task('git:update', async ({ host, paths, config, logger }: TaskContext) => {
   })
 
   if (cacheExists.stdout.trim() === 'yes') {
-    if (isVerbose()) logger.cmd(`git fetch ${repository}`)
+    if (isVerbose(Verbose.TRACE)) logger.cmd(`git fetch ${repository}`)
     await ssh(host, `set -e\ngit -C ${q(cache)} fetch --all --prune`)
   } else {
-    if (isVerbose()) logger.cmd(`git clone --mirror ${repository}`)
+    if (isVerbose(Verbose.TRACE)) logger.cmd(`git clone --mirror ${repository}`)
     await ssh(host, `set -e\ngit clone --mirror ${q(repository)} ${q(cache)}`)
   }
 })

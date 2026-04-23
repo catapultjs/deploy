@@ -4,6 +4,7 @@ import { pathToFileURL } from 'node:url'
 import { findDeployFile } from '../src/utils.ts'
 import { Context } from '../src/context.ts'
 import { logger } from '../src/logger.ts'
+import { Verbose } from '../src/enums.ts'
 import { Kernel, ListLoader, HelpCommand } from '@adonisjs/ace'
 import Version from '../commands/version.js'
 import Init from '../commands/init.js'
@@ -19,13 +20,13 @@ import RunTask from '../commands/run_task.js'
 import Ssh from '../commands/ssh.js'
 import Run from '../commands/run.js'
 
-function parseVerboseLevel(argv: string[]): 0 | 1 | 2 {
+function parseVerboseLevel(argv: string[]): Verbose {
   let count = 0
   for (const arg of argv) {
     if (arg === '--verbose' || arg === '-v') count++
-    else if (/^-v{2,}$/.test(arg)) count += 2
+    else if (/^-v{2,}$/.test(arg)) count += arg.length - 1
   }
-  return Math.min(count, 2) as 0 | 1 | 2
+  return Math.min(count, Verbose.DEBUG) as Verbose
 }
 
 const skipDeployFile = ['init', 'version'].includes(process.argv[2])
@@ -44,7 +45,7 @@ if (!skipDeployFile) {
   await mod.default()
 
   const verboseLevel = parseVerboseLevel(process.argv.slice(2))
-  if (verboseLevel > 0) Context.get().config.verbose = verboseLevel
+  if (verboseLevel > Verbose.SILENT) Context.get().config.verbose = verboseLevel
 }
 
 //

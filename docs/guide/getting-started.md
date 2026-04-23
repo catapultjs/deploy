@@ -66,7 +66,7 @@ export default defineConfig({
     },
   ],
 
-  verbose: Verbose.NORMAL, // Verbose.SILENT | Verbose.NORMAL | Verbose.DEBUG
+  verbose: Verbose.NORMAL, // Verbose.SILENT | Verbose.NORMAL | Verbose.TRACE | Verbose.DEBUG
 })
 ```
 
@@ -85,9 +85,10 @@ npx cata deploy:setup
 # Deploy
 npx cata deploy
 
-# Deploy with verbose output (-v level 1, -vv level 2)
+# Deploy with verbose output (-v level 1, -vv level 2, -vvv level 3)
 npx cata deploy -v
 npx cata deploy -vv
+npx cata deploy -vvv
 
 # Rollback to the previous release
 npx cata rollback

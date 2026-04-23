@@ -1,6 +1,7 @@
 import type { Host, DeployContext, TaskName } from './types.ts'
 import { type TaskFn, TaskRunner } from './task/runner.ts'
 import { TaskStore } from './task/store.ts'
+import type { Verbose } from './enums.ts'
 import { q } from './utils.ts'
 
 export type { TaskContext } from './task/runner.ts'
@@ -48,6 +49,6 @@ export function bin(name: string): string {
   return runner.bin(name)
 }
 
-export function isVerbose(): 0 | 1 | 2 {
-  return runner.isVerbose()
+export function isVerbose(level: Verbose): boolean {
+  return runner.isVerbose(level)
 }
