@@ -52,3 +52,11 @@ export function bin(name: string): string {
 export function isVerbose(level: Verbose): boolean {
   return runner.isVerbose(level)
 }
+
+export function upload(localPath: string, remotePath: string): Promise<void> {
+  return runner.upload(localPath, remotePath)
+}
+
+export function download(remotePath: string, localPath: string): Promise<void> {
+  return runner.download(remotePath, localPath)
+}

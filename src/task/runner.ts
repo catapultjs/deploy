@@ -1,6 +1,7 @@
 import type { Host, Config, Paths } from '../types.ts'
 import { Strategy, Verbose } from '../enums.ts'
-import { ssh } from '../utils.ts'
+import { ssh, scpArgs, scpTarget } from '../utils.ts'
+import { $ } from 'execa'
 import { logger, type CatapultLogger } from '../logger.ts'
 
 export interface TaskContext {
@@ -57,6 +58,22 @@ export class TaskRunner {
       .replace(/\{\{releases_path\}\}/g, p.releases)
       .replace(/\{\{base_path\}\}/g, p.base)
       .replace(/\{\{release\}\}/g, this.#ctx.release)
+  }
+
+  async upload(localPath: string, remotePath: string): Promise<void> {
+    await this.flush()
+    if (!this.#ctx) throw new Error('upload() must be called inside a task')
+    const args = ['-r', ...scpArgs(this.#ctx.host)]
+    const target = `${scpTarget(this.#ctx.host)}:${remotePath}`
+    await $`scp ${args} ${localPath} ${target}`
+  }
+
+  async download(remotePath: string, localPath: string): Promise<void> {
+    await this.flush()
+    if (!this.#ctx) throw new Error('download() must be called inside a task')
+    const args = ['-r', ...scpArgs(this.#ctx.host)]
+    const source = `${scpTarget(this.#ctx.host)}:${remotePath}`
+    await $`scp ${args} ${source} ${localPath}`
   }
 
   async flush(): Promise<void> {

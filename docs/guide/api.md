@@ -231,6 +231,36 @@ Per-host binary paths are configured in `defineConfig`:
 
 ---
 
+### `upload(localPath, remotePath)`
+
+Uploads a local file or directory to the remote server via SCP. Flushes any queued `run()` commands first.
+Supports [template variables](#template-variables) in `remotePath`.
+
+```typescript
+task('my:task', async () => {
+  await upload('./dist/app.zip', '{{release_path}}/app.zip')
+})
+```
+
+Must be called inside an `async` task callback.
+
+---
+
+### `download(remotePath, localPath)`
+
+Downloads a file or directory from the remote server via SCP. Flushes any queued `run()` commands first.
+Supports [template variables](#template-variables) in `remotePath`.
+
+```typescript
+task('my:task', async () => {
+  await download('{{release_path}}/config.json', './config.json')
+})
+```
+
+Must be called inside an `async` task callback.
+
+---
+
 ### `isVerbose(level)`
 
 Returns `true` if the current verbosity is at least `level`. Useful for conditional logging inside async tasks.

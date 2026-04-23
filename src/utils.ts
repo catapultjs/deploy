@@ -71,6 +71,17 @@ export function sshControlArgs(host: Host): string[] {
   return ['-o', 'ControlMaster=auto', '-o', `ControlPath=${socket}`, '-o', 'ControlPersist=300']
 }
 
+export function scpArgs(host: Host): string[] {
+  const portArgs =
+    typeof host.ssh === 'object' && host.ssh.port ? ['-P', String(host.ssh.port)] : []
+  return [...portArgs, ...sshControlArgs(host)]
+}
+
+export function scpTarget(host: Host): string {
+  if (typeof host.ssh === 'string') return host.ssh
+  return `${host.ssh.user}@${host.ssh.host}`
+}
+
 /** Returns the -e flag value for rsync, reusing the SSH multiplexing socket. */
 export function rsyncSshFlag(host: Host): string {
   const controlOpts = sshControlArgs(host).join(' ')

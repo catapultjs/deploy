@@ -10,6 +10,7 @@ description: Catapult changelog — release history and notable changes.
 - `Verbose.SILENT` (`0`) no longer displays anything — task progress previously shown at `SILENT` is now gated at `NORMAL`
 - CLI flags extended: `-vvv` sets `Verbose.DEBUG` (level 3); `-v` → `NORMAL`, `-vv` → `TRACE`
 - `isVerbose()` signature changed: now takes a `Verbose` level and returns `boolean` — e.g. `isVerbose(Verbose.TRACE)`
+- Added `upload(localPath, remotePath)` and `download(remotePath, localPath)` to the task DSL — transfer files via SCP, reusing the SSH multiplexing socket
 
 ## 0.3.0
 
