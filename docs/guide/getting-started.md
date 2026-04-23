@@ -93,6 +93,9 @@ npx cata deploy -vvv
 # Rollback to the previous release
 npx cata rollback
 
+# Rollback and interactively select the target release
+npx cata rollback --interactive
+
 # Server status
 npx cata status
 
@@ -123,9 +126,11 @@ npx cata ssh
 
 # Target a specific host
 npx cata deploy --host staging
+npx cata deploy -H staging
 
 # Override the branch to deploy
 npx cata deploy --branch feature/my-feature
+npx cata deploy -b feature/my-feature
 ```
 
 ## Server structure
@@ -164,9 +169,26 @@ To skip the prompt and target a specific host directly:
 
 ```bash
 npx cata deploy --host staging
+npx cata deploy -H staging
 ```
 
-The `--host` flag is available on all commands: `deploy`, `deploy:setup`, `rollback`, `status`, `list:releases`, `task`.
+The `--host` / `-H` flag is available on all commands: `deploy`, `deploy:setup`, `rollback`, `status`, `list:releases`, `task`.
+
+## Rollback
+
+By default, `rollback` restores the previous release automatically:
+
+```bash
+npx cata rollback
+```
+
+To choose the target release interactively, use the `--interactive` (or `-i`) flag.
+Catapult lists all available releases — the current one is marked and disabled — and prompts you to pick one:
+
+```bash
+npx cata rollback --interactive
+npx cata rollback -i
+```
 
 ## Automatic rollback
 

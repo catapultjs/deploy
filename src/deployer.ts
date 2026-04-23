@@ -73,9 +73,8 @@ export async function getCurrentRelease(ctx: DeployContext, host: Host): Promise
   }
 }
 
-async function getPreviousReleaseName(ctx: DeployContext, host: Host): Promise<string | null> {
+export async function getReleaseNames(ctx: DeployContext, host: Host): Promise<string[]> {
   const paths = getPaths(host.deployPath, ctx.release)
-  const currentRelease = await getCurrentRelease(ctx, host)
 
   let stdout = ''
   try {
@@ -88,13 +87,18 @@ async function getPreviousReleaseName(ctx: DeployContext, host: Host): Promise<s
     `
     ))
   } catch {
-    return null
+    return []
   }
 
-  const releases = stdout
+  return stdout
     .split('\n')
     .map((line) => line.trim().replace(/\/$/, ''))
     .filter(Boolean)
+}
+
+async function getPreviousReleaseName(ctx: DeployContext, host: Host): Promise<string | null> {
+  const currentRelease = await getCurrentRelease(ctx, host)
+  const releases = await getReleaseNames(ctx, host)
 
   if (!currentRelease) {
     return releases[1] || releases[0] || null
@@ -103,9 +107,9 @@ async function getPreviousReleaseName(ctx: DeployContext, host: Host): Promise<s
   return releases.find((name) => name !== currentRelease) ?? null
 }
 
-export async function rollbackHost(ctx: DeployContext, host: Host): Promise<void> {
+export async function rollbackHost(ctx: DeployContext, host: Host, target?: string): Promise<void> {
   const paths = getPaths(host.deployPath, ctx.release)
-  const previous = await getPreviousReleaseName(ctx, host)
+  const previous = target ?? (await getPreviousReleaseName(ctx, host))
 
   if (!previous) {
     throw new Error(`[${host.name}] no previous release available`)
