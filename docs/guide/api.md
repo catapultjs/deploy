@@ -234,7 +234,7 @@ Per-host binary paths are configured in `defineConfig`:
 ### `upload(localPath, remotePath)`
 
 Uploads a local file or directory to the remote server via SCP. Flushes any queued `run()` commands first.
-Supports [template variables](#template-variables) in `remotePath`.
+Supports [template variables](#template-variables) in `remotePath`. If `remotePath` is relative, it is resolved against `host.deployPath`.
 
 ```typescript
 task('my:task', async () => {
@@ -249,7 +249,7 @@ Must be called inside an `async` task callback.
 ### `download(remotePath, localPath)`
 
 Downloads a file or directory from the remote server via SCP. Flushes any queued `run()` commands first.
-Supports [template variables](#template-variables) in `remotePath`.
+Supports [template variables](#template-variables) in `remotePath`. If `remotePath` is relative, it is resolved against `host.deployPath`.
 
 ```typescript
 task('my:task', async () => {

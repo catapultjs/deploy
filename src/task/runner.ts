@@ -3,6 +3,7 @@ import { Strategy, Verbose } from '../enums.ts'
 import { ssh, scpArgs, scpTarget } from '../utils.ts'
 import { $ } from 'execa'
 import { logger, type CatapultLogger } from '../logger.ts'
+import { posix } from 'node:path'
 
 export interface TaskContext {
   readonly host: Host
@@ -64,7 +65,8 @@ export class TaskRunner {
     await this.flush()
     if (!this.#ctx) throw new Error('upload() must be called inside a task')
     const args = ['-r', ...scpArgs(this.#ctx.host)]
-    const target = `${scpTarget(this.#ctx.host)}:${remotePath}`
+    const resolved = posix.isAbsolute(remotePath) ? remotePath : posix.join(this.#ctx.host.deployPath, remotePath)
+    const target = `${scpTarget(this.#ctx.host)}:${resolved}`
     await $`scp ${args} ${localPath} ${target}`
   }
 
@@ -72,7 +74,8 @@ export class TaskRunner {
     await this.flush()
     if (!this.#ctx) throw new Error('download() must be called inside a task')
     const args = ['-r', ...scpArgs(this.#ctx.host)]
-    const source = `${scpTarget(this.#ctx.host)}:${remotePath}`
+    const resolved = posix.isAbsolute(remotePath) ? remotePath : posix.join(this.#ctx.host.deployPath, remotePath)
+    const source = `${scpTarget(this.#ctx.host)}:${resolved}`
     await $`scp ${args} ${source} ${localPath}`
   }
 

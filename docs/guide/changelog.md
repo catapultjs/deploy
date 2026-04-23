@@ -11,6 +11,7 @@ description: Catapult changelog — release history and notable changes.
 - CLI flags extended: `-vvv` sets `Verbose.DEBUG` (level 3); `-v` → `NORMAL`, `-vv` → `TRACE`
 - `isVerbose()` signature changed: now takes a `Verbose` level and returns `boolean` — e.g. `isVerbose(Verbose.TRACE)`
 - Added `upload(localPath, remotePath)` and `download(remotePath, localPath)` to the task DSL — transfer files via SCP, reusing the SSH multiplexing socket
+- `upload()` and `download()` now resolve relative `remotePath` values against `host.deployPath`
 
 ## 0.3.0
 
