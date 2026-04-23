@@ -38,14 +38,14 @@ export default defineConfig({
 
 **Options**
 
-| Option            | Type             | Description                                                                                                                                                                        |
-| ----------------- | ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `hosts`           | `Host[]`         | List of servers to deploy to                                                                                                                                                       |
-| `keepReleases?`   | `number`         | Number of releases to keep (default: `5`)                                                                                                                                          |
-| `repository?`     | `string`         | Git repository URL (auto-detected from origin)                                                                                                                                     |
-| `strategy?`       | `Strategy`       | Deployment strategy: `Strategy.BUILD` builds in a separate directory then copies to the release; `Strategy.DIRECT` (default) installs and builds in the release directory directly |
-| `packageManager?` | `PackageManager` | Package manager used by `pm()`, `pmInstall()`, `pmInstallProd()` (auto-detected from lock files, defaults to `PackageManager.NPM`)                                                 |
-| `hooks?`          | `Hooks`          | Lifecycle hooks (`beforeDeploy`, `afterDeploy`, …)                                                                                                                                 |
+| Option            | Type             | Description                                                                                                                                                                                |
+| ----------------- | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `hosts`           | `Host[]`         | List of servers to deploy to                                                                                                                                                               |
+| `keepReleases?`   | `number`         | Number of releases to keep (default: `5`)                                                                                                                                                  |
+| `repository?`     | `string`         | Git repository URL (auto-detected from origin)                                                                                                                                             |
+| `strategy?`       | `Strategy`       | Deployment strategy: `Strategy.BUILD` builds in a separate directory then copies to the release; `Strategy.DIRECT` (default) installs and builds in the release directory directly         |
+| `packageManager?` | `PackageManager` | Package manager used by `pm()`, `pmInstall()`, `pmInstallProd()` (auto-detected from lock files, defaults to `PackageManager.NPM`)                                                         |
+| `hooks?`          | `Hooks`          | Lifecycle hooks (`beforeDeploy`, `afterDeploy`, …)                                                                                                                                         |
 | `verbose?`        | `Verbose`        | Verbosity level: `Verbose.SILENT` nothing, `Verbose.NORMAL` shows task progress, `Verbose.TRACE` also prints SSH commands, `Verbose.DEBUG` also streams stdout (default: `Verbose.NORMAL`) |
 
 **Host options**
