@@ -12,7 +12,7 @@ description: Catapult changelog — release history and notable changes.
 - Added `local(command, options?)` to the task DSL — executes a shell command on the local machine, with optional `cwd`; flushes queued SSH commands first
 - Fixed `upload()` and `download()` not interpolating template variables (e.g. `{{release_path}}`) in `remotePath`
 
-> Released at *2026-04-23*
+> Released at *2026-04-24*
 
 ## 0.4.0
 
