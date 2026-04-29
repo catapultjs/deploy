@@ -8,6 +8,25 @@ export type { LifecycleHook, ConfigHook } from './pipeline/hooks.ts'
 
 const pipeline = new PipelineStore()
 
+let immediate = false
+const queue: Array<() => void> = []
+
+function defer(fn: () => void): void {
+  if (immediate) fn()
+  else queue.push(fn)
+}
+
+/** @internal — switches between immediate and deferred execution for after/before/remove. */
+export function setImmediatePipeline(value: boolean): void {
+  immediate = value
+}
+
+/** @internal — executes all queued after/before/remove calls. */
+export function flushPipelineQueue(): void {
+  for (const fn of queue) fn()
+  queue.length = 0
+}
+
 /** Returns a copy of the current pipeline. */
 export function getPipeline(): string[] {
   return pipeline.get()
@@ -30,12 +49,12 @@ export function isPipelineLocked(): boolean {
 
 /** Inserts a task before an existing one in the pipeline. */
 export function before(existing: TaskName, newTask: TaskName): void {
-  pipeline.before(existing, newTask)
+  defer(() => pipeline.before(existing, newTask))
 }
 
 /** Inserts a task after an existing one in the pipeline. */
 export function after(existing: TaskName, newTask: TaskName): void {
-  pipeline.after(existing, newTask)
+  defer(() => pipeline.after(existing, newTask))
 }
 
 /** Returns true if the task is present in the pipeline. */
@@ -45,7 +64,7 @@ export function inPipeline(name: TaskName): boolean {
 
 /** Removes a task from the pipeline. */
 export function remove(name: TaskName): void {
-  pipeline.remove(name)
+  defer(() => pipeline.remove(name))
 }
 
 /** Registers a function to run during deploy:setup, after base directories are initialized. */

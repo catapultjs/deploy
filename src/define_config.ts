@@ -2,7 +2,15 @@ import type { Config } from './types.ts'
 import { Strategy, Verbose } from './enums.ts'
 import { Context } from './context.ts'
 import { detectPackageManager } from './utils.ts'
-import { remove, getPipeline, inPipeline, isPipelineLocked, hooks } from './pipeline.ts'
+import {
+  remove,
+  getPipeline,
+  inPipeline,
+  isPipelineLocked,
+  hooks,
+  setImmediatePipeline,
+  flushPipelineQueue,
+} from './pipeline.ts'
 import './defaults.ts'
 
 const initialConfigValues = {
@@ -14,6 +22,8 @@ const initialConfigValues = {
 export function defineConfig(config: Config): () => Promise<void> {
   const resolved: Config = { ...initialConfigValues, ...config }
 
+  setImmediatePipeline(true)
+
   const strategy = resolved.strategy!
   if (strategy !== Strategy.REMOTE) {
     if (inPipeline('deploy:builder:release')) remove('deploy:builder:release')
@@ -21,6 +31,9 @@ export function defineConfig(config: Config): () => Promise<void> {
   }
 
   if (!isPipelineLocked()) hooks.runConfig(resolved)
+
+  setImmediatePipeline(false)
+  flushPipelineQueue()
 
   return async () => {
     const pm = await detectPackageManager()
@@ -33,7 +46,9 @@ export function defineConfig(config: Config): () => Promise<void> {
 
     const hasHealthcheck = config.hosts.some((h) => h.healthcheck?.url)
     if (!hasHealthcheck && getPipeline().includes('deploy:healthcheck')) {
+      setImmediatePipeline(true)
       remove('deploy:healthcheck')
+      setImmediatePipeline(false)
     }
   }
 }
