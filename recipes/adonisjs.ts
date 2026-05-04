@@ -51,10 +51,15 @@ task('adonisjs:install', () => {
 })
 
 desc('Builds the AdonisJS application in the builder')
-task('adonisjs:builder:build', () => {
+task('adonisjs:builder:build', async () => {
   const adonisjsPath = get<string>('adonisjs_path')
+  const buildOutput = get<string>('build_output')
+  const lockFile = await getLockFileName(adonisjsPath)
   cd(`{{builder_path}}/${adonisjsPath}`)
   run(`${bin('node')} ace build`)
+  run(`cp package.json ./${buildOutput}`)
+  run(`cp ${lockFile} ./${buildOutput}`)
+  run(`mkdir ./${buildOutput}/tmp`)
 })
 
 desc('Builds the AdonisJS application locally')
