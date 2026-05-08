@@ -38,32 +38,32 @@ export default defineConfig({
 
 **Options**
 
-| Option            | Type             | Description |
-| ----------------- | ---------------- | ----------- |
-| `hosts`           | `Host[]`         | List of servers to deploy to |
-| `keepReleases?`   | `number`         | Number of releases to keep (default: `5`) |
-| `repository?`     | `string`         | Git repository URL (auto-detected from origin) |
-| `packageManager?` | `PackageManager` | Package manager used by `pm()`, `pmInstall()`, `pmInstallProd()` (auto-detected from lock files, defaults to `PackageManager.NPM`) |
-| `hooks?`          | `Hooks`          | Lifecycle hooks (`beforeDeploy`, `afterDeploy`, …) |
+| Option            | Type             | Description                                                                                                                                                                                |
+| ----------------- | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `hosts`           | `Host[]`         | List of servers to deploy to                                                                                                                                                               |
+| `keepReleases?`   | `number`         | Number of releases to keep (default: `5`)                                                                                                                                                  |
+| `repository?`     | `string`         | Git repository URL (auto-detected from origin)                                                                                                                                             |
+| `packageManager?` | `PackageManager` | Package manager used by `pm()`, `pmInstall()`, `pmInstallProd()` (auto-detected from lock files, defaults to `PackageManager.NPM`)                                                         |
+| `hooks?`          | `Hooks`          | Lifecycle hooks (`beforeDeploy`, `afterDeploy`, …)                                                                                                                                         |
 | `verbose?`        | `Verbose`        | Verbosity level: `Verbose.SILENT` nothing, `Verbose.NORMAL` shows task progress, `Verbose.TRACE` also prints SSH commands, `Verbose.DEBUG` also streams stdout (default: `Verbose.NORMAL`) |
 
 **Host options**
 
-| Option         | Type                         | Description |
-| -------------- | ---------------------------- | ----------- |
-| `name`         | `string`                     | Host identifier |
+| Option         | Type                         | Description                     |
+| -------------- | ---------------------------- | ------------------------------- |
+| `name`         | `string`                     | Host identifier                 |
 | `ssh`          | `string \| SshConfig`        | SSH connection string or object |
-| `deployPath`   | `string`                     | Absolute path on the server |
-| `branch?`      | `string \| BranchWithPrompt` | Branch to deploy |
-| `healthcheck?` | `Healthcheck`                | Healthcheck configuration |
-| `bin?`         | `Record<string, string>`     | Per-host binary path overrides |
+| `deployPath`   | `string`                     | Absolute path on the server     |
+| `branch?`      | `string \| BranchWithPrompt` | Branch to deploy                |
+| `healthcheck?` | `Healthcheck`                | Healthcheck configuration       |
+| `bin?`         | `Record<string, string>`     | Per-host binary path overrides  |
 
 **SshConfig options**
 
-| Option  | Type     | Description |
-| ------- | -------- | ----------- |
-| `user`  | `string` | SSH user |
-| `host`  | `string` | SSH host |
+| Option  | Type     | Description              |
+| ------- | -------- | ------------------------ |
+| `user`  | `string` | SSH user                 |
+| `host`  | `string` | SSH host                 |
 | `port?` | `number` | SSH port (default: `22`) |
 
 ```typescript
@@ -72,9 +72,9 @@ ssh: { user: 'deploy', host: 'example.com', port: 2222 }
 
 **BranchWithPrompt options**
 
-| Option | Type      | Description |
-| ------ | --------- | ----------- |
-| `name` | `string`  | Default branch name |
+| Option | Type      | Description                                                              |
+| ------ | --------- | ------------------------------------------------------------------------ |
+| `name` | `string`  | Default branch name                                                      |
 | `ask`  | `boolean` | Prompt the user to enter a branch name, with `name` as the default value |
 
 ```typescript
@@ -83,10 +83,10 @@ branch: { name: 'develop', ask: true }
 
 **Healthcheck options**
 
-| Option     | Type     | Description |
-| ---------- | -------- | ----------- |
-| `url?`     | `string` | URL to check after deployment |
-| `retries?` | `number` | Number of attempts before failing |
+| Option     | Type     | Description                                   |
+| ---------- | -------- | --------------------------------------------- |
+| `url?`     | `string` | URL to check after deployment                 |
+| `retries?` | `number` | Number of attempts before failing             |
 | `delayMs?` | `number` | Delay between retries in ms (default: `3000`) |
 
 ```typescript
@@ -154,25 +154,25 @@ task('my:build', async ({ host, paths, config, release, logger }) => {
 
 **TaskContext fields**
 
-| Field     | Type     | Description |
-| --------- | -------- | ----------- |
-| `host`    | `Host`   | The host being deployed to |
-| `paths`   | `Paths`  | Resolved server paths |
-| `config`  | `Config` | The resolved deploy configuration |
+| Field     | Type     | Description                                        |
+| --------- | -------- | -------------------------------------------------- |
+| `host`    | `Host`   | The host being deployed to                         |
+| `paths`   | `Paths`  | Resolved server paths                              |
+| `config`  | `Config` | The resolved deploy configuration                  |
 | `release` | `string` | The release name (e.g. `2024-01-15T10-30-00-000Z`) |
-| `logger`  | `Logger` | Logger instance for output |
+| `logger`  | `Logger` | Logger instance for output                         |
 
 **Paths fields**
 
-| Field        | Value |
-| ------------ | ----- |
-| `base`       | `{deployPath}` |
-| `current`    | `{deployPath}/current` |
-| `releases`   | `{deployPath}/releases` |
-| `release`    | `{deployPath}/releases/{release}` |
-| `shared`     | `{deployPath}/shared` |
-| `cataConfig` | `{deployPath}/.catapult` |
-| `repo`       | `{deployPath}/.catapult/repo` |
+| Field        | Value                                |
+| ------------ | ------------------------------------ |
+| `base`       | `{deployPath}`                       |
+| `current`    | `{deployPath}/current`               |
+| `releases`   | `{deployPath}/releases`              |
+| `release`    | `{deployPath}/releases/{release}`    |
+| `shared`     | `{deployPath}/shared`                |
+| `cataConfig` | `{deployPath}/.catapult`             |
+| `repo`       | `{deployPath}/.catapult/repo`        |
 | `lock`       | `{deployPath}/.catapult/deploy.lock` |
 
 ---
@@ -234,8 +234,8 @@ Per-host binary paths are configured in `defineConfig`:
 Executes a shell command on the local machine. Flushes any queued `run()` commands first.
 Prints the command at `Verbose.TRACE` level and streams stdout at `Verbose.DEBUG` level.
 
-| Option | Type     | Description |
-| ------ | -------- | ----------- |
+| Option | Type     | Description                                                     |
+| ------ | -------- | --------------------------------------------------------------- |
 | `cwd?` | `string` | Working directory for the command (defaults to `process.cwd()`) |
 
 ```typescript
@@ -409,21 +409,26 @@ Key/value store for sharing configuration between `deploy.ts` and recipes.
 
 **Core keys**
 
-| Key             | Type       | Default | Used by |
-| --------------- | ---------- | ------- | ------- |
-| `shared_dirs`   | `string[]` | `[]`    | `deploy:shared` |
+| Key             | Type       | Default | Used by                         |
+| --------------- | ---------- | ------- | ------------------------------- |
+| `shared_dirs`   | `string[]` | `[]`    | `deploy:shared`                 |
 | `shared_files`  | `string[]` | `[]`    | `deploy:shared`, `deploy:setup` |
-| `writable_dirs` | `string[]` | `[]`    | `deploy:setup` |
+| `writable_dirs` | `string[]` | `[]`    | `deploy:setup`                  |
 
 **Recipe keys**
 
-| Key                 | Type                              | Default        | Used by |
-| ------------------- | --------------------------------- | -------------- | ------- |
-| `adonisjs_path`     | `string`                          | `''`           | `recipes/adonisjs` |
-| `astro_mode`        | `string \| Record<string, string>` | `'production'` | `recipes/astro` |
-| `source_path`       | `string`                          | depends recipe | `recipes/astro`, `recipes/rsync` |
-| `rsync_source_path` | `string`                          | `./`           | `recipes/rsync` |
-| `rsync_excludes`    | `string[]`                        | `[]`           | `recipes/rsync` |
+| Key                      | Type                               | Default             | Used by                          |
+| ------------------------ | ---------------------------------- | ------------------- | -------------------------------- |
+| `adonisjs_path`          | `string`                           | `''`                | `recipes/adonisjs`               |
+| `astro_mode`             | `string \| Record<string, string>` | `'production'`      | `recipes/astro`                  |
+| `directus_path`          | `string`                           | `''`                | `recipes/directus`               |
+| `directus_snapshot_path` | `string`                           | `'./snapshot.yaml'` | `recipes/directus`               |
+| `nuxt_path`              | `string`                           | `''`                | `recipes/nuxt`                   |
+| `redis_db`               | `number \| number[]`               | `1`                 | `recipes/redis`                  |
+| `source_path`            | `string`                           | depends recipe      | `recipes/astro`, `recipes/rsync` |
+| `rsync_source_path`      | `string`                           | `./`                | `recipes/rsync`                  |
+| `rsync_excludes`         | `string[]`                         | `[]`                | `recipes/rsync`                  |
+| `vitepress_path`         | `string`                           | `''`                | `recipes/vitepress`              |
 
 ### `set(key, value)`
 
@@ -479,12 +484,12 @@ run(`${pm()} run build`)
 
 Returns the install command with frozen lockfile for the current package manager.
 
-| `packageManager` | Command |
-| ---------------- | ------- |
-| `npm`            | `npm ci` |
+| `packageManager` | Command                          |
+| ---------------- | -------------------------------- |
+| `npm`            | `npm ci`                         |
 | `pnpm`           | `pnpm install --frozen-lockfile` |
 | `yarn`           | `yarn install --frozen-lockfile` |
-| `bun`            | `bun ci` |
+| `bun`            | `bun ci`                         |
 
 ```typescript
 run(pmInstall())
@@ -496,12 +501,12 @@ run(pmInstall())
 
 Returns the production-only install command for the current package manager.
 
-| `packageManager` | Command |
-| ---------------- | ------- |
-| `npm`            | `npm ci --omit=dev` |
-| `pnpm`           | `pnpm install --frozen-lockfile --prod` |
+| `packageManager` | Command                                       |
+| ---------------- | --------------------------------------------- |
+| `npm`            | `npm ci --omit=dev`                           |
+| `pnpm`           | `pnpm install --frozen-lockfile --prod`       |
 | `yarn`           | `yarn install --frozen-lockfile --production` |
-| `bun`            | `bun ci --omit=dev` |
+| `bun`            | `bun ci --omit=dev`                           |
 
 ```typescript
 run(pmInstallProd())

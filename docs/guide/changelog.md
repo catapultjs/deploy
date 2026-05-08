@@ -8,12 +8,16 @@ description: Catapult changelog — release history and notable changes.
 
 - `Strategy` removed
 - Added `recipes/astro` — runs `astro build` locally, then uploads the generated artifacts to the new release
+- Added `recipes/vitepress` — runs `vitepress build` locally, then uploads the generated static files to the new release
+- Added `recipes/nuxt` — exposes `deploy:build` for `nuxt build` and a manual `nuxt:generate` task
+- Added `recipes/directus` — exposes Directus database migration and schema snapshot tasks
+- Added `recipes/redis` — exposes `redis:db:flush` for one or many configured DBs, plus `redis:db:flush_all` for `FLUSHALL`
 - `recipes/git` now clones or resets directly into `releases/<release>` while keeping a bare mirror in `.catapult/repo`
 - `recipes/rsync` now always syncs the contents of the configured source directory into the release, normalises the trailing slash automatically, and keeps `--delete`
 - `recipes/adonisjs` now wires the built-in `deploy:install` and `deploy:build` tasks, with migrations exposed as `ace:*` tasks
 - Added `--config` / `-c` global flag — points to an alternative deploy config file (default: `deploy.ts`)
 
-> Released at *2026-05-07*
+> Released at _2026-05-07_
 
 ## 0.5.0
 
@@ -23,7 +27,7 @@ description: Catapult changelog — release history and notable changes.
 - Added `local(command, options?)` to the task DSL — executes a shell command on the local machine, with optional `cwd`; flushes queued SSH commands first
 - Fixed `upload()` and `download()` not interpolating template variables (e.g. `{{release_path}}`) in `remotePath`
 
-> Released at *2026-04-24*
+> Released at _2026-04-24_
 
 ## 0.4.0
 
@@ -34,7 +38,7 @@ description: Catapult changelog — release history and notable changes.
 - Added `upload(localPath, remotePath)` and `download(remotePath, localPath)` to the task DSL — transfer files via SCP, reusing the SSH multiplexing socket
 - `upload()` and `download()` now resolve relative `remotePath` values against `host.deployPath`
 
-> Released at *2026-04-23*
+> Released at _2026-04-23_
 
 ## 0.3.0
 
@@ -44,7 +48,7 @@ description: Catapult changelog — release history and notable changes.
 - Added `Verbose` enum (`Verbose.SILENT`, `Verbose.NORMAL`, `Verbose.DEBUG`) — replaces the raw `0 | 1 | 2` type for the `verbose` config option; available via `@catapultjs/deploy/enums`
 - Added `@catapultjs/deploy/enums` export — exposes `Strategy`, `PackageManager` and `Verbose`
 
-> Released at *2026-04-17*
+> Released at _2026-04-17_
 
 ## 0.2.0
 
@@ -53,15 +57,15 @@ description: Catapult changelog — release history and notable changes.
 - Fixed: `adonisjs:migrate` now passes `--force` to `ace migration:run`, which is required in non-interactive deployment environments
 - Fixed: default `strategy` was incorrectly falling back to `Strategy.BUILD` instead of `Strategy.DIRECT` when not set in `defineConfig`
 
-> Released at *2026-04-15*
+> Released at _2026-04-15_
 
 ## 0.1.0
 
 - Added `Strategy` enum (`Strategy.BUILD` | `Strategy.DIRECT`) — controls where install/build tasks run before being copied to the release
 - Added `strategy` option to `defineConfig` (default: `Strategy.DIRECT`) — when set to `Strategy.BUILD`, two new tasks are inserted into the pipeline: `deploy:build:shared` (symlinks shared paths into the build directory) and `deploy:build:copy` (copies build output into the release)
-::: v-pre
+  ::: v-pre
 - Added `{{builder_path}}` template variable — resolves to `{deployPath}/.catapult/builder`
-:::
+  :::
 - Added `git:update` task in `recipes/git` — maintains a cached bare mirror of the repository on the server; `deploy:update_code` now clones from this local mirror instead of the remote
 - `TaskContext`: replaced `deployCtx` with two top-level fields — `config` (the resolved config object) and `release` (the release name string)
 - `deploy:log_revision` now writes structured JSON to `.catapult/revisions.log` instead of a plain text line in `revisions.log`
@@ -74,7 +78,7 @@ description: Catapult changelog — release history and notable changes.
 - `recipes/nodejs`, `recipes/bun`: tasks now operate on `{{builder_path}}` when `strategy` is `Build`; pipeline positions updated (`nodejs:install`/`bun:install` after `deploy:update_code`, build task after `deploy:build:shared`)
 - `recipes/adonisjs`: tasks are now strategy-aware; `adonisjs:migrate` is inserted after `deploy:build:copy` when using the Build strategy
 
-> Released at *2026-04-15*
+> Released at _2026-04-15_
 
 ## 0.0.6
 
@@ -84,7 +88,7 @@ description: Catapult changelog — release history and notable changes.
 - `packageManager` is now auto-detected from lock files (`bun.lock`, `pnpm-lock.yaml`, `yarn.lock`, `package-lock.json`) if not set in `defineConfig`
 - `recipes/pm2`: added `pm2:delete` task — deletes all processes from PM2
 
-> Released at *2026-04-11*
+> Released at _2026-04-11_
 
 ## 0.0.5
 
@@ -95,7 +99,7 @@ description: Catapult changelog — release history and notable changes.
 - `healthcheckUrl`, `healthcheckRetries` and `healthcheckDelayMs` replaced by a `healthcheck` object on each `Host` (`{ url?, retries?, delayMs? }`) — allows per-host healthcheck configuration
 - `keepReleases` is now optional in `defineConfig` (default: `5`)
 
-> Released at *2026-04-10*
+> Released at _2026-04-10_
 
 ## 0.0.4
 
@@ -107,7 +111,7 @@ description: Catapult changelog — release history and notable changes.
 - `task` command now accepts `-v` / `-vv` verbose flags (consistent with `deploy`)
 - Fixed: `deploy:unlock` is no longer called when `deploy:lock` itself fails — a lock held by another deployment is no longer removed on error
 
-> Released at *2026-04-09*
+> Released at _2026-04-09_
 
 ## 0.0.3
 
@@ -117,7 +121,7 @@ description: Catapult changelog — release history and notable changes.
 - `recipes/pm2`: `pm2:start` and `pm2:save` refactored to use `cd()`/`run()` DSL
 - `deploy:shared`: leading slashes are now stripped from `shared_dirs` and `shared_files` entries to prevent double slashes in paths
 
-> Released at *2026-04-08*
+> Released at _2026-04-08_
 
 ## 0.0.2
 
@@ -126,7 +130,7 @@ description: Catapult changelog — release history and notable changes.
 - Internal refactoring: task runner and store split into dedicated classes
 - Added unit tests
 
-> Released at *2026-04-05*
+> Released at _2026-04-05_
 
 ## 0.0.1
 
@@ -143,4 +147,4 @@ Initial release.
 - Multi-server support with host selection prompt
 - `--host` and `--branch` CLI flags
 
-> Released at *2026-04-03*
+> Released at _2026-04-03_
