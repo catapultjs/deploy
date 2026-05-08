@@ -66,7 +66,9 @@ task('deploy:release', () => {
 })
 
 desc('Method for updating code')
-task('deploy:update_code', () => {})
+task('deploy:update_code', () => {
+  throw new Error('Please implement this task')
+})
 
 desc('Symlinks shared directories and files into the release')
 task('deploy:shared', () => {
