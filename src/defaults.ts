@@ -155,12 +155,12 @@ task('deploy:cleanup', async ({ config, host, paths }: TaskContext) => {
     [ -d ${q(paths.releases)} ] || exit 0
     cd ${q(paths.releases)}
 
-    count=$(ls -1dt */ 2>/dev/null | wc -l | tr -d ' ')
+    count=$(find . -mindepth 1 -maxdepth 1 -type d -printf '%P\n' | wc -l | tr -d ' ')
     if [ "$count" -le ${config.keepReleases} ]; then
       exit 0
     fi
 
-    ls -1dt */ | tail -n +$(( ${config.keepReleases} + 1 )) | xargs -r rm -rf
+    find . -mindepth 1 -maxdepth 1 -type d -printf '%P\n' | sort -r | tail -n +$(( ${config.keepReleases} + 1 )) | xargs -r rm -rf
   `
   )
 })
