@@ -102,7 +102,6 @@ The Astro recipe builds locally, then uploads the generated directory to the rel
 import { defineConfig, set } from '@catapultjs/deploy'
 import '@catapultjs/deploy/recipes/astro'
 
-set('source_path', './dist')
 set('astro_mode', 'production')
 
 export default defineConfig({

@@ -45,7 +45,7 @@ export default defineConfig({
 | `repository?`     | `string`         | Git repository URL (auto-detected from origin)                                                                                                                                             |
 | `packageManager?` | `PackageManager` | Package manager used by `pm()`, `pmInstall()`, `pmInstallProd()` (auto-detected from lock files, defaults to `PackageManager.NPM`)                                                         |
 | `hooks?`          | `Hooks`          | Lifecycle hooks (`beforeDeploy`, `afterDeploy`, …)                                                                                                                                         |
-| `verbose?`        | `Verbose`        | Verbosity level: `Verbose.SILENT` nothing, `Verbose.NORMAL` shows task progress, `Verbose.TRACE` also prints SSH commands, `Verbose.DEBUG` also streams stdout (default: `Verbose.NORMAL`) |
+| `verbose?`        | `Verbose`        | Verbosity level: `Verbose.SILENT` nothing, `Verbose.NORMAL` shows task progress, `Verbose.TRACE` also prints SSH commands, `Verbose.DEBUG` also streams stdout (default: `Verbose.TRACE`) |
 
 **Host options**
 
@@ -242,7 +242,7 @@ Prints the command at `Verbose.TRACE` level and streams stdout at `Verbose.DEBUG
 task('my:task', async () => {
   await local('npm run build')
   await local('npm run test', { cwd: './frontend' })
-  await upload('./dist', '{{release_path}}/dist')
+  await upload('./dist/.', '{{release_path}}/dist')
 })
 ```
 

@@ -10,6 +10,10 @@ description: Deploy an AdonisJS application with the Catapult adonisjs recipe.
 import '@catapultjs/deploy/recipes/adonisjs'
 ```
 
+This recipe runs the AdonisJS install, build, and migration steps on the server. It does not override `deploy:update_code`, so combine it with a transfer recipe such as `git` or `rsync`.
+
+See the [example AdonisJS project](https://github.com/catapultjs/deploy/tree/main/exemples/adonisjs) for a complete setup.
+
 **Tasks**
 
 | Task                     | Inserted                   | Description |
@@ -40,3 +44,5 @@ set('shared_files', ['.env', '.env.production'])
 
 import '@catapultjs/deploy/recipes/adonisjs'
 ```
+
+If you want to build AdonisJS locally instead of on the server, follow the [local deployment example](https://github.com/catapultjs/deploy/blob/main/exemples/adonisjs/deploy.locale.ts).

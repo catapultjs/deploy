@@ -47,6 +47,7 @@ npx cata rollback
 
 # Rollback and interactively select the target release
 npx cata rollback --interactive
+npx cata rollback -i
 
 # Server status
 npx cata status

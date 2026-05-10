@@ -113,7 +113,7 @@ setPipeline([
 
 ## Overriding a task
 
-Redefining a task replaces its implementation. Place it before `defineConfig`:
+Redefining a task replaces its implementation:
 
 ```typescript
 import { defineConfig, task, cd, run } from '@catapultjs/deploy'

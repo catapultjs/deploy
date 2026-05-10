@@ -10,6 +10,8 @@ description: Manage Directus database migrations and schema snapshots with the C
 import '@catapultjs/deploy/recipes/directus'
 ```
 
+This recipe runs the Directus migration and schema tasks on the server. It does not override `deploy:update_code`, so combine it with a transfer recipe such as `git` or `rsync`.
+
 **Tasks**
 
 | Task                        | Inserted | Description                                              |

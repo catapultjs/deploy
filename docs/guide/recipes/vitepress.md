@@ -10,6 +10,8 @@ description: Build a VitePress site locally and upload the generated files with 
 import '@catapultjs/deploy/recipes/vitepress'
 ```
 
+See the [example VitePress project](https://github.com/catapultjs/deploy/tree/main/exemples/vitepress) for a complete setup.
+
 **Tasks**
 
 | Task                 | Inserted             | Description                                                                                               |

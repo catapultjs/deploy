@@ -47,6 +47,8 @@ export default defineConfig({
             { text: 'Motivation', link: '/guide/motivation' },
             { text: 'Getting Started', link: '/guide/getting-started' },
             { text: 'Pipeline', link: '/guide/pipeline' },
+            { text: 'Hooks', link: '/guide/hooks' },
+            { text: 'API Reference', link: '/guide/api' },
             {
               text: 'Recipes',
               link: '/guide/recipes/',
@@ -69,8 +71,6 @@ export default defineConfig({
               link: '/guide/creating-recipes',
               items: [{ text: 'Monorepo', link: '/guide/monorepo' }],
             },
-            { text: 'Hooks', link: '/guide/hooks' },
-            { text: 'API Reference', link: '/guide/api' },
             { text: 'Changelog', link: '/guide/changelog' },
           ],
         },
