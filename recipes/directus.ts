@@ -1,5 +1,5 @@
 import type {} from '../src/types.ts'
-import { task, desc, run, get, set, cd, pmExec } from '../index.ts'
+import { task, desc, run, get, set, cd, after, before, pmExec } from '../index.ts'
 
 declare module '../src/types.ts' {
   interface TaskRegistry {
@@ -37,3 +37,7 @@ task('directus:snapshot:apply', () => {
   cd(`{{release_path}}/${directusPath}`)
   run(`${pmExec('directus')} schema apply -y ${snapshotPath}`)
 })
+
+after('deploy:update_code', 'deploy:install')
+before('deploy:publish', 'directus:database:migrate')
+before('deploy:publish', 'directus:snapshot:apply')
