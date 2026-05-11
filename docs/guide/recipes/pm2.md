@@ -27,7 +27,34 @@ Requires an `ecosystem.config.cjs` file at the root of the project.
 | `pm2:list`          | —                         | Lists PM2 processes (manual)                                      |
 | `pm2:show`          | —                         | Shows detailed info for each app in ecosystem.config.cjs (manual) |
 
-`ecosystem.config.cjs` is read directly from the release directory (`{{release_path}}`). Stop, reload, restart and delete tasks use `{{current_path}}` so they always target the active release.
+`ecosystem.config.cjs` must be present at the root of each release, because PM2 reads it from `{{release_path}}`.
+
+Inside that file, prefer absolute paths that resolve through `current` instead of paths tied to a specific release directory. This avoids keeping references to an old release after a new deployment.
+
+Example:
+
+```js
+const path = require('path')
+const root = path.resolve(__dirname, '../', 'current')
+
+module.exports = {
+  apps: [
+    {
+      name: 'admin',
+      exec_mode: 'fork',
+      instances: 1,
+      autorestart: true,
+      watch: false,
+      cwd: root,
+      script: 'pnpm',
+      args: 'run start',
+      max_memory_restart: '1G',
+    },
+  ],
+}
+```
+
+Stop, reload, restart and delete tasks use `{{current_path}}` so they always target the active release.
 
 **Hooks**
 

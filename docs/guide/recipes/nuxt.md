@@ -12,7 +12,7 @@ import '@catapultjs/deploy/recipes/nuxt'
 
 This recipe runs the Nuxt build and generate tasks on the server. It does not override `deploy:update_code`, so combine it with a transfer recipe such as `git` or `rsync`.
 
-See the [example Nuxt project](https://github.com/catapultjs/deploy/tree/main/exemples/nuxt) for a complete setup.
+See the [example Nuxt project](https://github.com/catapultjs/deploy/tree/main/examples/nuxt) for a complete setup, or go directly to [deploy.ts](https://github.com/catapultjs/deploy/blob/main/examples/nuxt/deploy.ts).
 
 **Tasks**
 
@@ -44,4 +44,4 @@ Run the static generation task manually:
 npx cata task nuxt:generate
 ```
 
-If you want to generate a static Nuxt site locally and deploy the generated files, follow the [static deployment example](https://github.com/catapultjs/deploy/blob/main/exemples/nuxt/deploy.static.ts).
+If you want to generate a static Nuxt site locally and deploy the generated files, follow the [static deployment example](https://github.com/catapultjs/deploy/blob/main/examples/nuxt/deploy.static.ts).

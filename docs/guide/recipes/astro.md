@@ -12,7 +12,7 @@ import '@catapultjs/deploy/recipes/astro'
 
 This recipe builds the Astro application locally before deployment, then uploads the generated files to the target server. The remote host receives the built output from `source_path`; it does not run `astro build` itself.
 
-See the [example Astro project](https://github.com/catapultjs/deploy/tree/main/exemples/astro) for a complete setup.
+See the [example Astro project](https://github.com/catapultjs/deploy/tree/main/examples/astro) for a complete setup, or go directly to [deploy.js](https://github.com/catapultjs/deploy/blob/main/examples/astro/deploy.js).
 
 **Tasks**
 
