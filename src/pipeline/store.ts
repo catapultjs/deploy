@@ -8,20 +8,28 @@ export class PipelineStore {
   }
 
   init(tasks: TaskName[]): void {
-    this.#pipeline = [...tasks]
+    this.#pipeline = []
+    for (const task of tasks) {
+      if (this.has(task)) this.remove(task)
+      this.#pipeline.push(task)
+    }
   }
 
   set(tasks: TaskName[]): void {
-    this.#pipeline = [...tasks]
+    this.init(tasks)
   }
 
   before(existing: TaskName, newTask: TaskName): void {
+    if (existing === newTask) return
+    if (this.has(newTask)) this.remove(newTask)
     const idx = this.#pipeline.indexOf(existing)
     if (idx === -1) throw new Error(`Task "${existing}" not found in pipeline`)
     this.#pipeline.splice(idx, 0, newTask)
   }
 
   after(existing: TaskName, newTask: TaskName): void {
+    if (existing === newTask) return
+    if (this.has(newTask)) this.remove(newTask)
     const idx = this.#pipeline.indexOf(existing)
     if (idx === -1) throw new Error(`Task "${existing}" not found in pipeline`)
     this.#pipeline.splice(idx + 1, 0, newTask)
