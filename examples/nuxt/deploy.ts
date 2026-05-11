@@ -1,4 +1,4 @@
-import { defineConfig, task, local, set, before } from '@catapultjs/deploy'
+import { defineConfig, set } from '@catapultjs/deploy'
 import '@catapultjs/deploy/recipes/nuxt'
 import '@catapultjs/deploy/recipes/rsync'
 
