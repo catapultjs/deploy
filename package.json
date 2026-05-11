@@ -13,7 +13,13 @@
     "url": "git+https://github.com/catapultjs/deploy.git"
   },
   "files": [
-    "build"
+    "build",
+    "!build/bin/test.js",
+    "!build/bin/test.d.ts",
+    "!build/bin/test.js.map",
+    "!build/docs",
+    "!build/examples",
+    "!build/tests"
   ],
   "scripts": {
     "lint": "eslint .",

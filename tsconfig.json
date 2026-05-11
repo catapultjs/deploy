@@ -5,5 +5,4 @@
     "outDir": "./build",
     "declaration": true,
   },
-  "exclude": ["docs", "tests", "build", "exemples"],
 }
