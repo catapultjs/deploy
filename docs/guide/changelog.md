@@ -15,9 +15,10 @@ description: Catapult changelog — release history and notable changes.
 - `recipes/git` now clones or resets directly into `releases/<release>` while keeping a bare mirror in `.catapult/repo`
 - `recipes/rsync` now always syncs the contents of the configured source directory into the release, normalises the trailing slash automatically, and keeps `--delete`
 - `recipes/adonisjs` now wires the built-in `deploy:install` and `deploy:build` tasks, with migrations exposed as `ace:*` tasks
+- Pipeline insertion now deduplicates tasks — if a task is added again with `before()` or `after()`, the previous occurrence is removed and the last position wins
 - Added `--config` / `-c` global flag — points to an alternative deploy config file (default: `deploy.ts`)
 
-> Released at _2026-05-07_
+> Released at _2026-05-11
 
 ## 0.5.0
 
