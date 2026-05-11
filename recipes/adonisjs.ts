@@ -1,9 +1,9 @@
 import type {} from '../src/types.ts'
-import { task, desc, cd, run, after, before, bin, get, set } from '../index.ts'
-import { linkSharedPaths } from '../src/actions.ts'
+import { task, desc, cd, run, after, before, bin, get, set, linkSharedPaths } from '../index.ts'
 
 declare module '../src/types.ts' {
   interface TaskRegistry {
+    'adonisjs:build:shared': true
     'ace:migration:run': true
     'ace:migration:rollback': true
     'ace:migration:status': true
@@ -32,6 +32,13 @@ task('deploy:build', async () => {
   run(`mkdir ./build/tmp`)
 
   linkSharedPaths(`{{release_path}}/${adonisjsPath}/build`)
+})
+
+desc('Adds shared paths to the build directory')
+task('adonisjs:build:shared', () => {
+  const adonisjsPath = get<string>('adonisjs_path')
+  run(`mkdir ./build/tmp`)
+  linkSharedPaths(`{{builder_path}}/${adonisjsPath}/build`)
 })
 
 desc('Runs database migrations')

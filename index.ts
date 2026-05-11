@@ -1,4 +1,5 @@
 export * from './src/types.ts'
+export * from './src/actions.ts'
 export * from './src/store.ts'
 export * from './src/task.ts'
 export * from './src/pipeline.ts'
