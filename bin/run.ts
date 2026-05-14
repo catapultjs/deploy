@@ -114,3 +114,4 @@ kernel.addLoader(
 )
 
 await kernel.handle(process.argv.splice(2))
+process.exitCode = kernel.exitCode ?? 0
