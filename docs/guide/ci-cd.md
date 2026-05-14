@@ -6,13 +6,13 @@ description: Deploy with Catapult from GitHub Actions using the official deploy-
 
 Use the official [catapultjs/deploy-action](https://github.com/catapultjs/deploy-action) to run `@catapultjs/deploy` inside GitHub Actions.
 
-The action handles SSH setup, detects the package manager from the repository lockfile, and executes the requested Catapult command.
+The action handles SSH setup, detects the package manager from the repository lockfile, installs project dependencies in the selected `working-directory`, and executes the requested Catapult command.
 
 For a complete working example, see [batosai/demo-adonisjs-deployer](https://github.com/batosai/demo-adonisjs-deployer) and its [GitHub Actions runs](https://github.com/batosai/demo-adonisjs-deployer/actions).
 
 ## Minimal workflow
 
-Use this workflow when the deployment is handled remotely and your `deploy.ts` file does not depend on local project packages.
+Use this workflow when the project dependencies can be installed with the runner defaults.
 
 ```yaml
 name: Deploy
@@ -26,44 +26,57 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: catapultjs/deploy-action@v1
-        with:
-          private-key: ${{ secrets.DEPLOY_SSH_PRIVATE_KEY }}
-          insecure-ignore-host-key: true
-```
-
-## Workflow with local dependencies
-
-Add a runtime setup and install dependencies when your Catapult config or deployment tasks import local packages.
-
-```yaml
-name: Deploy
-
-on:
-  workflow_dispatch:
-
-jobs:
-  deploy:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: catapultjs/deploy-action@v1
+      - uses: catapultjs/deploy-action@v0.5.0
         with:
           command: deploy
           config: deploy.ts
           private-key: ${{ secrets.DEPLOY_SSH_PRIVATE_KEY }}
           known-hosts: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
           version: latest
-          args: |
-            -vvv
 ```
 
-If the repository uses another package manager, replace `npm ci` with the matching install command:
+## Workflow with a custom runtime
 
-- `pnpm install --frozen-lockfile`
-- `yarn install --immutable`
-- `bun install --frozen-lockfile`
+Add a runtime setup when your project needs a specific Node version or package-manager tooling. The action still installs dependencies automatically before running Catapult.
+
+```yaml
+name: Deploy
+
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - uses: catapultjs/deploy-action@v0.5.0
+        with:
+          command: deploy
+          config: deploy.ts
+          private-key: ${{ secrets.DEPLOY_SSH_PRIVATE_KEY }}
+          known-hosts: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+          version: latest
+          working-directory: .
+          args: |
+            -vvv
+            -c config.ts
+```
+
+The action installs dependencies with the detected package manager:
+
+- npm -> `npm ci`
+- pnpm -> `pnpm install --frozen-lockfile`
+- yarn -> `yarn install --immutable`
+- bun -> `bun install --frozen-lockfile`
+
+You can still prepare the runtime yourself before the action, for example with `actions/setup-node`, `pnpm/action-setup`, or Bun setup if your project needs a specific toolchain version.
 
 ## Store SSH and host config in secrets
 
@@ -94,7 +107,7 @@ export default defineConfig({
 Then pass the values from GitHub Actions:
 
 ```yaml
-- uses: catapultjs/deploy-action@v1
+- uses: catapultjs/deploy-action@v0.5.0
   with:
     command: deploy
     config: deploy.ts
@@ -122,7 +135,7 @@ The action prepares `~/.ssh` before running Catapult.
 Example with a custom SSH config:
 
 ```yaml
-- uses: catapultjs/deploy-action@v1
+- uses: catapultjs/deploy-action@v0.5.0
   with:
     command: deploy
     private-key: ${{ secrets.DEPLOY_SSH_PRIVATE_KEY }}
@@ -140,7 +153,7 @@ Example with a custom SSH config:
 | `command` | `deploy` | Catapult command to run |
 | `config` | — | Path to the deploy config file |
 | `args` | — | Extra CLI args, one per line |
-| `package-manager` | auto-detected | Package manager executable used to run Catapult |
+| `package-manager` | auto-detected | Package manager to use (`npm`, `pnpm`, `yarn`, or `bun`) |
 | `version` | `latest` | Version of `@catapultjs/deploy` to execute |
 | `working-directory` | `.` | Working directory relative to the repository root |
 
