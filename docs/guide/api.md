@@ -4,8 +4,8 @@ description: Complete API reference for @catapultjs/deploy — all exported func
 
 # API Reference
 
-:::warning Alpha
-`@catapultjs/deploy` is currently in alpha. Its API may change between minor releases until it reaches a stable version. Pin the package version in your `package.json` to avoid unexpected breaking changes during updates.
+:::warning Beta
+`@catapultjs/deploy` is currently in beta. The API is stabilising, but some behavior and interfaces may still change before `1.0`. Pin the package version in your `package.json` to avoid unexpected breaking changes during updates.
 :::
 
 All functions are exported from `@catapultjs/deploy`.

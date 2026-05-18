@@ -4,8 +4,8 @@ description: Learn how to create custom Catapult recipes — reusable JavaScript
 
 # Creating a Recipe
 
-:::warning Alpha
-`@catapultjs/deploy` is currently in alpha. Its API may change between minor releases until it reaches a stable version. Pin the package version in your `package.json` to avoid unexpected breaking changes during updates.
+:::warning Beta
+`@catapultjs/deploy` is currently in beta. The API is stabilising, but some behavior and interfaces may still change before `1.0`. Pin the package version in your `package.json` to avoid unexpected breaking changes during updates.
 :::
 
 A recipe is a regular JavaScript or TypeScript file that registers tasks and inserts them into the pipeline upon import.

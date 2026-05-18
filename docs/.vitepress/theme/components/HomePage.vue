@@ -10,7 +10,7 @@ import { withBase } from 'vitepress'
       <div class="hero__content">
         <div class="hero__badges">
           <div class="hero__badge">SSH Deployment Tool</div>
-          <div class="hero__alpha">⚠️ Alpha — API may change</div>
+          <div class="hero__alpha">⚠️ Beta</div>
         </div>
         <h1 class="hero__title">
           <span class="hero__title-main">Catapult JS</span>
