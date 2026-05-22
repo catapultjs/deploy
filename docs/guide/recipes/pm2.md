@@ -35,7 +35,7 @@ Example:
 
 ```js
 const path = require('path')
-const root = path.resolve(__dirname, '../', 'current')
+const root = path.resolve('../../', 'current')
 
 module.exports = {
   apps: [
@@ -46,8 +46,7 @@ module.exports = {
       autorestart: true,
       watch: false,
       cwd: root,
-      script: 'pnpm',
-      args: 'run start',
+      script: 'bin/server.js',
       max_memory_restart: '1G',
     },
   ],
