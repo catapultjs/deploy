@@ -4,6 +4,15 @@ description: Catapult changelog — release history and notable changes.
 
 # Changelog
 
+## 0.7.0
+
+- `deploy:log_revision` now falls back to `DEPLOY_USER` when `git config user.name` is unavailable on the machine running Catapult
+- Config auto-detection now also supports `deploy.config.ts` and `deploy.config.js`
+- Default pipeline tasks have been split into dedicated files under `recipes/deploy/*.ts`
+- The default pipeline is now registered from `recipes/common.ts` and loaded automatically from `defineConfig()`
+
+> Released at _TBD_
+
 ## 0.6.0
 
 - `Strategy` removed
