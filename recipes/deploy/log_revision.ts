@@ -21,7 +21,7 @@ task('deploy:log_revision', async ({ host, paths, release, logger }: TaskContext
     } catch {}
   }
   let commit = 'unknown'
-  let user = 'unknown'
+  let user = process.env.DEPLOY_USER?.trim() || 'unknown'
 
   try {
     if (isVerbose(Verbose.TRACE)) logger.cmd('git rev-parse HEAD')
@@ -29,7 +29,7 @@ task('deploy:log_revision', async ({ host, paths, release, logger }: TaskContext
     commit = commitResult.stdout.trim()
     if (isVerbose(Verbose.TRACE)) logger.cmd('git config user.name')
     const userResult = await $`git config user.name`
-    user = userResult.stdout.trim()
+    user = userResult.stdout.trim() || user
   } catch {}
 
   const line = JSON.stringify({

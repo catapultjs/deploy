@@ -88,7 +88,6 @@ import '@catapultjs/deploy/recipes/git'
 
 const ssh = process.env.DEPLOY_SSH
 const deployPath = process.env.DEPLOY_PATH
-
 if (!ssh) throw new Error('Missing DEPLOY_SSH')
 if (!deployPath) throw new Error('Missing DEPLOY_PATH')
 
@@ -117,9 +116,12 @@ Then pass the values from GitHub Actions:
     DEPLOY_SSH: ${{ secrets.DEPLOY_SSH }}
     DEPLOY_PATH: ${{ vars.DEPLOY_PATH }}
     DEPLOY_BRANCH: main
+    DEPLOY_USER: ${{ github.actor }}
 ```
 
 Use GitHub **Secrets** for sensitive values such as the SSH private key, and **Variables** for non-sensitive values such as the deploy path.
+
+When `deploy:log_revision` cannot read `git config user.name` on the runner, it falls back to `DEPLOY_USER` before writing `.catapult/revisions.log`.
 
 ## SSH setup
 
