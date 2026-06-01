@@ -7,7 +7,7 @@ import { createHash } from 'node:crypto'
 import { access } from 'node:fs/promises'
 import { logger } from './logger.ts'
 
-const DEPLOY_CANDIDATES = ['deploy.ts', 'deploy.js']
+const DEPLOY_CANDIDATES = ['deploy.ts', 'deploy.config.ts', 'deploy.js', 'deploy.config.js']
 
 const PM_LOCK_FILES: [string, PackageManager][] = [
   ['bun.lock', PackageManager.BUN],

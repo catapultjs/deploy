@@ -182,7 +182,7 @@ The `--host` / `-H` flag is available on all commands: `deploy`, `deploy:setup`,
 
 ## Config file
 
-By default, Catapult looks for `deploy.ts` or `deploy.js` in the current directory. Use `--config` / `-c` to point to a different file:
+By default, Catapult looks for `deploy.ts`, `deploy.config.ts`, `deploy.js`, or `deploy.config.js` in the current directory. Use `--config` / `-c` to point to a different file:
 
 ```bash
 npx cata deploy --config deploy.production.ts

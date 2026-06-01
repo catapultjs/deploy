@@ -1,6 +1,9 @@
 import { test } from '@japa/runner'
+import { writeFile, rm, mkdtemp } from 'node:fs/promises'
+import { join } from 'node:path'
+import { tmpdir } from 'node:os'
 import type { Host } from '../src/types.ts'
-import { resolveHostStringValue } from '../src/utils.ts'
+import { findDeployFile, resolveHostStringValue } from '../src/utils.ts'
 
 function makeHost(name = 'web-1'): Host {
   return {
@@ -31,5 +34,33 @@ test.group('utils — resolveHostStringValue', () => {
       () => resolveHostStringValue({ 'web-2': 'production' }, makeHost(), 'astro_mode'),
       /\[web-1\] astro_mode must be a string or an object keyed by host name/
     )
+  })
+})
+
+test.group('utils — findDeployFile', () => {
+  test('detects deploy.config.ts', async ({ assert }) => {
+    const cwd = await mkdtemp(join(tmpdir(), 'cata-deploy-file-'))
+
+    try {
+      const file = join(cwd, 'deploy.config.ts')
+      await writeFile(file, 'export default {}')
+
+      assert.equal(await findDeployFile(cwd), file)
+    } finally {
+      await rm(cwd, { recursive: true, force: true })
+    }
+  })
+
+  test('detects deploy.config.js', async ({ assert }) => {
+    const cwd = await mkdtemp(join(tmpdir(), 'cata-deploy-file-'))
+
+    try {
+      const file = join(cwd, 'deploy.config.js')
+      await writeFile(file, 'export default {}')
+
+      assert.equal(await findDeployFile(cwd), file)
+    } finally {
+      await rm(cwd, { recursive: true, force: true })
+    }
   })
 })

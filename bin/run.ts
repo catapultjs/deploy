@@ -61,7 +61,7 @@ if (!skipDeployFile) {
 
   if (!deployFile) {
     logger.error(
-      'No deploy.ts or deploy.js found in current directory. Run `npx cata init` to create one.'
+      'No supported deploy config file found in current directory. Run `npx cata init` to create one.'
     )
     process.exit(1)
   }
@@ -85,7 +85,7 @@ kernel.defineFlag('help', {
 kernel.defineFlag('config', {
   type: 'string',
   alias: 'c',
-  description: 'Path to the deploy config file (default: deploy.ts)',
+  description: 'Path to the deploy config file (default: auto-detected)',
 })
 
 kernel.on('help', async (command, $kernel, parsed) => {
