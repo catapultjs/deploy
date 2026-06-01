@@ -1,7 +1,8 @@
 import { defineConfig, task, local, set, before } from '@catapultjs/deploy'
+import '@catapultjs/deploy/recipes/common'
 import '@catapultjs/deploy/recipes/rsync'
 
-set('source_path', './dist')
+set('source_path', '.output/public')
 
 task('nuxt:generate', async () => {
   await local('nuxt generate')

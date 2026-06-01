@@ -3,6 +3,7 @@ import { $ } from 'execa'
 import { Verbose } from '../src/enums.ts'
 import { type TaskContext, task, desc, after, before, isVerbose } from '../index.ts'
 import { ssh, q } from '../src/utils.ts'
+import './common.ts'
 
 declare module '../src/types.ts' {
   interface TaskRegistry {

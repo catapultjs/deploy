@@ -14,7 +14,7 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "@catapultjs/deploy": "file:../../catapultjs-deploy-0.5.0.tgz",
+    "@catapultjs/deploy": "file:../../catapultjs-deploy-0.6.2.tgz",
     "vitepress": "^2.0.0-alpha.17"
   }
 }

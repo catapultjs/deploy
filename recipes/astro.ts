@@ -5,6 +5,7 @@
  */
 import { type TaskContext, task, desc, local, upload, get, set, before } from '../index.ts'
 import { resolveHostStringValue } from '../src/utils.ts'
+import './common.ts'
 
 set('astro_mode', 'production')
 

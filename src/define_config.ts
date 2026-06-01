@@ -3,7 +3,6 @@ import { Verbose } from './enums.ts'
 import { Context } from './context.ts'
 import { detectPackageManager } from './utils.ts'
 import { remove, getPipeline } from './pipeline.ts'
-import './defaults.ts'
 
 const initialConfigValues = {
   keepReleases: 5,

@@ -1,4 +1,4 @@
-import { defineConfig, set } from '@catapultjs/deploy'
+import { defineConfig, set, task, upload, after } from '@catapultjs/deploy'
 import '@catapultjs/deploy/recipes/nuxt'
 import '@catapultjs/deploy/recipes/rsync'
 
@@ -15,6 +15,12 @@ set('rsync_excludes', [
   'deploy.ts',
   'deploy.static.ts',
 ])
+
+task('init', async () => {
+  await upload('../../catapultjs-deploy-0.6.2.tgz', '/home/deploy/deploy-nuxt')
+})
+
+after('deploy:lock', 'init')
 
 export default defineConfig({
   hosts: [

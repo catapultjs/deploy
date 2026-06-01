@@ -27,6 +27,7 @@ task('deploy:build', async () => {
   await local('node ace build', { cwd: adonisjsPath })
   await local('cp package.json ./build', { cwd: adonisjsPath })
   await local('cp package-lock.json ./build', { cwd: adonisjsPath })
+  await local('cp ecosystem.config.cjs ./build', { cwd: adonisjsPath })
   await local('mkdir ./build/tmp', { cwd: adonisjsPath })
 })
 
