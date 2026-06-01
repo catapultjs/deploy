@@ -1,6 +1,5 @@
 import type {} from '../src/types.ts'
 import { task, desc, cd, run, after, before, bin, get, set, linkSharedPaths } from '../index.ts'
-import './common.ts'
 
 declare module '../src/types.ts' {
   interface TaskRegistry {

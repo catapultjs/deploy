@@ -2,7 +2,6 @@ import type {} from '../src/types.ts'
 import { createRequire } from 'node:module'
 import { type TaskContext, task, desc, cd, run, after, onStatus, bin } from '../index.ts'
 import { ssh, q } from '../src/utils.ts'
-import './common.ts'
 
 declare module '../src/types.ts' {
   interface TaskRegistry {
