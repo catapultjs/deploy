@@ -11,7 +11,7 @@ description: Catapult changelog — release history and notable changes.
 - Default pipeline tasks have been split into dedicated files under `recipes/deploy/*.ts`
 - The default pipeline is now registered from `recipes/common.ts` and loaded automatically from `defineConfig()`
 
-> Released at _TBD_
+> Released at 2026-06-01
 
 ## 0.6.0
 
@@ -27,7 +27,7 @@ description: Catapult changelog — release history and notable changes.
 - Pipeline insertion now deduplicates tasks — if a task is added again with `before()` or `after()`, the previous occurrence is removed and the last position wins
 - Added `--config` / `-c` global flag — points to an alternative deploy config file (default: `deploy.ts`)
 
-> Released at _2026-05-11
+> Released at 2026-05-11
 
 ## 0.5.0
 

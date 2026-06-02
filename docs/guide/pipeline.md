@@ -10,6 +10,8 @@ description: Understand the Catapult deployment pipeline — the ordered sequenc
 
 The pipeline is the ordered sequence of tasks executed on each server during a deployment.
 
+Run `cata pipeline` to list the current pipeline and inspect the task order.
+
 ## Default pipeline
 
 | Task                  | Description                                                 |
@@ -32,6 +34,7 @@ For complete examples with official recipes, see [Deployment Examples](/guide/de
 
 ## Available tasks (not in pipeline by default)
 
+::: v-pre
 These tasks are registered but not inserted automatically. By default they run in `{{release_path}}`.
 
 | Task             | Default implementation                 | Description           |
@@ -39,6 +42,7 @@ These tasks are registered but not inserted automatically. By default they run i
 | `deploy:install` | `pmInstall()` in `{{release_path}}`    | Installs dependencies |
 | `deploy:build`   | `pm() run build` in `{{release_path}}` | Builds the app        |
 | `deploy:test`    | `pm() run test` in `{{release_path}}`  | Runs tests            |
+:::
 
 ```typescript
 import { after } from '@catapultjs/deploy'

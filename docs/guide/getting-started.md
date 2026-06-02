@@ -137,9 +137,9 @@ export default defineConfig({
 
 Catapult does not impose a deployment mode in `defineConfig()`. A recipe or custom task must provide `deploy:update_code`:
 
+- local artifact uploads use SCP by default
 - `recipes/git` clones the repository into each release and keeps a mirror in `.catapult/repo`
 - `recipes/rsync` pushes a local directory into the release with rsync
-- `recipes/astro` builds locally and uploads `dist/` with SCP
 
 ## Server structure
 

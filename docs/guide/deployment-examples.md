@@ -6,6 +6,8 @@ description: Complete deployment pipeline examples for the official Catapult rec
 
 This page shows the complete pipeline for the most common official recipe combinations.
 
+Browse the full [examples directory on GitHub](https://github.com/catapultjs/deploy/tree/main/examples).
+
 The core package only provides the base pipeline. A recipe or custom task must implement `deploy:update_code`.
 
 ## `git` + `adonisjs` + `pm2`
