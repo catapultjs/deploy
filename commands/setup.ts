@@ -6,6 +6,7 @@ import { logger } from '../src/logger.ts'
 
 export default class Setup extends BaseDeployCommand {
   static commandName = 'deploy:setup'
+  static aliases = ['setup']
   static description = 'Initialize directories on servers'
 
   async run() {
