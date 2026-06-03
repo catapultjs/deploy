@@ -2,11 +2,11 @@
 description: Complete API reference for @catapultjs/deploy — all exported functions, types and template variables.
 ---
 
-# API Reference
-
 :::warning Beta
 `@catapultjs/deploy` is currently in beta. The API is stabilising, but some behavior and interfaces may still change before `1.0`. Pin the package version in your `package.json` to avoid unexpected breaking changes during updates.
 :::
+
+# API Reference
 
 All functions are exported from `@catapultjs/deploy`.
 

@@ -37,6 +37,7 @@ export default defineConfig({
     nav: [
       { text: 'Home', link: '/' },
       { text: 'Guide', link: '/guide/getting-started' },
+      { text: 'FAQ', link: '/faq' },
     ],
 
     sidebar: {
@@ -46,6 +47,26 @@ export default defineConfig({
           items: [
             { text: 'Motivation', link: '/guide/motivation' },
             { text: 'Getting Started', link: '/guide/getting-started' },
+            {
+              text: 'CLI',
+              link: '/guide/cli/',
+              items: [
+                { text: 'Overview', link: '/guide/cli/' },
+                { text: 'version', link: '/guide/cli/version' },
+                { text: 'init', link: '/guide/cli/init' },
+                { text: 'deploy:setup', link: '/guide/cli/deploy-setup' },
+                { text: 'deploy', link: '/guide/cli/deploy' },
+                { text: 'rollback', link: '/guide/cli/rollback' },
+                { text: 'status', link: '/guide/cli/status' },
+                { text: 'list:releases', link: '/guide/cli/list-releases' },
+                { text: 'list:revisions', link: '/guide/cli/list-revisions' },
+                { text: 'list:tasks', link: '/guide/cli/list-tasks' },
+                { text: 'pipeline', link: '/guide/cli/pipeline' },
+                { text: 'task', link: '/guide/cli/task' },
+                { text: 'ssh', link: '/guide/cli/ssh' },
+                { text: 'run', link: '/guide/cli/run' },
+              ],
+            },
             { text: 'Pipeline', link: '/guide/pipeline' },
             { text: 'Hooks', link: '/guide/hooks' },
             { text: 'API Reference', link: '/guide/api' },
@@ -65,13 +86,13 @@ export default defineConfig({
                 { text: 'vitepress', link: '/guide/recipes/vitepress' },
               ],
             },
-            { text: 'CI/CD', link: '/guide/ci-cd' },
-            { text: 'Deployment Examples', link: '/guide/deployment-examples' },
             {
               text: 'Creating a Recipe',
               link: '/guide/creating-recipes',
               items: [{ text: 'Monorepo', link: '/guide/monorepo' }],
             },
+            { text: 'CI/CD', link: '/guide/ci-cd' },
+            { text: 'Deployment Examples', link: '/guide/deployment-examples' },
             { text: 'Changelog', link: '/guide/changelog' },
           ],
         },

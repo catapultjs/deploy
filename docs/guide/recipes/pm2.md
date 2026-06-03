@@ -35,18 +35,17 @@ Example:
 
 ```js
 const path = require('path')
-const root = path.resolve('../../', 'current')
+const root = path.resolve('../../', 'current', 'build')
 
 module.exports = {
   apps: [
     {
       name: 'admin',
       exec_mode: 'fork',
-      instances: 1,
       autorestart: true,
-      watch: false,
       cwd: root,
-      script: 'bin/server.js',
+      script: 'node',
+      args: 'bin/server.js',
       max_memory_restart: '1G',
     },
   ],

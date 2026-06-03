@@ -2,6 +2,10 @@
 description: Build a VitePress site locally and upload the generated files with the Catapult vitepress recipe.
 ---
 
+:::warning Beta
+`@catapultjs/deploy` is currently in beta. The API is stabilising, but some behavior and interfaces may still change before `1.0`. Pin the package version in your `package.json` to avoid unexpected breaking changes during updates.
+:::
+
 # `recipes/vitepress`
 
 [View source on GitHub](https://github.com/catapultjs/deploy/blob/main/recipes/vitepress.ts)

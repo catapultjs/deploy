@@ -2,6 +2,10 @@
 description: Manage Directus database migrations and schema snapshots with the Catapult directus recipe.
 ---
 
+:::warning Beta
+`@catapultjs/deploy` is currently in beta. The API is stabilising, but some behavior and interfaces may still change before `1.0`. Pin the package version in your `package.json` to avoid unexpected breaking changes during updates.
+:::
+
 # `recipes/directus`
 
 [View source on GitHub](https://github.com/catapultjs/deploy/blob/main/recipes/directus.ts)
