@@ -4,6 +4,14 @@ description: Catapult changelog — release history and notable changes.
 
 # Changelog
 
+## 0.8.0
+
+- Added `recipes/adonisjs_local` — builds the AdonisJS app locally, uploads the artifact, then installs production dependencies on the server
+- `init` now accepts `--skip-install` — creates the deploy config without installing `@catapultjs/deploy`
+- Commands that require an initialized server now detect missing setup and guide you to run `deploy:setup`
+- `deploy` now prompts to run `deploy:setup` automatically when the target host is not initialized
+- `deploy:setup` now has a `setup` alias
+
 ## 0.7.0
 
 - `deploy:log_revision` now falls back to `DEPLOY_USER` when `git config user.name` is unavailable on the machine running Catapult

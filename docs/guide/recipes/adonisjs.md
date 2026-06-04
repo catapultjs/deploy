@@ -49,4 +49,4 @@ set('shared_files', ['.env', '.env.production'])
 import '@catapultjs/deploy/recipes/adonisjs'
 ```
 
-If you want to build AdonisJS locally instead of on the server, follow the [local deployment example](https://github.com/catapultjs/deploy/blob/main/examples/adonisjs/deploy.locale.ts).
+If you want to build AdonisJS locally instead of on the server, use [`recipes/adonisjs_local`](./adonisjs_local).

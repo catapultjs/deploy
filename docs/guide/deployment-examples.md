@@ -100,6 +100,45 @@ deploy:cleanup
 
 ---
 
+## `adonisjs_local` + `pm2`
+
+The application is built locally with `node ace build`, then the generated artifact is uploaded to the new release before production dependencies are installed on the server.
+
+```typescript
+import { defineConfig } from '@catapultjs/deploy'
+import '@catapultjs/deploy/recipes/adonisjs_local'
+import '@catapultjs/deploy/recipes/pm2'
+
+export default defineConfig({
+  hosts: [
+    {
+      name: 'production',
+      ssh: 'deploy@example.com',
+      deployPath: '/home/deploy/myapp',
+    },
+  ],
+})
+```
+
+```
+deploy:build         → node ace build on the local machine
+deploy:lock
+deploy:release
+deploy:update_code   → upload(build/) → releases/<release>
+deploy:shared        → symlinks shared dirs/files into the release
+deploy:install       → installs production dependencies in the release
+ace:migration:run    → node ace migration:run --force
+deploy:publish       → current → releases/<release>
+pm2:startOrReload    → pm2 startOrReload ecosystem.config.cjs --update-env
+pm2:save             → pm2 save
+deploy:log_revision
+deploy:healthcheck   → if configured
+deploy:unlock
+deploy:cleanup
+```
+
+---
+
 ## `astro`
 
 The Astro recipe builds locally, then uploads the generated directory to the release with SCP.

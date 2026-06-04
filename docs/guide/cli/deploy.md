@@ -12,6 +12,8 @@ Runs the deployment pipeline for the selected hosts.
 
 Alias: `dep`
 
+If a target host has not been initialized yet, Catapult prompts to run `deploy:setup` before continuing.
+
 ## Usage
 
 ```bash
