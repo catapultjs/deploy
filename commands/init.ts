@@ -1,4 +1,4 @@
-import { BaseCommand } from '@adonisjs/ace'
+import { BaseCommand, flags } from '@adonisjs/ace'
 import { writeFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
 import { execa } from 'execa'
@@ -22,6 +22,9 @@ export default class Init extends BaseCommand {
   static commandName = 'init'
   static description = 'Create a deploy configuration file'
 
+  @flags.boolean({ description: 'Create the config file without installing @catapultjs/deploy' })
+  declare skipInstall: boolean
+
   async run() {
     const existing = await findDeployFile()
     if (existing) {
@@ -39,6 +42,11 @@ export default class Init extends BaseCommand {
 
     await writeFile(dest, TEMPLATE)
     this.logger.action(`create ${filename}`).succeeded()
+
+    if (this.skipInstall) {
+      this.logger.info('Skipping @catapultjs/deploy installation')
+      return
+    }
 
     const pm = await detectPackageManager()
     this.logger.info('Installing @catapultjs/deploy...')

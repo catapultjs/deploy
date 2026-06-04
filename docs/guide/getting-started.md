@@ -16,7 +16,7 @@ Run the following command at the root of your project:
 npx @catapultjs/deploy init
 ```
 
-This creates a `deploy.(js|ts)` configuration file and installs `@catapultjs/deploy` as a dev dependency. If a supported deploy config file already exists, `init` only warns and does not overwrite it. Once installed, the `cata` CLI is available.
+This creates a `deploy.(js|ts)` configuration file and installs `@catapultjs/deploy` as a dev dependency by default. Pass `--skip-install` if you only want to generate the config file. If a supported deploy config file already exists, `init` only warns and does not overwrite it. Once installed, the `cata` CLI is available.
 
 ### 1. Prepare the server
 
