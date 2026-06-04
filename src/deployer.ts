@@ -5,6 +5,7 @@ import { runTask } from './task.ts'
 import { get } from './store.ts'
 import { getPipeline } from './pipeline.ts'
 import { logger } from './logger.ts'
+import { hooks } from './pipeline/hooks.ts'
 
 // ---------------------------------------------------------------------------
 // Hook runner
@@ -52,6 +53,24 @@ export async function setupHost(ctx: DeployContext, host: Host): Promise<void> {
     ${mkfiles}
   `
   )
+}
+
+export async function initializeHost(ctx: DeployContext, host: Host): Promise<void> {
+  await setupHost(ctx, host)
+  for (const hook of hooks.getSetup()) {
+    await hook(ctx, host, logger)
+  }
+}
+
+export async function isHostSetup(ctx: DeployContext, host: Host): Promise<boolean> {
+  const paths = getPaths(host.deployPath, ctx.release)
+
+  try {
+    await ssh(host, `set -e\n[ -d ${q(paths.cataConfig)} ]`)
+    return true
+  } catch {
+    return false
+  }
 }
 
 export async function getCurrentRelease(ctx: DeployContext, host: Host): Promise<string | null> {

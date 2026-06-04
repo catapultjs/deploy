@@ -1,6 +1,7 @@
-import type { Host } from './types.ts'
+import type { DeployContext, Host } from './types.ts'
 import { BaseCommand, flags } from '@adonisjs/ace'
 import { Context } from './context.ts'
+import { isHostSetup } from './deployer.ts'
 
 export abstract class BaseDeployCommand extends BaseCommand {
   @flags.string({ alias: 'H', description: 'Target a specific host' })
@@ -34,5 +35,21 @@ export abstract class BaseDeployCommand extends BaseCommand {
     }
 
     return ctx.config.hosts
+  }
+
+  protected setupCommand(host: Host): string {
+    return `npx cata deploy:setup -H ${host.name}`
+  }
+
+  protected missingSetupMessage(host: Host): string {
+    return `[${host.name}] Catapult is not initialized on this server. Run: ${this.setupCommand(host)}`
+  }
+
+  protected async ensureHostSetup(ctx: DeployContext, host: Host): Promise<boolean> {
+    if (await isHostSetup(ctx, host)) return true
+
+    this.logger.error(this.missingSetupMessage(host))
+    this.exitCode = 1
+    return false
   }
 }

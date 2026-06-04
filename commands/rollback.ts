@@ -18,6 +18,8 @@ export default class Rollback extends BaseDeployCommand {
     if (!hosts) return
 
     for (const host of hosts) {
+      if (!(await this.ensureHostSetup(ctx, host))) continue
+
       let target: string | undefined
 
       if (this.interactive) {

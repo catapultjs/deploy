@@ -27,6 +27,8 @@ export default class RunTask extends BaseDeployCommand {
     if (!hosts) return
 
     for (const host of hosts) {
+      if (!(await this.ensureHostSetup(ctx, host))) continue
+
       const currentRelease = await getCurrentRelease(ctx, host)
       if (!currentRelease) {
         this.logger.error(`[${host.name}] no current release found, run deploy first`)

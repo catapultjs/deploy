@@ -13,6 +13,8 @@ export default class ListRevisions extends BaseDeployCommand {
     if (!hosts) return
 
     for (const host of hosts) {
+      if (!(await this.ensureHostSetup(ctx, host))) continue
+
       const paths = getPaths(host.deployPath, ctx.release)
       const logFile = `${paths.cataConfig}/revisions.log`
 

@@ -1,8 +1,6 @@
 import { Context } from '../src/context.ts'
-import { setupHost } from '../src/deployer.ts'
-import { hooks } from '../src/pipeline/hooks.ts'
+import { initializeHost } from '../src/deployer.ts'
 import { BaseDeployCommand } from '../src/base_command.ts'
-import { logger } from '../src/logger.ts'
 
 export default class Setup extends BaseDeployCommand {
   static commandName = 'deploy:setup'
@@ -14,10 +12,7 @@ export default class Setup extends BaseDeployCommand {
     const hosts = await this.selectHosts()
     if (!hosts) return
     for (const host of hosts) {
-      await setupHost(ctx, host)
-      for (const hook of hooks.getSetup()) {
-        await hook(ctx, host, logger)
-      }
+      await initializeHost(ctx, host)
     }
     this.logger.action('setup').succeeded()
   }

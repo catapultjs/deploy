@@ -1,6 +1,6 @@
 import { flags } from '@adonisjs/ace'
 import { Context } from '../src/context.ts'
-import { deployHost } from '../src/deployer.ts'
+import { deployHost, initializeHost, isHostSetup } from '../src/deployer.ts'
 import { BaseDeployCommand } from '../src/base_command.ts'
 
 export default class Deploy extends BaseDeployCommand {
@@ -38,6 +38,30 @@ export default class Deploy extends BaseDeployCommand {
     if (ctx.hooks.beforeDeploy) await ctx.hooks.beforeDeploy({ hosts })
     for (const host of hosts) {
       try {
+        if (!(await isHostSetup(ctx, host))) {
+          const shouldSetup = await this.prompt.choice(
+            `[${host.name}] Catapult is not initialized on this server. Run deploy:setup now?`,
+            [
+              {
+                name: 'yes',
+                message: `Yes, run ${this.setupCommand(host)} and continue`,
+              },
+              {
+                name: 'no',
+                message: 'No, cancel deployment',
+              },
+            ]
+          )
+
+          if (shouldSetup === 'yes') {
+            await initializeHost(ctx, host)
+          } else {
+            this.logger.error(this.missingSetupMessage(host))
+            this.exitCode = 1
+            return
+          }
+        }
+
         await deployHost(ctx, host)
       } catch (error) {
         if (ctx.hooks.afterFailure) await ctx.hooks.afterFailure({ hosts, error: error as Error })

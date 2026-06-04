@@ -20,6 +20,8 @@ export default class Status extends BaseDeployCommand {
     const pm = await detectPackageManager()
 
     for (const host of hosts) {
+      if (!(await this.ensureHostSetup(ctx, host))) continue
+
       const paths = getPaths(host.deployPath, ctx.release)
 
       this.logger.log(this.colors.bold(`\n# ${host.name}`))
