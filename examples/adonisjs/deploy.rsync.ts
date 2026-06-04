@@ -25,6 +25,11 @@ set('rsync_excludes', [
   'deploy.rsync.ts',
 ])
 
+// For local development
+// task('up', () => {
+//   upload('../../catapultjs-deploy-0.7.0.tgz', './')
+// })
+
 export default defineConfig({
   verbose: Verbose.TRACE,
   hosts: [

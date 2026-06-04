@@ -1,12 +1,15 @@
+const path = require('path')
+// const root = path.resolve('../../', 'current', 'build')
+// local build
+const root = path.resolve('../../', 'current')
+
 module.exports = {
   apps: [
     {
-      name: 'myapp',
-      cwd: './build',
-      script: 'npm',
-      args: 'run start',
-      instances: 1,
-      exec_mode: 'fork',
+      name: 'adonis',
+      cwd: root,
+      script: 'node',
+      args: 'bin/server.js',
     },
   ],
 }
