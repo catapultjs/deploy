@@ -18,9 +18,9 @@ declare module '../src/types.ts' {
   }
 }
 
-onStatus(async (_ctx, host, logger) => {
+onStatus(async (_ctx, host) => {
   const { stdout } = await ssh(host, `set +e\n${bin('pm2')} --version || true`)
-  logger.log(stdout.trim() ? `pm2 ${stdout.trim()}` : 'pm2 unavailable')
+  return { pm2: stdout.trim() || 'unavailable' }
 })
 
 desc('Starts PM2 processes with updated environment')

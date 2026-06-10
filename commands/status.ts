@@ -5,8 +5,9 @@ import { bin } from '../src/task.ts'
 import { getPipeline } from '../src/pipeline.ts'
 import { hooks } from '../src/pipeline/hooks.ts'
 import { q, getPaths, ssh, detectPackageManager } from '../src/utils.ts'
+import { MemoryRenderer } from '@poppinss/cliui'
 import { BaseDeployCommand } from '../src/base_command.ts'
-import { logger } from '../src/logger.ts'
+import { CatapultLogger, logger } from '../src/logger.ts'
 
 interface HostStatus {
   name: string
@@ -17,6 +18,7 @@ interface HostStatus {
   revision?: Record<string, unknown>
   lock?: string | null
   error?: string
+  [key: string]: unknown
 }
 
 export default class Status extends BaseDeployCommand {
@@ -34,6 +36,10 @@ export default class Status extends BaseDeployCommand {
 
     const pm = await detectPackageManager()
     const report: HostStatus[] = []
+
+    // In JSON mode, hooks that log directly would corrupt the JSON on stdout
+    const hookLogger = this.json ? new CatapultLogger() : logger
+    if (this.json) hookLogger.useRenderer(new MemoryRenderer())
 
     for (const host of hosts) {
       if (!(await this.ensureHostSetup(ctx, host))) continue
@@ -79,9 +85,16 @@ export default class Status extends BaseDeployCommand {
         if (!this.json) {
           this.logger.log(`Node     ${this.colors.dim(nodeVersion || 'unavailable')}`)
           this.logger.log(`${pm.padEnd(8)} ${this.colors.dim(pmVersion || 'unavailable')}`)
+        }
 
-          for (const hook of hooks.getStatus()) {
-            await hook(ctx, host, logger)
+        for (const hook of hooks.getStatus()) {
+          const data = await hook(ctx, host, hookLogger)
+          if (!data) continue
+          Object.assign(status, data)
+          if (!this.json) {
+            for (const [key, value] of Object.entries(data)) {
+              this.logger.log(`${key.padEnd(8)} ${this.colors.dim(String(value))}`)
+            }
           }
         }
 

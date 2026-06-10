@@ -1,10 +1,10 @@
 import type { TaskName } from './types.ts'
 import { PipelineStore } from './pipeline/store.ts'
-import { hooks, type LifecycleHook } from './pipeline/hooks.ts'
+import { hooks, type LifecycleHook, type StatusHook } from './pipeline/hooks.ts'
 
 export { hooks }
 
-export type { LifecycleHook } from './pipeline/hooks.ts'
+export type { LifecycleHook, StatusHook, StatusData } from './pipeline/hooks.ts'
 
 const pipeline = new PipelineStore()
 
@@ -48,7 +48,12 @@ export function onSetup(fn: LifecycleHook): void {
   hooks.addSetup(fn)
 }
 
-/** Registers a function to run during the status command. */
-export function onStatus(fn: LifecycleHook): void {
+/**
+ * Registers a function to run during the status command.
+ * Data returned as an object is printed as key/value lines and merged
+ * into the host entry of `status --json`; logger output only appears
+ * in text mode.
+ */
+export function onStatus(fn: StatusHook): void {
   hooks.addStatus(fn)
 }

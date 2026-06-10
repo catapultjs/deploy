@@ -26,6 +26,8 @@ npx cata status [options]
 
 With `--json`, all hosts are targeted by default (no interactive prompt) unless `--host` is provided, and results are aggregated into a single JSON document on stdout. Logs and errors are written to stderr.
 
+Recipes can add entries to the report with [`onStatus`](/guide/api#onstatus-fn) — returned data appears both in the text output and in the host entries of the JSON document.
+
 ## Examples
 
 ```bash

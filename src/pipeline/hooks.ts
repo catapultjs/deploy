@@ -7,9 +7,17 @@ export type LifecycleHook = (
   logger: CatapultLogger
 ) => Promise<void> | void
 
+export type StatusData = Record<string, unknown>
+
+export type StatusHook = (
+  ctx: DeployContext,
+  host: Host,
+  logger: CatapultLogger
+) => Promise<StatusData | void> | StatusData | void
+
 export class PipelineHookStore {
   #setupHooks: LifecycleHook[] = []
-  #statusHooks: LifecycleHook[] = []
+  #statusHooks: StatusHook[] = []
 
   addSetup(fn: LifecycleHook): void {
     this.#setupHooks.push(fn)
@@ -19,11 +27,11 @@ export class PipelineHookStore {
     return [...this.#setupHooks]
   }
 
-  addStatus(fn: LifecycleHook): void {
+  addStatus(fn: StatusHook): void {
     this.#statusHooks.push(fn)
   }
 
-  getStatus(): LifecycleHook[] {
+  getStatus(): StatusHook[] {
     return [...this.#statusHooks]
   }
 }
