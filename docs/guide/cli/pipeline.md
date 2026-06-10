@@ -21,12 +21,14 @@ npx cata pipeline [options]
 | Option | Description |
 | --- | --- |
 | `--config <path>`, `-c <path>` | Load a specific deploy config file |
+| `--json` | Output result as JSON |
 
 ## Examples
 
 ```bash
 npx cata pipeline
 npx cata pipeline -c deploy.production.ts
+npx cata pipeline --json
 ```
 
 ## Output example

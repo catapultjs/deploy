@@ -24,12 +24,14 @@ npx cata list:tasks [options]
 | Option | Description |
 | --- | --- |
 | `--config <path>`, `-c <path>` | Load a specific deploy config file |
+| `--json` | Output result as JSON |
 
 ## Examples
 
 ```bash
 npx cata list:tasks
 npx cata list:tasks -c deploy.production.ts
+npx cata list:tasks --json
 ```
 
 ## Output example

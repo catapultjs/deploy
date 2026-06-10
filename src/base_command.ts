@@ -7,7 +7,7 @@ export abstract class BaseDeployCommand extends BaseCommand {
   @flags.string({ alias: 'H', description: 'Target a specific host' })
   declare host: string | undefined
 
-  protected async selectHosts(): Promise<Host[] | null> {
+  protected async selectHosts(options: { all?: boolean } = {}): Promise<Host[] | null> {
     const ctx = Context.get()
 
     if (this.host) {
@@ -19,6 +19,8 @@ export abstract class BaseDeployCommand extends BaseCommand {
       }
       return hosts
     }
+
+    if (options.all) return ctx.config.hosts
 
     if (ctx.config.hosts.length > 1) {
       const selected = await this.prompt.multiple(

@@ -22,12 +22,16 @@ npx cata list:releases [options]
 | --- | --- |
 | `--host <name>`, `-H <name>` | Target a specific host |
 | `--config <path>`, `-c <path>` | Load a specific deploy config file |
+| `--json` | Output result as JSON |
+
+With `--json`, all hosts are targeted by default (no interactive prompt) unless `--host` is provided, and results are aggregated into a single JSON document on stdout. Logs and errors are written to stderr.
 
 ## Examples
 
 ```bash
 npx cata list:releases
 npx cata list:releases --host production
+npx cata list:releases --json
 ```
 
 ## Output example

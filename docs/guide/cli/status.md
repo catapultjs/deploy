@@ -22,6 +22,9 @@ npx cata status [options]
 | --- | --- |
 | `--host <name>`, `-H <name>` | Target a specific host |
 | `--config <path>`, `-c <path>` | Load a specific deploy config file |
+| `--json` | Output result as JSON |
+
+With `--json`, all hosts are targeted by default (no interactive prompt) unless `--host` is provided, and results are aggregated into a single JSON document on stdout. Logs and errors are written to stderr.
 
 ## Examples
 
@@ -29,6 +32,7 @@ npx cata status [options]
 npx cata status
 npx cata status --host production
 npx cata status -c deploy.staging.ts
+npx cata status --json
 ```
 
 ## Output example
