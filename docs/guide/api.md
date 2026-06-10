@@ -1,5 +1,6 @@
 ---
 description: Complete API reference for @catapultjs/deploy — all exported functions, types and template variables.
+outline: deep
 ---
 
 :::warning Beta
@@ -389,17 +390,21 @@ onSetup(async (ctx, host, logger) => {
 
 ### `onStatus(fn)`
 
-Registers a callback to run during `cata status`. Useful for displaying additional information such as a process manager version or queue state.
+Registers a callback to run during `cata status`. Useful for reporting additional information such as a process manager version or queue state.
+
+Return an object to add entries to the status report: each key is printed as an aligned `key value` line in text mode, and merged into the host entry of the `status --json` output.
 
 ```typescript
 import { onStatus } from '@catapultjs/deploy'
 import { ssh } from '@catapultjs/deploy/utils'
 
-onStatus(async (_ctx, host, logger) => {
+onStatus(async (_ctx, host) => {
   const { stdout } = await ssh(host, `set +e\nmy-service --version || true`)
-  logger.log(`my-service ${stdout.trim() || 'unavailable'}`)
+  return { 'my-service': stdout.trim() || 'unavailable' }
 })
 ```
+
+The callback still receives a `logger` as third argument for free-form output, but anything logged this way only appears in text mode — it is omitted from `status --json`.
 
 ---
 

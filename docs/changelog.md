@@ -4,6 +4,16 @@ description: Catapult changelog — release history and notable changes.
 
 # Changelog
 
+## 0.9.0
+
+- Added `--json` flag to `status`, `pipeline`, `version`, `list:releases`, `list:revisions` and `list:tasks` — outputs the result as JSON for scripting and CI usage
+- `status --json` now runs against all configured hosts without prompting for a selection
+- `onStatus` hooks can now return an object — entries are printed as aligned key/value lines in text mode and merged into the host entry of `status --json`; output logged via the `logger` argument is omitted in JSON mode
+- `recipes/pm2` now reports the pm2 version through the new `onStatus` data contract — included in `status --json`
+- Docs: the API reference page now lists every function in the "On this page" sidebar
+
+> Released at 2026-06-11
+
 ## 0.8.0
 
 - Added `recipes/adonisjs_local` — builds the AdonisJS app locally, uploads the artifact, then installs production dependencies on the server
@@ -11,6 +21,8 @@ description: Catapult changelog — release history and notable changes.
 - Commands that require an initialized server now detect missing setup and guide you to run `deploy:setup`
 - `deploy` now prompts to run `deploy:setup` automatically when the target host is not initialized
 - `deploy:setup` now has a `setup` alias
+
+> Released at 2026-06-05
 
 ## 0.7.0
 

@@ -40,7 +40,7 @@ import { withBase } from 'vitepress'
           <div class="feature-card__icon">⚡</div>
           <h3>SSH-based</h3>
           <p>
-            Deploy directly over SSH — no agents, no server-side dependencies, just a remote shell.
+            Deploy directly over SSH, no agents, no server-side dependencies, just a remote shell.
           </p>
         </div>
         <div class="feature-card">
