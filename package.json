@@ -64,6 +64,10 @@
       "types": "./build/src/utils.d.ts",
       "import": "./build/src/utils.js"
     },
+    "./api": {
+      "types": "./build/src/api.d.ts",
+      "import": "./build/src/api.js"
+    },
     "./recipes/*": {
       "types": "./build/recipes/*.d.ts",
       "import": "./build/recipes/*.js"

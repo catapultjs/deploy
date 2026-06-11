@@ -4,6 +4,14 @@ description: Catapult changelog — release history and notable changes.
 
 # Changelog
 
+## 0.10.0
+
+- Added programmatic API — `new Catapult(config)` from `@catapultjs/deploy/api` exposes `deploy()`, `rollback()`, `setup()`, `status()`, `task()`, `listReleases()`, `listRevisions()`, `listTasks()` and `pipeline()`, with `task:start` / `task:done` / `task:error` / `host:done` events; `task()` captures and returns the logger output of display tasks like `pm2:logs`
+- `runTask()` now accepts an optional `logger` — task `logger` output can be redirected, e.g. captured in memory
+- `deployHost()`, `rollbackHost()`, `initializeHost()`, `isHostSetup()`, `getCurrentRelease()`, `getReleaseNames()`, `getRevisions()` and `collectHostStatus()` are now exported from the main entry point
+
+> Released at 2026-06-11
+
 ## 0.9.0
 
 - Added `--json` flag to `status`, `pipeline`, `version`, `list:releases`, `list:revisions` and `list:tasks` — outputs the result as JSON for scripting and CI usage

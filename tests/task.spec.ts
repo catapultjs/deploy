@@ -1,5 +1,7 @@
 import { test } from '@japa/runner'
+import { MemoryRenderer } from '@poppinss/cliui'
 import { task, hasTask, getTasks, runTask, cd, run, bin, isVerbose } from '../src/task.ts'
+import { CatapultLogger } from '../src/logger.ts'
 import type { DeployContext, Host } from '../src/types.ts'
 import { Verbose } from '../src/enums.ts'
 
@@ -79,6 +81,23 @@ test.group('task — runTask', () => {
     await assert.rejects(
       () => runTask('task:does_not_exist_xyz', makeDeployCtx(), makeHost()),
       /Task not found/
+    )
+  })
+
+  test('runTask routes logger output to an injected logger', async ({ assert }) => {
+    task('test:run_logger', async ({ logger }) => {
+      logger.log('captured line')
+    })
+
+    const renderer = new MemoryRenderer()
+    const captured = new CatapultLogger()
+    captured.useRenderer(renderer)
+
+    await runTask('test:run_logger', makeDeployCtx(), makeHost(), { logger: captured })
+
+    assert.deepEqual(
+      renderer.getLogs().map((log) => log.message),
+      ['captured line']
     )
   })
 })

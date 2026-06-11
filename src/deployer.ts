@@ -115,6 +115,28 @@ export async function getReleaseNames(ctx: DeployContext, host: Host): Promise<s
     .filter(Boolean)
 }
 
+export async function getRevisions(
+  ctx: DeployContext,
+  host: Host,
+  limit = 10
+): Promise<Record<string, unknown>[]> {
+  const paths = getPaths(host.deployPath, ctx.release)
+  const logFile = `${paths.cataConfig}/revisions.log`
+
+  const { stdout } = await ssh(
+    host,
+    `set +e\n[ -f ${q(logFile)} ] && tail -${limit} ${q(logFile)} || true`
+  )
+
+  const revisions: Record<string, unknown>[] = []
+  for (const line of stdout.trim().split('\n').filter(Boolean).reverse()) {
+    try {
+      revisions.push(JSON.parse(line))
+    } catch {}
+  }
+  return revisions
+}
+
 async function getPreviousReleaseName(ctx: DeployContext, host: Host): Promise<string | null> {
   const currentRelease = await getCurrentRelease(ctx, host)
   const releases = await getReleaseNames(ctx, host)
@@ -147,9 +169,20 @@ export async function rollbackHost(ctx: DeployContext, host: Host, target?: stri
   }
 }
 
-export async function deployHost(ctx: DeployContext, host: Host): Promise<void> {
+export interface DeployObserver {
+  taskStart?: (host: Host, task: string) => void
+  taskDone?: (host: Host, task: string) => void
+  taskError?: (host: Host, task: string, error: Error) => void
+}
+
+export async function deployHost(
+  ctx: DeployContext,
+  host: Host,
+  observer?: DeployObserver
+): Promise<void> {
   let locked = false
   let published = false
+  let currentTask = ''
   const deployStart = Date.now()
 
   await runHook(ctx, 'beforeHostDeploy', { host })
@@ -157,15 +190,19 @@ export async function deployHost(ctx: DeployContext, host: Host): Promise<void> 
   try {
     const verbose = ctx.config.verbose ?? 0
     for (const taskName of getPipeline()) {
+      currentTask = taskName
       if (verbose >= Verbose.NORMAL)
         logger.task(elapsed(Date.now() - deployStart), host.name, taskName)
+      observer?.taskStart?.(host, taskName)
       await runTask(taskName, ctx, host)
+      observer?.taskDone?.(host, taskName)
       if (taskName === 'deploy:lock') locked = true
       if (taskName === 'deploy:publish') published = true
     }
 
     logger.ok(host.name, `deploy OK -> ${ctx.release}`, elapsed(Date.now() - deployStart))
   } catch (error) {
+    observer?.taskError?.(host, currentTask, error as Error)
     logger.fail(host.name, `deploy failed: ${(error as Error).message}`)
 
     if (published) {

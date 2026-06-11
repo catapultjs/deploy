@@ -70,6 +70,7 @@ export default defineConfig({
             { text: 'Pipeline', link: '/guide/pipeline' },
             { text: 'Hooks', link: '/guide/hooks' },
             { text: 'API Reference', link: '/guide/api' },
+            { text: 'Programmatic usage', link: '/guide/programmatic' },
             {
               text: 'Recipes',
               link: '/guide/recipes/',

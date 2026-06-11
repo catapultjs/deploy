@@ -1,25 +1,9 @@
 import { flags } from '@adonisjs/ace'
-import { Context } from '../src/context.ts'
-import { getCurrentRelease } from '../src/deployer.ts'
-import { bin } from '../src/task.ts'
-import { getPipeline } from '../src/pipeline.ts'
-import { hooks } from '../src/pipeline/hooks.ts'
-import { q, getPaths, ssh, detectPackageManager } from '../src/utils.ts'
 import { MemoryRenderer } from '@poppinss/cliui'
+import { Context } from '../src/context.ts'
+import { collectHostStatus, HOST_STATUS_FIELDS, type HostStatus } from '../src/status.ts'
 import { BaseDeployCommand } from '../src/base_command.ts'
 import { CatapultLogger, logger } from '../src/logger.ts'
-
-interface HostStatus {
-  name: string
-  release?: string | null
-  health?: 'ok' | 'fail'
-  node?: string | null
-  packageManager?: { name: string; version: string | null }
-  revision?: Record<string, unknown>
-  lock?: string | null
-  error?: string
-  [key: string]: unknown
-}
 
 export default class Status extends BaseDeployCommand {
   static commandName = 'status'
@@ -34,108 +18,66 @@ export default class Status extends BaseDeployCommand {
     const hosts = await this.selectHosts({ all: this.json })
     if (!hosts) return
 
-    const pm = await detectPackageManager()
-    const report: HostStatus[] = []
-
     // In JSON mode, hooks that log directly would corrupt the JSON on stdout
     const hookLogger = this.json ? new CatapultLogger() : logger
     if (this.json) hookLogger.useRenderer(new MemoryRenderer())
 
+    const report: HostStatus[] = []
+
     for (const host of hosts) {
       if (!(await this.ensureHostSetup(ctx, host))) continue
 
-      const paths = getPaths(host.deployPath, ctx.release)
-      const status: HostStatus = { name: host.name }
-      report.push(status)
-
       if (!this.json) this.logger.log(this.colors.bold(`\n# ${host.name}`))
 
-      try {
-        const current = await getCurrentRelease(ctx, host)
-        status.release = current ?? null
-        if (!this.json) {
-          this.logger.log(
-            `Release  ${current ? this.colors.cyan(current) : this.colors.dim('none')}`
-          )
-        }
+      const status = await collectHostStatus(ctx, host, hookLogger)
+      report.push(status)
 
-        if (getPipeline().includes('deploy:healthcheck')) {
-          try {
-            await ssh(
-              host,
-              `set -e\n${bin('curl')} --fail --silent --show-error --max-time 5 ${q(host.healthcheck?.url)} >/dev/null`
-            )
-            status.health = 'ok'
-            if (!this.json) this.logger.log(`Health   ${this.colors.green('OK')}`)
-          } catch {
-            status.health = 'fail'
-            if (!this.json) this.logger.log(`Health   ${this.colors.red('FAIL')}`)
-          }
-        }
-
-        const { stdout: versionsStdout } = await ssh(
-          host,
-          `set +e\ncd ${q(paths.current)}\necho "NODE:$(${bin('node')} --version 2>/dev/null || true)"\necho "PM:$(${bin(pm)} --version 2>/dev/null || true)"`
-        )
-        const lines = versionsStdout.trim().split('\n')
-        const nodeVersion = lines.find((l) => l.startsWith('NODE:'))?.slice(5) || ''
-        const pmVersion = lines.find((l) => l.startsWith('PM:'))?.slice(3) || ''
-        status.node = nodeVersion || null
-        status.packageManager = { name: pm, version: pmVersion || null }
-        if (!this.json) {
-          this.logger.log(`Node     ${this.colors.dim(nodeVersion || 'unavailable')}`)
-          this.logger.log(`${pm.padEnd(8)} ${this.colors.dim(pmVersion || 'unavailable')}`)
-        }
-
-        for (const hook of hooks.getStatus()) {
-          const data = await hook(ctx, host, hookLogger)
-          if (!data) continue
-          Object.assign(status, data)
-          if (!this.json) {
-            for (const [key, value] of Object.entries(data)) {
-              this.logger.log(`${key.padEnd(8)} ${this.colors.dim(String(value))}`)
-            }
-          }
-        }
-
-        const { stdout: revStdout } = await ssh(
-          host,
-          `set +e\n[ -f ${q(paths.cataConfig + '/revisions.log')} ] && tail -1 ${q(paths.cataConfig + '/revisions.log')} || true`
-        )
-        const rev = revStdout.trim()
-        if (rev) {
-          try {
-            const revision = JSON.parse(rev)
-            const { branch, commit, user, date } = revision
-            status.revision = revision
-            if (!this.json) {
-              this.logger.log(`Branch   ${this.colors.dim(branch ?? '—')}`)
-              this.logger.log(`Commit   ${this.colors.dim(commit ? commit.slice(0, 7) : '—')}`)
-              this.logger.log(`By       ${this.colors.dim(user ?? '—')}`)
-              this.logger.log(
-                `Date     ${this.colors.dim(date ? new Date(date).toLocaleString() : '—')}`
-              )
-            }
-          } catch {}
-        }
-
-        const { stdout: lockStdout } = await ssh(
-          host,
-          `set +e\n[ -f ${q(paths.lock)} ] && cat ${q(paths.lock)} || true`
-        )
-        const lock = lockStdout.trim()
-        status.lock = lock || null
-        if (!this.json) {
-          this.logger.log(`Lock     ${lock ? this.colors.yellow(lock) : this.colors.dim('none')}`)
-        }
-      } catch (error) {
-        status.error = (error as Error).message
-        this.logger.error(`status error: ${(error as Error).message}`)
-      }
+      if (status.error) this.logger.error(`status error: ${status.error}`)
+      if (!this.json) this.printStatus(status)
     }
 
     if (this.json) {
       this.logger.log(JSON.stringify({ hosts: report }, null, 2))
+    }
+  }
+
+  private printStatus(status: HostStatus) {
+    if (status.release !== undefined) {
+      this.logger.log(
+        `Release  ${status.release ? this.colors.cyan(status.release) : this.colors.dim('none')}`
+      )
+    }
+
+    if (status.health) {
+      this.logger.log(
+        `Health   ${status.health === 'ok' ? this.colors.green('OK') : this.colors.red('FAIL')}`
+      )
+    }
+
+    if (status.packageManager) {
+      this.logger.log(`Node     ${this.colors.dim(status.node || 'unavailable')}`)
+      this.logger.log(
+        `${status.packageManager.name.padEnd(8)} ${this.colors.dim(status.packageManager.version || 'unavailable')}`
+      )
+    }
+
+    for (const [key, value] of Object.entries(status)) {
+      if (HOST_STATUS_FIELDS.has(key)) continue
+      this.logger.log(`${key.padEnd(8)} ${this.colors.dim(String(value))}`)
+    }
+
+    if (status.revision) {
+      const { branch, commit, user, date } = status.revision as Record<string, string | undefined>
+      this.logger.log(`Branch   ${this.colors.dim(branch ?? '—')}`)
+      this.logger.log(`Commit   ${this.colors.dim(commit ? commit.slice(0, 7) : '—')}`)
+      this.logger.log(`By       ${this.colors.dim(user ?? '—')}`)
+      this.logger.log(`Date     ${this.colors.dim(date ? new Date(date).toLocaleString() : '—')}`)
+    }
+
+    if (status.lock !== undefined) {
+      this.logger.log(
+        `Lock     ${status.lock ? this.colors.yellow(status.lock) : this.colors.dim('none')}`
+      )
     }
   }
 }

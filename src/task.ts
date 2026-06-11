@@ -1,4 +1,5 @@
 import type { Host, DeployContext, TaskName } from './types.ts'
+import type { CatapultLogger } from './logger.ts'
 import { type TaskFn, TaskRunner } from './task/runner.ts'
 import { TaskStore } from './task/store.ts'
 import type { Verbose } from './enums.ts'
@@ -29,8 +30,13 @@ export function getTaskDescription(name: TaskName): string {
   return store.getDescription(name)
 }
 
-export async function runTask(name: TaskName, deployCtx: DeployContext, host: Host): Promise<void> {
-  return store.run(name, deployCtx, host)
+export async function runTask(
+  name: TaskName,
+  deployCtx: DeployContext,
+  host: Host,
+  options: { logger?: CatapultLogger } = {}
+): Promise<void> {
+  return store.run(name, deployCtx, host, options)
 }
 
 // ---------------------------------------------------------------------------

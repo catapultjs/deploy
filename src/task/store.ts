@@ -1,7 +1,7 @@
 import type { Host, DeployContext, TaskName } from '../types.ts'
 import { getPaths } from '../utils.ts'
 import type { TaskFn, TaskRunner } from './runner.ts'
-import { logger } from '../logger.ts'
+import { logger, type CatapultLogger } from '../logger.ts'
 
 export class TaskStore {
   #registry = new Map<string, TaskFn>()
@@ -37,12 +37,23 @@ export class TaskStore {
     return this.#descriptions.get(name) ?? ''
   }
 
-  async run(name: TaskName, deployCtx: DeployContext, host: Host): Promise<void> {
+  async run(
+    name: TaskName,
+    deployCtx: DeployContext,
+    host: Host,
+    options: { logger?: CatapultLogger } = {}
+  ): Promise<void> {
     const fn = this.#registry.get(name)
     if (!fn) throw new Error(`Task not found: "${name}"`)
 
     const paths = getPaths(host.deployPath, deployCtx.release)
-    const ctx = { host, paths, config: deployCtx.config, release: deployCtx.release, logger }
+    const ctx = {
+      host,
+      paths,
+      config: deployCtx.config,
+      release: deployCtx.release,
+      logger: options.logger ?? logger,
+    }
     this.#runner.set(ctx)
 
     try {
