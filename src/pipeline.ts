@@ -13,12 +13,12 @@ export function getPipeline(): string[] {
   return pipeline.get()
 }
 
-/** Replaces the entire pipeline. Marks it as user-managed — onConfig hooks will not run. */
+/** Replaces the entire pipeline. */
 export function setPipeline(tasks: TaskName[]): void {
   pipeline.set(tasks)
 }
 
-/** @internal — initialises the default pipeline without marking it as user-managed. */
+/** @internal — initialises the default pipeline. */
 export function initPipeline(tasks: TaskName[]): void {
   pipeline.init(tasks)
 }
