@@ -40,7 +40,8 @@ import { withBase } from 'vitepress'
           <div class="feature-card__icon">⚡</div>
           <h3>SSH-based</h3>
           <p>
-            Deploy directly over SSH, no agents, no server-side dependencies, just a remote shell.
+            Deploy directly over SSH. No agents, no containers, no server-side dependencies, just
+            a remote shell.
           </p>
         </div>
         <div class="feature-card">
@@ -77,7 +78,23 @@ import { withBase } from 'vitepress'
           <h3>Extensible</h3>
           <p>
             Define custom tasks, hooks and recipes. Full async support with
-            <code>getContext()</code>.
+            <code>TaskContext</code>.
+          </p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-card__icon">📜</div>
+          <h3>Programmatic API</h3>
+          <p>
+            Drive deployments from scripts, CI or bots with the <code>Catapult</code> class.
+            Events, captured output, JSON reports.
+          </p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-card__icon">🤖</div>
+          <h3>Agent-ready</h3>
+          <p>
+            Ships with agent skills for Claude Code. Your AI assistant writes configs and recipes
+            following the conventions.
           </p>
         </div>
       </div>
@@ -334,8 +351,20 @@ import { withBase } from 'vitepress'
 
 .features__grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  grid-template-columns: repeat(4, 1fr);
   gap: 20px;
+}
+
+@media (max-width: 1024px) {
+  .features__grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 560px) {
+  .features__grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 .feature-card {

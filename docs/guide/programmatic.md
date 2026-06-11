@@ -230,3 +230,14 @@ const catapult = new Catapult({
 ## Lower-level functions
 
 If the `Catapult` class is too coarse, the underlying primitives are exported from the main entry point: `deployHost()`, `rollbackHost()`, `initializeHost()`, `isHostSetup()`, `getCurrentRelease()`, `getReleaseNames()`, `getRevisions()` and `collectHostStatus()` all take an explicit `DeployContext` and `Host`. See the [API Reference](/guide/api).
+
+## Agent skill
+
+The package ships a `cata-api` skill that teaches this API (methods, return shapes, events, silent mode) to Claude Code and any agent supporting the SKILL.md format. Copy it into your project to get assisted scripting:
+
+```bash
+mkdir -p .claude/skills
+cp -r node_modules/@catapultjs/deploy/skills/cata-api .claude/skills/
+```
+
+See the [Agent skills](/guide/agent-skills) page for details.

@@ -2,7 +2,7 @@ import { defineConfig } from 'vitepress'
 
 const siteUrl = 'https://catapultjs.com'
 const siteDescription =
-  'Deploy Node.js applications over SSH with a composable task pipeline, auto-rollback, and multi-server support. No agents, no server dependencies.'
+  'Deploy Node.js applications over SSH with a composable task pipeline, auto-rollback, and multi-server support. No agents, no containers, no server dependencies.'
 
 // https://vitepress.dev/reference/site-config
 export default defineConfig({
@@ -94,6 +94,7 @@ export default defineConfig({
             },
             { text: 'CI/CD', link: '/guide/ci-cd' },
             { text: 'Programmatic usage', link: '/guide/programmatic' },
+            { text: 'Agent skills', link: '/guide/agent-skills' },
             { text: 'Deployment Examples', link: '/guide/deployment-examples' },
             { text: 'Changelog', link: '/changelog' },
           ],

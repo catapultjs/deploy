@@ -4,7 +4,7 @@
 [![node version](https://img.shields.io/node/v/@catapultjs/deploy)](https://nodejs.org)
 [![license](https://img.shields.io/npm/l/@catapultjs/deploy)](https://github.com/catapultjs/deploy/blob/main/LICENSE)
 
-A Capistrano-style deployment tool for Node.js — versioned releases, shared directories, composable task pipeline, automatic rollback. No agent, no server-side dependency, just SSH.
+A Capistrano-style deployment tool for Node.js — versioned releases, shared directories, composable task pipeline, automatic rollback. No agent, no container, no server-side dependency, just SSH.
 
 Full documentation at **https://catapultjs.com/**
 
@@ -86,6 +86,15 @@ npx cata deploy
 
 - Node.js >= 24 on the machine running Catapult
 - SSH key-based access to the target servers
+
+## Agent skills
+
+The package ships [agent skills](https://catapultjs.com/guide/agent-skills) for Claude Code and SKILL.md-compatible agents: `cata-config` (write the deploy config), `cata-recipe` (write recipes) and `cata-api` (script the programmatic API).
+
+```bash
+mkdir -p .claude/skills
+cp -r node_modules/@catapultjs/deploy/skills/* .claude/skills/
+```
 
 ## Contributing a recipe
 
