@@ -12,7 +12,7 @@
     "astro": "astro"
   },
   "dependencies": {
-    "@catapultjs/deploy": "file:../../catapultjs-deploy-0.7.0.tgz",
+    "@catapultjs/deploy": "file:../../catapultjs-deploy-0.9.0.tgz",
     "astro": "^6.3.1"
   }
 }
