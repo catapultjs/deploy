@@ -70,7 +70,6 @@ export default defineConfig({
             { text: 'Pipeline', link: '/guide/pipeline' },
             { text: 'Hooks', link: '/guide/hooks' },
             { text: 'API Reference', link: '/guide/api' },
-            { text: 'Programmatic usage', link: '/guide/programmatic' },
             {
               text: 'Recipes',
               link: '/guide/recipes/',
@@ -94,6 +93,7 @@ export default defineConfig({
               items: [{ text: 'Monorepo', link: '/guide/monorepo' }],
             },
             { text: 'CI/CD', link: '/guide/ci-cd' },
+            { text: 'Programmatic usage', link: '/guide/programmatic' },
             { text: 'Deployment Examples', link: '/guide/deployment-examples' },
             { text: 'Changelog', link: '/changelog' },
           ],
