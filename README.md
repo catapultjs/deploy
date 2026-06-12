@@ -87,13 +87,12 @@ npx cata deploy
 - Node.js >= 24 on the machine running Catapult
 - SSH key-based access to the target servers
 
-## Agent skills
+## Agent skill
 
-The package ships [agent skills](https://catapultjs.com/guide/agent-skills) for Claude Code and SKILL.md-compatible agents: `cata-config` (write the deploy config), `cata-recipe` (write recipes) and `cata-api` (script the programmatic API).
+The package ships a [`catapultjs` agent skill](https://catapultjs.com/guide/agent-skills) for Claude Code and SKILL.md-compatible agents, with references covering the deploy config, recipe writing and the programmatic API.
 
 ```bash
-mkdir -p .claude/skills
-cp -r node_modules/@catapultjs/deploy/skills/* .claude/skills/
+npx skills add catapultjs/deploy
 ```
 
 ## Contributing a recipe

@@ -8,7 +8,7 @@ description: Catapult changelog — release history and notable changes.
 
 - Added programmatic API — `new Catapult(config)` from `@catapultjs/deploy/api` exposes `deploy()`, `rollback()`, `setup()`, `status()`, `task()`, `listReleases()`, `listRevisions()`, `listTasks()` and `pipeline()`, with `task:start` / `task:done` / `task:error` / `host:done` events; `task()` captures and returns the logger output of display tasks like `pm2:logs`
 - `runTask()` now accepts an optional `logger` — task `logger` output can be redirected, e.g. captured in memory
-- The npm package now ships three agent skills (`skills/cata-config`, `skills/cata-recipe`, `skills/cata-api`) — copy them into `.claude/skills/` to get assisted config writing, recipe writing and API scripting in Claude Code
+- The npm package now ships a `catapultjs` agent skill with progressive references (config, recipe, programmatic API) — copy `skills/catapultjs` into `.claude/skills/` to get assisted Catapult work in Claude Code
 - `deployHost()`, `rollbackHost()`, `initializeHost()`, `isHostSetup()`, `getCurrentRelease()`, `getReleaseNames()`, `getRevisions()` and `collectHostStatus()` are now exported from the main entry point
 
 > Released at 2026-06-11

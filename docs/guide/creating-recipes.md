@@ -168,11 +168,11 @@ declare module '@catapultjs/deploy' {
 
 ## Agent skill
 
-The package ships a `cata-recipe` skill that teaches this whole workflow (conventions, DSL, hooks, pipeline insertion) to Claude Code and any agent supporting the SKILL.md format. Copy it into your project to get assisted recipe writing:
+The package ships a `catapultjs` skill that teaches this whole workflow (conventions, DSL, hooks, pipeline insertion) to Claude Code and any agent supporting the SKILL.md format. Copy it into your project to get assisted recipe writing:
 
 ```bash
 mkdir -p .claude/skills
-cp -r node_modules/@catapultjs/deploy/skills/cata-recipe .claude/skills/
+cp -r node_modules/@catapultjs/deploy/skills/catapultjs .claude/skills/
 ```
 
-See the [Agent skills](/guide/agent-skills) page for details.
+See the [Agent skill](/guide/agent-skills) page for details.

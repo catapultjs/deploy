@@ -1,8 +1,3 @@
----
-name: cata-recipe
-description: Create or modify a Catapult (@catapultjs/deploy) recipe. Use when writing deployment tasks, customizing the deploy pipeline, adding setup/status hooks, or packaging a reusable recipe for the SSH deployment tool Catapult.
----
-
 # Writing a Catapult recipe
 
 A recipe is a JavaScript/TypeScript module that registers tasks and inserts them into the deployment pipeline as a side effect of being imported. Users activate it with a bare import in their `deploy.ts`:

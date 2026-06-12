@@ -94,7 +94,7 @@ export default defineConfig({
             },
             { text: 'CI/CD', link: '/guide/ci-cd' },
             { text: 'Programmatic usage', link: '/guide/programmatic' },
-            { text: 'Agent skills', link: '/guide/agent-skills' },
+            { text: 'Agent skill', link: '/guide/agent-skills' },
             { text: 'Deployment Examples', link: '/guide/deployment-examples' },
             { text: 'Changelog', link: '/changelog' },
           ],

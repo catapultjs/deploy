@@ -1,8 +1,3 @@
----
-name: cata-api
-description: Drive Catapult (@catapultjs/deploy) from Node.js code with the programmatic API. Use when building deploy scripts, CI runners, bots or dashboards that deploy, roll back, run tasks or inspect servers through the Catapult class instead of the cata CLI.
----
-
 # Using the Catapult programmatic API
 
 The `Catapult` class from `@catapultjs/deploy/api` exposes the same operations as the `cata` CLI, without any interactive prompt. Full docs: https://catapultjs.com/guide/programmatic

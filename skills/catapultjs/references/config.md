@@ -1,8 +1,3 @@
----
-name: cata-config
-description: Create or update a Catapult (@catapultjs/deploy) deploy.ts configuration file. Use when setting up SSH deployment for a Node.js project, adding hosts or environments, picking recipes, configuring healthchecks, lifecycle hooks, branch prompts or per-host binary paths.
----
-
 # Writing a Catapult deploy config
 
 The config file is auto-detected as `deploy.ts`, `deploy.js`, `deploy.config.ts` or `deploy.config.js` at the project root (override with `cata --config <path>`). It must default-export `defineConfig()`. Full reference: https://catapultjs.com/guide/api

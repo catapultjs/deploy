@@ -233,11 +233,11 @@ If the `Catapult` class is too coarse, the underlying primitives are exported fr
 
 ## Agent skill
 
-The package ships a `cata-api` skill that teaches this API (methods, return shapes, events, silent mode) to Claude Code and any agent supporting the SKILL.md format. Copy it into your project to get assisted scripting:
+The package ships a `catapultjs` skill that teaches this API (methods, return shapes, events, silent mode) to Claude Code and any agent supporting the SKILL.md format. Copy it into your project to get assisted scripting:
 
 ```bash
 mkdir -p .claude/skills
-cp -r node_modules/@catapultjs/deploy/skills/cata-api .claude/skills/
+cp -r node_modules/@catapultjs/deploy/skills/catapultjs .claude/skills/
 ```
 
-See the [Agent skills](/guide/agent-skills) page for details.
+See the [Agent skill](/guide/agent-skills) page for details.
