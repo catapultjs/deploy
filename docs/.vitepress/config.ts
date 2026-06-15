@@ -49,6 +49,26 @@ export default defineConfig({
     head.push(['meta', { name: 'twitter:title', content: title }])
     head.push(['meta', { name: 'twitter:description', content: description }])
 
+    if (pageData.relativePath === 'index.md') {
+      head.push([
+        'script',
+        { type: 'application/ld+json' },
+        JSON.stringify({
+          '@context': 'https://schema.org',
+          '@type': 'SoftwareApplication',
+          name: 'Catapult',
+          description: siteDescription,
+          url: siteUrl,
+          applicationCategory: 'DeveloperApplication',
+          operatingSystem: 'Linux, macOS',
+          programmingLanguage: 'TypeScript',
+          license: 'https://github.com/catapultjs/deploy/blob/main/LICENSE',
+          downloadUrl: 'https://www.npmjs.com/package/@catapultjs/deploy',
+          offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
+        }),
+      ])
+    }
+
     return head
   },
   themeConfig: {
