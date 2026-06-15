@@ -10,7 +10,6 @@ import { withBase } from 'vitepress'
       <div class="hero__content">
         <div class="hero__badges">
           <div class="hero__badge">SSH Deployment Tool</div>
-          <div class="hero__alpha">⚠️ Beta</div>
         </div>
         <h1 class="hero__title">
           <span class="hero__title-main">Catapult JS</span>
@@ -40,8 +39,8 @@ import { withBase } from 'vitepress'
           <div class="feature-card__icon">⚡</div>
           <h3>SSH-based</h3>
           <p>
-            Deploy directly over SSH. No agents, no containers, no server-side dependencies, just
-            a remote shell.
+            Deploy directly over SSH. No agents, no containers, no server-side dependencies, just a
+            remote shell.
           </p>
         </div>
         <div class="feature-card">
@@ -85,8 +84,8 @@ import { withBase } from 'vitepress'
           <div class="feature-card__icon">📜</div>
           <h3>Programmatic API</h3>
           <p>
-            Drive deployments from scripts, CI or bots with the <code>Catapult</code> class.
-            Events, captured output, JSON reports.
+            Drive deployments from scripts, CI or bots with the <code>Catapult</code> class. Events,
+            captured output, JSON reports.
           </p>
         </div>
         <div class="feature-card">

@@ -2,10 +2,6 @@
 description: Show the current deployment pipeline in execution order.
 ---
 
-:::warning Beta
-`@catapultjs/deploy` is currently in beta. The API is stabilising, but some behavior and interfaces may still change before `1.0`. Pin the package version in your `package.json` to avoid unexpected breaking changes during updates.
-:::
-
 # `pipeline`
 
 Prints the current deployment pipeline as an ordered table.

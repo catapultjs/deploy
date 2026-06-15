@@ -3,10 +3,6 @@ description: Use Catapult as a library to deploy, roll back and inspect servers 
 outline: deep
 ---
 
-:::warning Beta
-`@catapultjs/deploy` is currently in beta. The API is stabilising, but some behavior and interfaces may still change before `1.0`. Pin the package version in your `package.json` to avoid unexpected breaking changes during updates.
-:::
-
 # Programmatic usage
 
 Everything the CLI does is also available as a library, through the `Catapult` class. Use it to drive deployments from your own scripts, a CI runner, a bot or a dashboard.

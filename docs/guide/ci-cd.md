@@ -2,10 +2,6 @@
 description: Deploy with Catapult from GitHub Actions using the official deploy-action.
 ---
 
-:::warning Beta
-`@catapultjs/deploy` is currently in beta. The API is stabilising, but some behavior and interfaces may still change before `1.0`. Pin the package version in your `package.json` to avoid unexpected breaking changes during updates.
-:::
-
 # CI/CD
 
 Use the official [catapultjs/deploy-action](https://github.com/catapultjs/deploy-action) to run `@catapultjs/deploy` inside GitHub Actions.

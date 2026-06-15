@@ -2,10 +2,6 @@
 description: Create a starter deploy config file and optionally install Catapult.
 ---
 
-:::warning Beta
-`@catapultjs/deploy` is currently in beta. The API is stabilising, but some behavior and interfaces may still change before `1.0`. Pin the package version in your `package.json` to avoid unexpected breaking changes during updates.
-:::
-
 # `init`
 
 Creates a starter `deploy.ts` or `deploy.js` file, then installs `@catapultjs/deploy` as a dev dependency with the detected package manager unless you pass `--skip-install`.

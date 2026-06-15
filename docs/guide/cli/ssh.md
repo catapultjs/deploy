@@ -2,10 +2,6 @@
 description: Open an interactive SSH shell in the configured deploy directory.
 ---
 
-:::warning Beta
-`@catapultjs/deploy` is currently in beta. The API is stabilising, but some behavior and interfaces may still change before `1.0`. Pin the package version in your `package.json` to avoid unexpected breaking changes during updates.
-:::
-
 # `ssh`
 
 Opens an interactive SSH session and changes into the host `deployPath` before starting the shell.

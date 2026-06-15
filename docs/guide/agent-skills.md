@@ -2,10 +2,6 @@
 description: Catapult ships a Claude Code agent skill with progressive references, for assisted config writing, recipe authoring and programmatic API scripting.
 ---
 
-:::warning Beta
-`@catapultjs/deploy` is currently in beta. The API is stabilising, but some behavior and interfaces may still change before `1.0`. Pin the package version in your `package.json` to avoid unexpected breaking changes during updates.
-:::
-
 # Agent skill
 
 The npm package ships a `catapultjs` agent skill: instruction files that teach an AI coding agent how to work with Catapult correctly. It follows the SKILL.md format used by Claude Code and other compatible agents.

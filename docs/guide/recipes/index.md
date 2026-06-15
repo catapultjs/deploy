@@ -2,10 +2,6 @@
 description: Drop-in Catapult recipes for Astro, AdonisJS, Directus, Nuxt, PM2, Redis, VitePress, git and rsync.
 ---
 
-:::warning Beta
-`@catapultjs/deploy` is currently in beta. The API is stabilising, but some behavior and interfaces may still change before `1.0`. Pin the package version in your `package.json` to avoid unexpected breaking changes during updates.
-:::
-
 # Recipes
 
 Recipes are importable modules that register tasks and insert them into the pipeline automatically.

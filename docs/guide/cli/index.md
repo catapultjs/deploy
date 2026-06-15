@@ -2,10 +2,6 @@
 description: Command reference for the Catapult CLI, with one page per command.
 ---
 
-:::warning Beta
-`@catapultjs/deploy` is currently in beta. The API is stabilising, but some behavior and interfaces may still change before `1.0`. Pin the package version in your `package.json` to avoid unexpected breaking changes during updates.
-:::
-
 # CLI
 
 Catapult exposes the `cata` CLI through `npx cata ...` after installation.

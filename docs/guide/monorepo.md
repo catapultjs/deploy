@@ -2,10 +2,6 @@
 description: Deploy a monorepo with Catapult by overriding install and build tasks at the workspace root.
 ---
 
-:::warning Beta
-`@catapultjs/deploy` is currently in beta. The API is stabilising, but some behavior and interfaces may still change before `1.0`. Pin the package version in your `package.json` to avoid unexpected breaking changes during updates.
-:::
-
 # Monorepo
 
 A monorepo usually needs two things:

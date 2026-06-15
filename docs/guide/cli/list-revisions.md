@@ -2,10 +2,6 @@
 description: Show the last 10 deployment revisions recorded on the target servers.
 ---
 
-:::warning Beta
-`@catapultjs/deploy` is currently in beta. The API is stabilising, but some behavior and interfaces may still change before `1.0`. Pin the package version in your `package.json` to avoid unexpected breaking changes during updates.
-:::
-
 # `list:revisions`
 
 Reads `.catapult/revisions.log` on the selected hosts and renders the last 10 revisions as a table with release, branch, commit, author, and date.

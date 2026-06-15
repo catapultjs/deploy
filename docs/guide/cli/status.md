@@ -2,10 +2,6 @@
 description: Inspect the state of one or more target servers.
 ---
 
-:::warning Beta
-`@catapultjs/deploy` is currently in beta. The API is stabilising, but some behavior and interfaces may still change before `1.0`. Pin the package version in your `package.json` to avoid unexpected breaking changes during updates.
-:::
-
 # `status`
 
 Shows the current release, healthcheck result, runtime versions, revision metadata, and deployment lock state for the selected hosts.

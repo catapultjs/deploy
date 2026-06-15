@@ -2,10 +2,6 @@
 description: List releases available on the selected servers.
 ---
 
-:::warning Beta
-`@catapultjs/deploy` is currently in beta. The API is stabilising, but some behavior and interfaces may still change before `1.0`. Pin the package version in your `package.json` to avoid unexpected breaking changes during updates.
-:::
-
 # `list:releases`
 
 Lists release directories on the target hosts and marks the current release with `*`.
