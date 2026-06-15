@@ -1,5 +1,5 @@
 ---
-description: Catapult ships a Claude Code agent skill with progressive references, for assisted config writing, recipe authoring and programmatic API scripting.
+description: Catapult ships a Claude Code agent skill with progressive references covering config, recipes, the programmatic API, the CLI and GitHub Actions integration.
 ---
 
 # Agent skill
@@ -33,9 +33,12 @@ The skill uses progressive disclosure: a small `SKILL.md` carries the universal 
 | --- | --- |
 | `references/config.md` | Creating and evolving `deploy.ts`: all config and host options, recipe selection by stack, healthchecks, lifecycle hooks, store options, pipeline tuning and `setPipeline()` |
 | `references/recipe.md` | Writing recipes: conventions, task DSL, `TaskContext`, pipeline insertion, `onSetup`/`onStatus` hooks, `TaskRegistry` augmentation, pre-publication checklist |
+| `references/recipes.md` | Using official recipes (git, rsync, astro, vitepress, adonisjs, nuxt, directus, pm2, redis): tasks added, store keys, monorepo patterns |
 | `references/api.md` | Scripting with the [programmatic API](/guide/programmatic): the `Catapult` class, methods with return shapes and CLI equivalents, events, output capture, silent mode |
+| `references/github-actions.md` | Setting up a GitHub Actions workflow with `catapultjs/deploy-action`: inputs, SSH secrets, env vars |
+| `references/cli.md` | The `cata` CLI: all commands, flags, global options and config loading |
 
-See [Getting Started](/guide/getting-started), [Creating a Recipe](/guide/creating-recipes) and [Programmatic usage](/guide/programmatic) for the underlying guides.
+See [Getting Started](/guide/getting-started), [Creating a Recipe](/guide/creating-recipes), [Programmatic usage](/guide/programmatic) and [CI/CD](/guide/ci-cd) for the underlying guides.
 
 ## Keeping the skill up to date
 
