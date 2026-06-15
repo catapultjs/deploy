@@ -1,4 +1,4 @@
-import { Catapult } from '@catapultjs/deploy/api'
+import { Catapult } from '@catapultjs/deploy'
 import '@catapultjs/deploy/recipes/astro'
 // import '@catapultjs/deploy/recipes/pm2'
 

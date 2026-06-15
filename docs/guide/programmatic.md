@@ -9,10 +9,10 @@ outline: deep
 
 # Programmatic usage
 
-Everything the CLI does is also available as a library, through the `Catapult` class exported from `@catapultjs/deploy/api`. Use it to drive deployments from your own scripts, a CI runner, a bot or a dashboard.
+Everything the CLI does is also available as a library, through the `Catapult` class. Use it to drive deployments from your own scripts, a CI runner, a bot or a dashboard.
 
 ```typescript
-import { Catapult } from '@catapultjs/deploy/api'
+import { Catapult } from '@catapultjs/deploy'
 import '@catapultjs/deploy/recipes/git'
 import '@catapultjs/deploy/recipes/pm2'
 

@@ -1,9 +1,9 @@
 # Using the Catapult programmatic API
 
-The `Catapult` class from `@catapultjs/deploy/api` exposes the same operations as the `cata` CLI, without any interactive prompt. Full docs: https://catapultjs.com/guide/programmatic
+The `Catapult` class exposes the same operations as the `cata` CLI, without any interactive prompt. Full docs: https://catapultjs.com/guide/programmatic
 
 ```typescript
-import { Catapult } from '@catapultjs/deploy/api'
+import { Catapult } from '@catapultjs/deploy'
 import '@catapultjs/deploy/recipes/git'
 import '@catapultjs/deploy/recipes/pm2'
 
