@@ -1,4 +1,4 @@
-import { defineConfig } from 'vitepress'
+import { defineConfig, type HeadConfig } from 'vitepress'
 
 const siteUrl = 'https://catapultjs.com'
 const siteDescription =
@@ -22,17 +22,35 @@ export default defineConfig({
         'data-website-id': 'e3910dee-0a06-45bd-87f7-90623acdcd7c',
       },
     ],
-    // OpenGraph
+    // OpenGraph — static per-site values; title/description/url injected per page via transformHead
     ['meta', { property: 'og:type', content: 'website' }],
     ['meta', { property: 'og:site_name', content: 'Catapult' }],
-    ['meta', { property: 'og:url', content: siteUrl }],
-    ['meta', { property: 'og:title', content: 'Catapult — SSH Deployment for Node.js' }],
-    ['meta', { property: 'og:description', content: siteDescription }],
+    ['meta', { property: 'og:image', content: `${siteUrl}/og.png` }],
     // Twitter Card
-    ['meta', { name: 'twitter:card', content: 'summary' }],
-    ['meta', { name: 'twitter:title', content: 'Catapult — SSH Deployment for Node.js' }],
-    ['meta', { name: 'twitter:description', content: siteDescription }],
+    ['meta', { name: 'twitter:card', content: 'summary_large_image' }],
+    ['meta', { name: 'twitter:image', content: `${siteUrl}/og.png` }],
   ],
+  transformHead({ pageData }) {
+    const head: HeadConfig[] = []
+
+    const title = pageData.title
+      ? `${pageData.title} | Catapult`
+      : 'Catapult — SSH Deployment for Node.js'
+
+    const description = (pageData.frontmatter.description as string | undefined) || siteDescription
+
+    const slug = pageData.relativePath.replace(/index\.md$/, '').replace(/\.md$/, '')
+    const url = slug ? `${siteUrl}/${slug}` : siteUrl
+
+    head.push(['link', { rel: 'canonical', href: url }])
+    head.push(['meta', { property: 'og:url', content: url }])
+    head.push(['meta', { property: 'og:title', content: title }])
+    head.push(['meta', { property: 'og:description', content: description }])
+    head.push(['meta', { name: 'twitter:title', content: title }])
+    head.push(['meta', { name: 'twitter:description', content: description }])
+
+    return head
+  },
   themeConfig: {
     nav: [
       { text: 'Home', link: '/' },
