@@ -15,6 +15,7 @@ Full docs: https://catapultjs.com/guide/recipes
 | `recipes/adonisjs_local` | Yes | AdonisJS, build locally, upload artifact |
 | `recipes/adonisjs` | No (pair with `git` or `rsync`) | AdonisJS, build on the server |
 | `recipes/nextjs` | No (pair with `git` or `rsync`) | Next.js, build on the server |
+| `recipes/nextjs_static` | Uses default SCP; `rsync` optional | Static Next.js export, build locally |
 | `recipes/nuxt` | No (pair with `git` or `rsync`) | Nuxt, build on the server |
 | `recipes/directus` | No (pair with `git` or `rsync`) | Directus, migrations and schema snapshots |
 | `recipes/pm2` | No | Process management (add to any stack) |
@@ -234,6 +235,45 @@ Enable standalone output in `next.config.*`:
 ```typescript
 export default {
   output: 'standalone',
+}
+```
+
+---
+
+## `recipes/nextjs_static`
+
+```typescript
+import '@catapultjs/deploy/recipes/nextjs_static'
+```
+
+Local build for static Next.js export. Sets `source_path` to `./out/.` and runs `next build` before the remote lock step.
+
+Uses the built-in `deploy:update_code` task by default, which transfers `source_path` via SCP. Import `rsync` only if rsync-based transfers are preferred.
+
+| Task | Inserted | Description |
+| --- | --- | --- |
+| `deploy:build` | before `deploy:lock` | Runs `next build` locally |
+
+| Key | Type | Default | Description |
+| --- | --- | --- | --- |
+| `source_path` | `string` | `'./out/.'` | Local static export directory to transfer |
+
+```typescript
+import '@catapultjs/deploy/recipes/nextjs_static'
+```
+
+Optional rsync transfer:
+
+```typescript
+import '@catapultjs/deploy/recipes/nextjs_static'
+import '@catapultjs/deploy/recipes/rsync'
+```
+
+Enable static export in `next.config.*`:
+
+```typescript
+export default {
+  output: 'export',
 }
 ```
 
