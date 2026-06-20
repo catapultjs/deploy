@@ -1,16 +1,9 @@
 /**
  * TYPE: remote-build
  * DESCRIPTION:
- * This recipe builds and deploys an AdonisJS app directly on the remote server.
+ * This recipe builds and deploys a Next.js app directly on the remote server.
  */
-import type {} from '../src/types.ts'
-import { task, desc, run, get, set, cd, after, pmExec, linkSharedPaths } from '../index.ts'
-
-declare module '../src/types.ts' {
-  interface TaskRegistry {
-    'nuxt:generate': true
-  }
-}
+import { task, desc, run, get, set, cd, after, pmExec } from '../index.ts'
 
 set('shared_files', ['.env'])
 set('nextjs_path', get('source_path', ''))
@@ -21,15 +14,14 @@ task('deploy:build', () => {
   const nextjsPath = get<string>('nextjs_path')
   cd(`{{release_path}}/${nextjsPath}`)
   run(`${pmExec('next')} build`)
-})
-
-desc('Symlinks shared directories and files into the release')
-task('deploy:shared', () => {
-  linkSharedPaths('{{release_path}}')
 
   const nextjsOutPath = get<string>('nextjs_out_path')
-  run(`ln -sfn {{release_path}}/public {{current_path}}/${nextjsOutPath}`)
-  run(`ln -sfn {{release_path}}/.next/static {{current_path}}/${nextjsOutPath}.next/`)
+  run(`
+    if [ -d {{release_path}}/${nextjsOutPath} ]; then
+      ln -sfn {{release_path}}/public {{release_path}}/${nextjsOutPath}
+      ln -sfn {{release_path}}/.next/static {{release_path}}/${nextjsOutPath}.next/
+    fi
+  `)
 })
 
 after('deploy:update_code', 'deploy:install')
