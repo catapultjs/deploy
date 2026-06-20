@@ -1,8 +1,13 @@
-import { defineConfig, set } from '@catapultjs/deploy'
+import { defineConfig, task, upload } from '@catapultjs/deploy'
+// import '@catapultjs/deploy/recipes/git'
+import '@catapultjs/deploy/recipes/rsync'
 import '@catapultjs/deploy/recipes/astro'
-// import '@catapultjs/deploy/recipes/rsync'
+import '@catapultjs/deploy/recipes/pm2'
 
-// set('source_path', './dist/.')
+// For local development
+task('up', () => {
+  upload('../../catapultjs-deploy-0.10.0.tgz', './')
+})
 
 export default defineConfig({
   keepReleases: 2,
