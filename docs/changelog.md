@@ -7,13 +7,15 @@ description: Catapult changelog — release history and notable changes.
 ## 0.11.0
 
 - Added `recipes/nestjs` — wires the standard `deploy:install` and `deploy:build` tasks for NestJS apps built on the remote server, with `.env` shared by default
+- Added `recipes/tanstack` — wires the standard remote install/build pipeline for TanStack Start apps, with `.env` shared by default
 - Added `recipes/nextjs` — builds Next.js on the remote server and prepares standalone output by symlinking `public` and `.next/static` into `.next/standalone/` when present
 - Added `recipes/nextjs_static` — runs `next build` locally for static export deployments and sets `source_path` to `./out/.`
 - Added `recipes/nuxt_static` — runs `nuxt generate` locally and sets `source_path` to `./.output/public/.`
 - Added `recipes/astro_static` — replaces the previous local-build Astro recipe for static sites, running `astro build --mode <astro_mode>` locally and deploying `./dist/.`
 - Refactored `recipes/astro` into a remote-build recipe for standalone Astro server apps; static Astro deployments should now use `recipes/astro_static`
+- Fixed `recipes/pm2` display tasks — `pm2:logs` and `pm2:show` now read `ecosystem.config.cjs` from the current remote release instead of the local working directory
 - Static local-build recipes now rely on the built-in SCP-based `deploy:update_code` by default; `recipes/rsync` remains optional when rsync transfers are preferred
-- Recipe docs and the bundled `catapultjs` agent skill reference now cover the new NestJS, Next.js, Nuxt static, Astro standalone, and Astro static recipes
+- Recipe docs and the bundled `catapultjs` agent skill reference now cover the new NestJS, TanStack Start, Next.js, Nuxt static, Astro standalone, and Astro static recipes, including PM2 runtime examples and upstream hosting/output references
 
 > Released at 2026-06-20
 
