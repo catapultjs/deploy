@@ -5,7 +5,7 @@ author: Jérémy Chaufourier
 description: A step-by-step walkthrough for deploying an AdonisJS application to a VPS using Catapult, the git recipe and PM2 for process management.
 ---
 
-# Deploying an AdonisJS application with PM2 and Catapult
+# Deploying an AdonisJS application with PM2 and CatapultJS
 
 This guide walks through a production-ready deployment setup for an AdonisJS application: versioned releases on a VPS, PM2 for process management, and automatic rollback on failure.
 

@@ -106,3 +106,14 @@
   --vp-nav-bg-color: #1a1b2e;
   --vp-sidebar-bg-color: #1a1b2e;
 }
+
+/**
+ * Blog
+ * -------------------------------------------------------------------------- */
+
+.blog-post-meta {
+  max-width: 688px;
+  margin: 0 auto 20px;
+  color: var(--vp-c-text-3);
+  font-size: 0.92rem;
+}
