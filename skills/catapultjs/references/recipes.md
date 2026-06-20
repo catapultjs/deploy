@@ -14,6 +14,7 @@ Full docs: https://catapultjs.com/guide/recipes
 | `recipes/vitepress` | Yes | VitePress site, build locally, upload dist |
 | `recipes/adonisjs_local` | Yes | AdonisJS, build locally, upload artifact |
 | `recipes/adonisjs` | No (pair with `git` or `rsync`) | AdonisJS, build on the server |
+| `recipes/nextjs` | No (pair with `git` or `rsync`) | Next.js, build on the server |
 | `recipes/nuxt` | No (pair with `git` or `rsync`) | Nuxt, build on the server |
 | `recipes/directus` | No (pair with `git` or `rsync`) | Directus, migrations and schema snapshots |
 | `recipes/pm2` | No | Process management (add to any stack) |
@@ -198,6 +199,42 @@ Remote build. Does not override `deploy:update_code` — pair with `git` or `rsy
 ```typescript
 set('nuxt_path', 'apps/web')
 import '@catapultjs/deploy/recipes/nuxt'
+```
+
+---
+
+## `recipes/nextjs`
+
+```typescript
+import '@catapultjs/deploy/recipes/nextjs'
+```
+
+Remote build. Does not override `deploy:update_code` — pair with `git` or `rsync`.
+
+After `next build`, the recipe symlinks `public` and `.next/static` into `.next/standalone/` when the standalone output directory exists.
+
+| Task | Inserted | Description |
+| --- | --- | --- |
+| `deploy:build` | after `deploy:shared` | Runs `next build` and prepares standalone output symlinks |
+
+| Key | Type | Default | Description |
+| --- | --- | --- | --- |
+| `shared_files` | `string[]` | `['.env']` | Symlinked into each release |
+| `nextjs_path` | `string` | `''` | Sub-path to the Next.js app (monorepo) |
+| `nextjs_out_path` | `string` | `'.next/standalone/'` | Standalone output path receiving `public` and `.next/static` symlinks |
+| `source_path` | `string` | `''` | Used as default for `nextjs_path` |
+
+```typescript
+set('nextjs_path', 'apps/web')
+import '@catapultjs/deploy/recipes/nextjs'
+```
+
+Enable standalone output in `next.config.*`:
+
+```typescript
+export default {
+  output: 'standalone',
+}
 ```
 
 ---
