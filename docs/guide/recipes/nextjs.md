@@ -49,3 +49,24 @@ const nextConfig = {
 
 export default nextConfig
 ```
+
+Next.js creates `.next/standalone/server.js` for standalone deployments. It does not copy `public` or `.next/static` into the standalone directory by default; this recipe links them into the standalone output after the build so the generated server can serve them.
+
+For PM2, use the standalone server entry from the active release:
+
+```javascript
+const path = require('path')
+const deployPath = '/home/deploy/myapp'
+
+module.exports = {
+  apps: [
+    {
+      name: 'next',
+      cwd: path.join(deployPath, 'current'),
+      script: '.next/standalone/server.js',
+    },
+  ],
+}
+```
+
+See Next.js' [`output: 'standalone'` documentation](https://nextjs.org/docs/pages/api-reference/config/next-config-js/output) for the upstream standalone output details.

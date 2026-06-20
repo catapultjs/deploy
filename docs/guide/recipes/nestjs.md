@@ -40,3 +40,22 @@ npm run build
 ```
 
 The exact package manager command follows your Catapult `packageManager` configuration.
+
+For PM2, use the compiled NestJS entry from the active release:
+
+```javascript
+const path = require('path')
+const deployPath = '/home/deploy/myapp'
+
+module.exports = {
+  apps: [
+    {
+      name: 'nest',
+      cwd: path.join(deployPath, 'current'),
+      script: 'dist/main.js',
+      instances: 1,
+      exec_mode: 'cluster',
+    },
+  ],
+}
+```

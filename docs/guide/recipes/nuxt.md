@@ -38,6 +38,23 @@ set('nuxt_path', 'apps/web')
 import '@catapultjs/deploy/recipes/nuxt'
 ```
 
+For PM2, use the Nitro server entry from the active release:
+
+```javascript
+const path = require('path')
+const deployPath = '/home/deploy/myapp'
+
+module.exports = {
+  apps: [
+    {
+      name: 'nuxt',
+      cwd: path.join(deployPath, 'current'),
+      script: '.output/server/index.mjs',
+    },
+  ],
+}
+```
+
 Run the static generation task manually:
 
 ```bash
