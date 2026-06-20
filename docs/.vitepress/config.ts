@@ -124,6 +124,7 @@ export default defineConfig({
                 { text: 'adonisjs', link: '/guide/recipes/adonisjs' },
                 { text: 'adonisjs_local', link: '/guide/recipes/adonisjs_local' },
                 { text: 'directus', link: '/guide/recipes/directus' },
+                { text: 'nestjs', link: '/guide/recipes/nestjs' },
                 { text: 'nextjs', link: '/guide/recipes/nextjs' },
                 { text: 'nextjs_static', link: '/guide/recipes/nextjs_static' },
                 { text: 'nuxt', link: '/guide/recipes/nuxt' },
