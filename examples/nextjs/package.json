@@ -14,7 +14,7 @@
     "react-dom": "19.2.4"
   },
   "devDependencies": {
-    "@catapultjs/deploy": "^0.10.0",
+    "@catapultjs/deploy": "file:../../catapultjs-deploy-0.10.0.tgz",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",

@@ -6,7 +6,7 @@ module.exports = {
     {
       name: 'next',
       cwd: path.join(deployPath, 'current'),
-      script: './node_modules/.bin/next',
+      script: '.next/standalone/server.js',
       args: 'start',
       instances: 1,
       exec_mode: 'cluster',
