@@ -10,7 +10,8 @@ Full docs: https://catapultjs.com/guide/recipes
 | --- | --- | --- |
 | `recipes/git` | Yes | Server can reach the repo; build runs on the server |
 | `recipes/rsync` | Yes | Local build, push artifacts via rsync |
-| `recipes/astro` | Yes | Astro site, build locally, upload dist |
+| `recipes/astro` | No (pair with `git` or `rsync`) | Astro, build on the server |
+| `recipes/astro_static` | Uses default SCP; `rsync` optional | Static Astro site, build locally |
 | `recipes/vitepress` | Yes | VitePress site, build locally, upload dist |
 | `recipes/adonisjs_local` | Yes | AdonisJS, build locally, upload artifact |
 | `recipes/adonisjs` | No (pair with `git` or `rsync`) | AdonisJS, build on the server |
@@ -73,25 +74,70 @@ import '@catapultjs/deploy/recipes/rsync'
 import '@catapultjs/deploy/recipes/astro'
 ```
 
-Builds locally before the lock step, then uploads the output via SCP. Does not run `astro build` on the server.
+Remote build. Does not override `deploy:update_code` — pair with `git` or `rsync`.
+
+| Task | Inserted | Description |
+| --- | --- | --- |
+| `deploy:install` | after `deploy:update_code` | Installs dependencies in the release |
+| `deploy:build` | after `deploy:shared` | Runs `astro build` on the server |
+
+| Key | Type | Default | Description |
+| --- | --- | --- | --- |
+| `astro_path` | `string` | `''` | Sub-path to the Astro app (monorepo) |
+| `source_path` | `string` | `''` | Used as default for `astro_path` |
+
+```typescript
+set('astro_path', 'apps/web')
+import '@catapultjs/deploy/recipes/astro'
+```
+
+Enable standalone server output in `astro.config.mjs`:
+
+```typescript
+import { defineConfig } from 'astro/config'
+import node from '@astrojs/node'
+
+export default defineConfig({
+  output: 'server',
+  adapter: node({
+    mode: 'standalone',
+  }),
+})
+```
+
+---
+
+## `recipes/astro_static`
+
+```typescript
+import '@catapultjs/deploy/recipes/astro_static'
+```
+
+Local build for static Astro sites. Sets `source_path` to `./dist/.` and runs `astro build --mode <astro_mode>` before the remote lock step.
+
+Uses the built-in `deploy:update_code` task by default, which transfers `source_path` via SCP. Import `rsync` only if rsync-based transfers are preferred. Do not combine with `git`.
 
 | Task | Inserted | Description |
 | --- | --- | --- |
 | `deploy:build` | before `deploy:lock` | Runs `astro build --mode <astro_mode>` locally |
-| `deploy:update_code` | — | Uploads the generated directory to `releases/<release>` via SCP |
 
 | Key | Type | Default | Description |
 | --- | --- | --- | --- |
 | `astro_mode` | `string \| Record<string, string>` | `'production'` | Build mode. String = same for all hosts; object = per host name |
-| `source_path` | `string` | `'./dist/.'` | Local directory uploaded after the build |
+| `source_path` | `string` | `'./dist/.'` | Local static output directory to transfer |
 
 ```typescript
 // Per-host modes
 set('astro_mode', { production: 'production', staging: 'staging' })
-import '@catapultjs/deploy/recipes/astro'
+import '@catapultjs/deploy/recipes/astro_static'
 ```
 
-To use rsync instead of SCP for the upload, import both `astro` and `rsync` — `astro` provides `deploy:build`, `rsync` overrides `deploy:update_code`. Do not combine with `git`.
+Optional rsync transfer:
+
+```typescript
+import '@catapultjs/deploy/recipes/astro_static'
+import '@catapultjs/deploy/recipes/rsync'
+```
 
 ---
 
