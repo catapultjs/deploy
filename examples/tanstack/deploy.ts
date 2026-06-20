@@ -1,11 +1,16 @@
-import { defineConfig, after } from '@catapultjs/deploy'
-import '@catapultjs/deploy/recipes/git'
+import { defineConfig, task, upload } from '@catapultjs/deploy'
+// import '@catapultjs/deploy/recipes/git'
+import '@catapultjs/deploy/recipes/rsync'
+import '@catapultjs/deploy/recipes/tanstack'
 import '@catapultjs/deploy/recipes/pm2'
 
-after('deploy:update_code', 'deploy:install')
-after('deploy:install', 'deploy:build')
+// For local development
+task('up', () => {
+  upload('../../catapultjs-deploy-0.10.0.tgz', './')
+})
 
 export default defineConfig({
+  keepReleases: 2,
   hosts: [
     {
       name: 'production',

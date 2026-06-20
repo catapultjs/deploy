@@ -1,19 +1,14 @@
-const path = require('node:path')
-
-const current = path.resolve(__dirname, '..', 'current')
+const path = require('path')
+const deployPath = '/home/deploy/deploy-tanstack'
 
 module.exports = {
   apps: [
     {
       name: 'tanstack',
-      script: path.join(current, '.output', 'server', 'index.mjs'),
-      cwd: current,
+      cwd: path.join(deployPath, 'current'),
+      script: '.output/server/index.mjs',
       instances: 1,
-      exec_mode: 'fork',
-      env: {
-        NODE_ENV: 'production',
-        PORT: 3000,
-      },
+      exec_mode: 'cluster',
     },
   ],
 }

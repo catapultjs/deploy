@@ -6,14 +6,9 @@ module.exports = {
     {
       name: 'nest',
       cwd: path.join(deployPath, 'current'),
-      script: 'node',
-      args: 'dist/main.js',
+      script: 'dist/main.js',
       instances: 1,
-      exec_mode: 'fork',
-      env: {
-        NODE_ENV: 'production',
-        PORT: 3000,
-      },
+      exec_mode: 'cluster',
     },
   ],
 };
