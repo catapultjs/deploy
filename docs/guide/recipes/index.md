@@ -15,6 +15,7 @@ Recipes are importable modules that register tasks and insert them into the pipe
 | [adonisjs_local](./adonisjs_local) | AdonisJS local build plus artifact upload            |
 | [directus](./directus)         | Directus schema and database tasks                       |
 | [nextjs](./nextjs)             | Next.js remote build with standalone output symlinks     |
+| [nextjs_static](./nextjs_static) | Next.js static export with local build                 |
 | [nuxt](./nuxt)                 | Nuxt build and static generation tasks                   |
 | [pm2](./pm2)                   | Process management with PM2                              |
 | [redis](./redis)               | Flush one, many, or all Redis databases                  |
