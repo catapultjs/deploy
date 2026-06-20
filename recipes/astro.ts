@@ -1,18 +1,18 @@
 /**
- * TYPE: local-build
+ * TYPE: remote-build
  * DESCRIPTION:
- * This recipe builds a local project then transfers files to a remote server using scp.
+ * This recipe builds and deploys a standalone Astro server app on the remote server.
  */
-import { type TaskContext, task, desc, local, get, set, before } from '../index.ts'
-import { resolveHostStringValue } from '../src/utils.ts'
+import { task, desc, cd, run, get, set, after, pmExec } from '../index.ts'
 
-set('astro_mode', 'production')
-set('source_path', './dist/.')
+set('astro_path', get('source_path', ''))
 
-desc('Builds the Astro application locally')
-task('deploy:build', async ({ host }: TaskContext) => {
-  const mode = resolveHostStringValue(get('astro_mode'), host, 'astro_mode')
-  await local(`astro build --mode ${mode}`)
+desc('Builds the Astro application on the remote server')
+task('deploy:build', () => {
+  const astroPath = get<string>('astro_path')
+  cd(`{{release_path}}/${astroPath}`)
+  run(`${pmExec('astro')} build`)
 })
 
-before('deploy:lock', 'deploy:build')
+after('deploy:update_code', 'deploy:install')
+after('deploy:shared', 'deploy:build')
