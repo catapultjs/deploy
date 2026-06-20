@@ -1,5 +1,4 @@
 import type {} from '../src/types.ts'
-import { createRequire } from 'node:module'
 import { type TaskContext, task, desc, cd, run, after, onStatus, bin } from '../index.ts'
 import { ssh, q } from '../src/utils.ts'
 
@@ -67,12 +66,14 @@ task('pm2:delete', async () => {
 
 desc('Displays the last 50 lines of logs for all apps')
 task('pm2:logs', async ({ host, paths, logger }: TaskContext) => {
-  const require = createRequire(import.meta.url)
-  const ecosystem = require(process.cwd() + '/ecosystem.config.cjs')
-  const names = (ecosystem?.apps ?? []).map((a: { name: string }) => a.name).join(' ')
   const { stdout } = await ssh(
     host,
-    `set -e\ncd ${q(paths.current)}\n${bin('pm2')} logs ${names} --nostream --lines 50`,
+    `
+    set -e
+    cd ${q(paths.current)}
+    names=$(${bin('node')} -e "const e=require('./ecosystem.config.cjs'); console.log((e.apps||[]).map((a)=>a.name).join(' '))")
+    ${bin('pm2')} logs $names --nostream --lines 50
+  `,
     { color: true }
   )
   logger.log(stdout.trim())
@@ -88,19 +89,19 @@ task('pm2:list', async ({ host, paths, logger }: TaskContext) => {
 
 desc('Shows detailed info for each app in ecosystem.config.cjs')
 task('pm2:show', async ({ host, paths, logger }: TaskContext) => {
-  const require = createRequire(import.meta.url)
-  const ecosystem = require(process.cwd() + '/ecosystem.config.cjs')
-  const names = (ecosystem?.apps ?? []).map((a: { name: string }) => a.name)
-  for (const name of names) {
-    const { stdout } = await ssh(
-      host,
-      `set -e\ncd ${q(paths.current)}\n${bin('pm2')} show ${q(name)}`,
-      {
-        color: true,
-      }
-    )
-    logger.log(stdout.trim())
-  }
+  const { stdout } = await ssh(
+    host,
+    `
+    set -e
+    cd ${q(paths.current)}
+    names=$(${bin('node')} -e "const e=require('./ecosystem.config.cjs'); console.log((e.apps||[]).map((a)=>a.name).join(' '))")
+    for name in $names; do
+      ${bin('pm2')} show "$name"
+    done
+  `,
+    { color: true }
+  )
+  logger.log(stdout.trim())
 })
 
 after('deploy:publish', 'pm2:startOrReload')
