@@ -1,5 +1,5 @@
 ---
-description: Build an Astro application on your local machine, then upload the generated artifacts with the Catapult astro recipe.
+description: Build an Astro application on the server with the Catapult astro recipe.
 ---
 
 # `recipes/astro`
@@ -10,71 +10,44 @@ description: Build an Astro application on your local machine, then upload the g
 import '@catapultjs/deploy/recipes/astro'
 ```
 
-This recipe builds the Astro application locally before deployment, then uploads the generated files to the target server. The remote host receives the built output from `source_path`; it does not run `astro build` itself.
+This recipe runs the Astro build on the server. It does not override `deploy:update_code`, so combine it with a transfer recipe such as `git` or `rsync`.
 
 See the [example Astro project](https://github.com/catapultjs/deploy/tree/main/examples/astro) for a complete setup, or go directly to [deploy.js](https://github.com/catapultjs/deploy/blob/main/examples/astro/deploy.js).
 
 **Tasks**
 
-| Task                 | Inserted             | Description |
-| -------------------- | -------------------- | ----------- |
-| `deploy:build`       | before `deploy:lock` | Runs `astro build --mode <astro_mode>` on the local machine |
-| `deploy:update_code` | —                    | Overrides the built-in task and uploads the generated directory to `releases/<release>` via SCP |
+| Task             | Inserted                   | Description                                            |
+| ---------------- | -------------------------- | ------------------------------------------------------ |
+| `deploy:install` | after `deploy:update_code` | Installs dependencies in the release                   |
+| `deploy:build`   | after `deploy:shared`      | Overrides the built-in build task and runs `astro build` |
+
+The recipe runs the build command from `{{release_path}}/{{astro_path}}`.
 
 **Configuration**
 
-| Key           | Type                              | Default        | Description |
-| ------------- | --------------------------------- | -------------- | ----------- |
-| `astro_mode`  | `string \| Record<string, string>` | `'production'` | Astro build mode. Can be set globally or per host |
-| `source_path` | `string`                          | `'./dist/.'`     | Directory uploaded after the local build |
-
-`astro_mode` is passed directly to `astro build --mode ...`. This controls which Astro environment files are loaded during the build. For example, `production` loads the production environment, while `staging` lets you build with a dedicated `.env.staging` file.
-
-If you use environment-specific variables, choose an `astro_mode` that matches your Astro setup. See [Setting environment variables](https://docs.astro.build/en/guides/environment-variables/#setting-environment-variables) in the Astro documentation for the supported file names and loading rules.
-
-Use a single mode for all hosts:
+| Key           | Type     | Default | Description                                    |
+| ------------- | -------- | ------- | ---------------------------------------------- |
+| `astro_path`  | `string` | `''`    | Sub-path to the Astro app within the repository |
+| `source_path` | `string` | `''`    | Used as the default value for `astro_path`      |
 
 ```typescript
-import { defineConfig, set } from '@catapultjs/deploy'
-import '@catapultjs/deploy/recipes/astro'
+import { set } from '@catapultjs/deploy'
 
-set('astro_mode', 'production')
-// set('source_path', './dist/.')
+set('astro_path', 'apps/web')
+import '@catapultjs/deploy/recipes/astro'
+```
+
+For standalone server output, make sure your Astro config uses the Node adapter in standalone mode:
+
+```typescript
+import { defineConfig } from 'astro/config'
+import node from '@astrojs/node'
 
 export default defineConfig({
-  hosts: [
-    {
-      name: 'production',
-      ssh: 'deploy@example.com',
-      deployPath: '/home/deploy/myapp',
-    },
-  ],
+  adapter: node({
+    mode: 'standalone',
+  }),
 })
 ```
 
-Or define a different mode per host:
-
-```typescript
-set('astro_mode', {
-  production: 'production',
-  staging: 'staging',
-})
-```
-
-In the object form, each key must match a Catapult host `name`, and each value is the Astro mode used when deploying that host.
-
-| Host `name`  | `astro_mode` value | Build command |
-| ------------ | ------------------ | ------------- |
-| `production` | `production`       | `astro build --mode production` |
-| `staging`    | `staging`          | `astro build --mode staging` |
-
-This means Catapult selects the mode from the current host name before running the local Astro build.
-
-If you want to keep the local Astro build but replace the default SCP upload with `rsync`, import the `astro` and `rsync` recipes together. In that setup, `astro` still provides `deploy:build`, and `rsync` overrides `deploy:update_code`.
-
-```typescript
-import '@catapultjs/deploy/recipes/astro'
-import '@catapultjs/deploy/recipes/rsync'
-```
-
-This should not be combined with the `git` recipe. The purpose of `astro` recipe is to build the project locally and deploy the generated artifacts, whereas `git` deploys the repository itself and expects the application to be built from the checked-out source on the server.
+For static Astro sites built locally, use [`recipes/astro_static`](./astro_static).

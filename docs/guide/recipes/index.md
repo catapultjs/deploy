@@ -8,7 +8,8 @@ Recipes are importable modules that register tasks and insert them into the pipe
 
 | Recipe                         | Description                                              |
 | ------------------------------ | -------------------------------------------------------- |
-| [astro](./astro)               | Build locally with Astro and upload artifacts            |
+| [astro](./astro)               | Astro remote build for server output                     |
+| [astro_static](./astro_static) | Astro static site with local build                       |
 | [git](./git)                   | Clone the repository and log revisions                   |
 | [rsync](./rsync)               | Transfer files via rsync                                 |
 | [adonisjs](./adonisjs)         | AdonisJS-specific deployment steps with remote build     |
