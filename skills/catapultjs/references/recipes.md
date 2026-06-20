@@ -23,6 +23,7 @@ Full docs: https://catapultjs.com/guide/recipes
 | `recipes/directus` | No (pair with `git` or `rsync`) | Directus, migrations and schema snapshots |
 | `recipes/pm2` | No | Process management (add to any stack) |
 | `recipes/redis` | No | Redis cache flush (add to any stack) |
+| `recipes/tanstack` | No (pair with `git` or `rsync`) | TanStack Start, build on the server |
 
 ---
 
@@ -251,6 +252,76 @@ import '@catapultjs/deploy/recipes/nestjs'
 import '@catapultjs/deploy/recipes/pm2'
 ```
 
+PM2 entry:
+
+```javascript
+{
+  name: 'nest',
+  cwd: path.join(deployPath, 'current'),
+  script: 'node',
+  args: 'dist/main.js',
+}
+```
+
+---
+
+## `recipes/tanstack`
+
+```typescript
+import '@catapultjs/deploy/recipes/tanstack'
+```
+
+Remote build for TanStack Start applications. Does not override `deploy:update_code` — pair with `git` or `rsync`.
+
+Uses the default Node.js install/build tasks: install dependencies in `{{release_path}}`, then run the package manager build script. `.env` is shared by default.
+
+For Vite-based TanStack Start deployments on Node.js, use Nitro with the `node-server` preset and start the generated `.output/server/index.mjs` file.
+
+| Task | Inserted | Description |
+| --- | --- | --- |
+| `deploy:install` | after `deploy:update_code` | Installs dependencies in the release |
+| `deploy:build` | after `deploy:install` | Runs the default `deploy:build` task (`<pm> run build`) |
+
+| Key | Type | Default | Description |
+| --- | --- | --- | --- |
+| `shared_files` | `string[]` | `['.env']` | Symlinked into each release |
+
+```typescript
+// vite.config.ts
+import { defineConfig } from 'vite'
+import { tanstackStart } from '@tanstack/react-start/plugin/vite'
+import { nitro } from 'nitro/vite'
+import viteReact from '@vitejs/plugin-react'
+
+export default defineConfig({
+  plugins: [tanstackStart(), nitro({ preset: 'node-server' }), viteReact()],
+})
+```
+
+```json
+{
+  "scripts": {
+    "build": "vite build",
+    "start": "node .output/server/index.mjs"
+  }
+}
+```
+
+PM2 environment should pass host/port explicitly:
+
+```javascript
+env: {
+  NODE_ENV: 'production',
+  HOST: '0.0.0.0',
+  HOSTNAME: '0.0.0.0',
+  NITRO_HOST: '0.0.0.0',
+  PORT: 3000,
+  NITRO_PORT: 3000,
+}
+```
+
+Upstream hosting docs: https://tanstack.com/start/latest/docs/framework/react/guide/hosting#nodejs--docker
+
 ---
 
 ## `recipes/nuxt`
@@ -275,6 +346,16 @@ Remote build. Does not override `deploy:update_code` — pair with `git` or `rsy
 ```typescript
 set('nuxt_path', 'apps/web')
 import '@catapultjs/deploy/recipes/nuxt'
+```
+
+PM2 entry:
+
+```javascript
+{
+  name: 'nuxt',
+  cwd: path.join(deployPath, 'current'),
+  script: '.output/server/index.mjs',
+}
 ```
 
 For static Nuxt sites generated locally, use `recipes/nuxt_static`.
@@ -345,6 +426,20 @@ export default {
   output: 'standalone',
 }
 ```
+
+Next.js creates `.next/standalone/server.js` for standalone deployments. It does not copy `public` or `.next/static` into the standalone directory by default; this recipe links them into the standalone output after the build.
+
+PM2 entry:
+
+```javascript
+{
+  name: 'next',
+  cwd: path.join(deployPath, 'current'),
+  script: '.next/standalone/server.js',
+}
+```
+
+Upstream output docs: https://nextjs.org/docs/pages/api-reference/config/next-config-js/output
 
 ---
 
