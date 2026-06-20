@@ -4,6 +4,19 @@ description: Catapult changelog — release history and notable changes.
 
 # Changelog
 
+## 0.11.0
+
+- Added `recipes/nestjs` — wires the standard `deploy:install` and `deploy:build` tasks for NestJS apps built on the remote server, with `.env` shared by default
+- Added `recipes/nextjs` — builds Next.js on the remote server and prepares standalone output by symlinking `public` and `.next/static` into `.next/standalone/` when present
+- Added `recipes/nextjs_static` — runs `next build` locally for static export deployments and sets `source_path` to `./out/.`
+- Added `recipes/nuxt_static` — runs `nuxt generate` locally and sets `source_path` to `./.output/public/.`
+- Added `recipes/astro_static` — replaces the previous local-build Astro recipe for static sites, running `astro build --mode <astro_mode>` locally and deploying `./dist/.`
+- Refactored `recipes/astro` into a remote-build recipe for standalone Astro server apps; static Astro deployments should now use `recipes/astro_static`
+- Static local-build recipes now rely on the built-in SCP-based `deploy:update_code` by default; `recipes/rsync` remains optional when rsync transfers are preferred
+- Recipe docs and the bundled `catapultjs` agent skill reference now cover the new NestJS, Next.js, Nuxt static, Astro standalone, and Astro static recipes
+
+> Released at 2026-06-20
+
 ## 0.10.0
 
 - Added programmatic API — `new Catapult(config)` from `@catapultjs/deploy` exposes `deploy()`, `rollback()`, `setup()`, `status()`, `task()`, `listReleases()`, `listRevisions()`, `listTasks()` and `pipeline()`, with `task:start` / `task:done` / `task:error` / `host:done` events; `task()` captures and returns the logger output of display tasks like `pm2:logs`
