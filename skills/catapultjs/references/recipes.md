@@ -18,6 +18,7 @@ Full docs: https://catapultjs.com/guide/recipes
 | `recipes/nextjs` | No (pair with `git` or `rsync`) | Next.js, build on the server |
 | `recipes/nextjs_static` | Uses default SCP; `rsync` optional | Static Next.js export, build locally |
 | `recipes/nuxt` | No (pair with `git` or `rsync`) | Nuxt, build on the server |
+| `recipes/nuxt_static` | Uses default SCP; `rsync` optional | Static Nuxt site, generate locally |
 | `recipes/directus` | No (pair with `git` or `rsync`) | Directus, migrations and schema snapshots |
 | `recipes/pm2` | No | Process management (add to any stack) |
 | `recipes/redis` | No | Redis cache flush (add to any stack) |
@@ -246,6 +247,39 @@ Remote build. Does not override `deploy:update_code` — pair with `git` or `rsy
 ```typescript
 set('nuxt_path', 'apps/web')
 import '@catapultjs/deploy/recipes/nuxt'
+```
+
+For static Nuxt sites generated locally, use `recipes/nuxt_static`.
+
+---
+
+## `recipes/nuxt_static`
+
+```typescript
+import '@catapultjs/deploy/recipes/nuxt_static'
+```
+
+Local generation for static Nuxt sites. Sets `source_path` to `./.output/public/.` and runs `nuxt generate` before the remote lock step.
+
+Uses the built-in `deploy:update_code` task by default, which transfers `source_path` via SCP. Import `rsync` only if rsync-based transfers are preferred. Do not combine with `git`.
+
+| Task | Inserted | Description |
+| --- | --- | --- |
+| `deploy:build` | before `deploy:lock` | Runs `nuxt generate` locally |
+
+| Key | Type | Default | Description |
+| --- | --- | --- | --- |
+| `source_path` | `string` | `'./.output/public/.'` | Local generated output directory to transfer |
+
+```typescript
+import '@catapultjs/deploy/recipes/nuxt_static'
+```
+
+Optional rsync transfer:
+
+```typescript
+import '@catapultjs/deploy/recipes/nuxt_static'
+import '@catapultjs/deploy/recipes/rsync'
 ```
 
 ---
