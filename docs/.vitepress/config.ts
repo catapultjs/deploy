@@ -131,6 +131,7 @@ export default defineConfig({
                 { text: 'nuxt_static', link: '/guide/recipes/nuxt_static' },
                 { text: 'pm2', link: '/guide/recipes/pm2' },
                 { text: 'redis', link: '/guide/recipes/redis' },
+                { text: 'tanstack', link: '/guide/recipes/tanstack' },
                 { text: 'vitepress', link: '/guide/recipes/vitepress' },
               ],
             },
