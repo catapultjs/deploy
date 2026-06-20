@@ -1,5 +1,5 @@
 import type {} from '../../src/types.ts'
-import { task, desc } from '../../index.ts'
+import { type TaskContext, task, desc, get, upload } from '../../index.ts'
 
 declare module '../../src/types.ts' {
   interface TaskRegistry {
@@ -8,6 +8,7 @@ declare module '../../src/types.ts' {
 }
 
 desc('Method for updating code')
-task('deploy:update_code', () => {
-  throw new Error('Please implement this task')
+task('deploy:update_code', async ({ paths }: TaskContext) => {
+  const source = get('source_path', './.')
+  await upload(source, paths.release)
 })
