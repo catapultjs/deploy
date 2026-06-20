@@ -15,6 +15,7 @@ Full docs: https://catapultjs.com/guide/recipes
 | `recipes/vitepress` | Yes | VitePress site, build locally, upload dist |
 | `recipes/adonisjs_local` | Yes | AdonisJS, build locally, upload artifact |
 | `recipes/adonisjs` | No (pair with `git` or `rsync`) | AdonisJS, build on the server |
+| `recipes/nestjs` | No (pair with `git` or `rsync`) | NestJS, build on the server |
 | `recipes/nextjs` | No (pair with `git` or `rsync`) | Next.js, build on the server |
 | `recipes/nextjs_static` | Uses default SCP; `rsync` optional | Static Next.js export, build locally |
 | `recipes/nuxt` | No (pair with `git` or `rsync`) | Nuxt, build on the server |
@@ -222,6 +223,33 @@ Local build + artifact upload. Same `ace:*` tasks as `adonisjs`. Copies `package
 | `shared_files` | `string[]` | `['.env']` | Symlinked into each release |
 | `adonisjs_path` | `string` | `''` | Sub-path to the app (monorepo) |
 | `source_path` | `string` | `<adonisjs_path>/build/.` | Local build directory to upload |
+
+---
+
+## `recipes/nestjs`
+
+```typescript
+import '@catapultjs/deploy/recipes/nestjs'
+```
+
+Remote build for NestJS applications. Does not override `deploy:update_code` — pair with `git` or `rsync`.
+
+Uses the default Node.js install/build tasks: install dependencies in `{{release_path}}`, then run the package manager build script.
+
+| Task | Inserted | Description |
+| --- | --- | --- |
+| `deploy:install` | after `deploy:update_code` | Installs dependencies in the release |
+| `deploy:build` | after `deploy:install` | Runs the default `deploy:build` task (`<pm> run build`) |
+
+| Key | Type | Default | Description |
+| --- | --- | --- | --- |
+| `shared_files` | `string[]` | `['.env']` | Symlinked into each release |
+
+```typescript
+import '@catapultjs/deploy/recipes/git'
+import '@catapultjs/deploy/recipes/nestjs'
+import '@catapultjs/deploy/recipes/pm2'
+```
 
 ---
 
