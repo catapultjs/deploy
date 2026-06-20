@@ -7,7 +7,7 @@ declare module '../../src/types.ts' {
   }
 }
 
-desc('Method for updating code')
+desc('Uploads local artifacts to the release directory')
 task('deploy:update_code', async ({ paths }: TaskContext) => {
   const source = get('source_path', './.')
   await upload(source, paths.release)
