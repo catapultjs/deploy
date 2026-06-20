@@ -2,6 +2,27 @@
 
 The config file is auto-detected as `deploy.ts`, `deploy.js`, `deploy.config.ts` or `deploy.config.js` at the project root (override with `cata --config <path>`). It must default-export `defineConfig()`. Full reference: https://catapultjs.com/guide/api
 
+## Before creating a config
+
+If the user asks to create or configure a deployment and the repo/prompt does not provide enough information, ask for the missing deployment facts before writing files. Do not guess real production values such as SSH hostnames, deploy paths, domains, branches, or healthcheck URLs.
+
+Use project inspection first:
+
+- `package.json` scripts and dependencies identify the stack and package manager.
+- Framework config files identify variants: `next.config.*` (`standalone` vs `export`), `nuxt.config.*`, `astro.config.*`, `vite.config.*`, `adonisrc.ts`, `nest-cli.json`.
+- Existing `ecosystem.config.cjs` means `recipes/pm2` is likely wanted.
+- Existing `.env.example`, `storage/`, `uploads/`, `public/`, or app-specific folders can suggest shared paths, but confirm anything destructive or production-specific.
+
+Ask a compact set of questions for missing values:
+
+1. Which environment and server? Need host name, SSH target (`user@host`), and absolute `deployPath`.
+2. How should code reach the server? Use default SCP when uploading `source_path` is enough; choose `git` when the server can access the repository; choose `rsync` when rsync-based sync/delete behavior is preferred.
+3. Which branch or source path should deploy?
+4. Should PM2 be configured? If yes, confirm app name, start entry, port, and whether to create `ecosystem.config.cjs`.
+5. Is there a healthcheck URL and any extra shared files or directories?
+
+When the user answers, generate `deploy.ts` with the selected recipes and put `set(...)` calls before the recipe imports they configure.
+
 ```typescript
 import { defineConfig } from '@catapultjs/deploy'
 import '@catapultjs/deploy/recipes/git'
@@ -19,25 +40,32 @@ export default defineConfig({
 })
 ```
 
-## Critical rule: code delivery
+## Code delivery
 
-`defineConfig()` does not impose a deployment mode. The pipeline task `deploy:update_code` MUST be provided by exactly one recipe (or a custom task), otherwise the deploy fails. Pick one:
+Catapult registers a default `deploy:update_code` task that uploads `source_path` via SCP. Recipes can override that task when a different delivery mechanism is needed. Pick one delivery mode:
 
 | Recipe | Delivery | Use for |
 | --- | --- | --- |
+| default `deploy:update_code` | Uploads `source_path` via SCP | Simple local upload, static recipes that set `source_path` |
 | `recipes/git` | Clones the repo on the server (bare mirror in `.catapult/repo`) | Server can reach the repo, build on server |
 | `recipes/rsync` | Pushes a local directory into the release | Local builds, no repo access from server |
 | `recipes/adonisjs_local` | Builds AdonisJS locally, uploads the artifact | AdonisJS without building on the server |
-| `recipes/astro` / `recipes/vitepress` | Builds locally, uploads the static output | Static sites |
+| `recipes/vitepress` | Builds locally, uploads the static output | VitePress static sites |
 | custom `task('deploy:update_code', …)` | Whatever you implement | Anything else |
+
+Avoid combining providers that override `deploy:update_code` (`git`, `rsync`, `adonisjs_local`, `vitepress`, custom) unless intentionally replacing task behavior.
 
 ## Picking recipes by stack
 
 Inspect the project (`package.json`, lock file, config files) before choosing:
 
-- **AdonisJS**: `adonisjs` (installs and builds on the server, exposes `ace:*` migration tasks) or `adonisjs_local` (build locally, upload). Both need a delivery recipe only in the `adonisjs` case (pair it with `git`).
-- **Nuxt**: `nuxt` (exposes `deploy:build` and `nuxt:generate`), pair with `git`.
-- **Astro / VitePress**: `astro` / `vitepress` alone (they handle delivery).
+- **Next.js**: `nextjs` for standalone server builds on the server (pair with `git` or `rsync`); `nextjs_static` for static export built locally and uploaded from `./out/.` using default SCP unless `rsync` is imported.
+- **Nuxt**: `nuxt` for server builds on the server (pair with `git` or `rsync`); `nuxt_static` for local static generation uploaded from `./.output/public/.` using default SCP unless `rsync` is imported.
+- **Astro**: `astro` for standalone server builds on the server (pair with `git` or `rsync`); `astro_static` for static sites built locally and uploaded from `./dist/.` using default SCP unless `rsync` is imported.
+- **TanStack Start**: `tanstack` for server builds on the server (pair with `git` or `rsync`); configure Vite with Nitro `node-server`.
+- **NestJS**: `nestjs` wires standard install/build on the server (pair with `git` or `rsync`).
+- **AdonisJS**: `adonisjs` (installs and builds on the server, exposes `ace:*` migration tasks; pair with `git` or `rsync`) or `adonisjs_local` (build locally, upload).
+- **VitePress**: `vitepress` builds locally and uploads the static output.
 - **Process manager**: add `pm2` if the app runs under PM2 (`ecosystem.config.cjs` expected in the project). It wires restart after publish and adds `pm2:*` tasks plus a status report.
 - **Extras**: `directus` (DB migrations and schema snapshots), `redis` (`redis:db:flush*` tasks, configure with `set('redis_db', n)`).
 
@@ -159,7 +187,7 @@ Rules:
 ## Checklist
 
 1. `defineConfig()` is the default export.
-2. Exactly one provider for `deploy:update_code` is imported (or defined).
+2. Delivery mode is intentional: default SCP, or one overriding provider such as `git`, `rsync`, `adonisjs_local`, `vitepress`, or a custom `deploy:update_code`.
 3. Recipe store options (`set(…)`) match the imported recipes.
 4. Healthcheck URLs point to an endpoint reachable from the server itself.
 5. Pin the package version in `package.json` (the API is still in beta).
