@@ -1,6 +1,7 @@
 import { defineConfig, set, task, upload, after } from '@catapultjs/deploy'
 import '@catapultjs/deploy/recipes/nuxt'
 import '@catapultjs/deploy/recipes/rsync'
+import '@catapultjs/deploy/recipes/pm2'
 
 set('source_path', './')
 
@@ -16,11 +17,10 @@ set('rsync_excludes', [
   'deploy.static.ts',
 ])
 
-task('init', async () => {
-  await upload('../../catapultjs-deploy-0.6.2.tgz', '/home/deploy/deploy-nuxt')
+// For local development
+task('up', () => {
+  upload('../../catapultjs-deploy-0.10.0.tgz', './')
 })
-
-after('deploy:lock', 'init')
 
 export default defineConfig({
   keepReleases: 2,
