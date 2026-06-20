@@ -11,6 +11,7 @@ task('nuxt:generate', async () => {
 before('deploy:lock', 'nuxt:generate')
 
 export default defineConfig({
+  keepReleases: 2,
   hosts: [
     {
       name: 'production',

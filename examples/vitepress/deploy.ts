@@ -2,6 +2,7 @@ import { defineConfig } from '@catapultjs/deploy'
 import '@catapultjs/deploy/recipes/vitepress'
 
 export default defineConfig({
+  keepReleases: 2,
   hosts: [
     {
       name: 'production',

@@ -9,6 +9,7 @@ set('source_path', './build')
 remove('ace:migration:run')
 
 export default defineConfig({
+  keepReleases: 2,
   verbose: Verbose.TRACE,
   hosts: [
     {

@@ -7,6 +7,7 @@ import '@catapultjs/deploy/recipes/pm2'
 remove('ace:migration:run')
 
 export default defineConfig({
+  keepReleases: 2,
   verbose: Verbose.TRACE,
   hosts: [
     {

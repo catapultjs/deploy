@@ -3,6 +3,7 @@ import '@catapultjs/deploy/recipes/astro'
 // import '@catapultjs/deploy/recipes/pm2'
 
 const catapult = new Catapult({
+  keepReleases: 2,
   hosts: [
     {
       name: 'production',

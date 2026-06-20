@@ -31,6 +31,7 @@ set('rsync_excludes', [
 // })
 
 export default defineConfig({
+  keepReleases: 2,
   verbose: Verbose.TRACE,
   hosts: [
     {

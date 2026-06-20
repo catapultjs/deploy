@@ -23,6 +23,7 @@ task('init', async () => {
 after('deploy:lock', 'init')
 
 export default defineConfig({
+  keepReleases: 2,
   hosts: [
     {
       name: 'production',

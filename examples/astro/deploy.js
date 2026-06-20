@@ -5,6 +5,7 @@ import '@catapultjs/deploy/recipes/astro'
 // set('source_path', './dist/.')
 
 export default defineConfig({
+  keepReleases: 2,
   hosts: [
     {
       name: 'production',
