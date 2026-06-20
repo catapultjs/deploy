@@ -18,6 +18,7 @@ Recipes are importable modules that register tasks and insert them into the pipe
 | [nextjs](./nextjs)             | Next.js remote build with standalone output symlinks     |
 | [nextjs_static](./nextjs_static) | Next.js static export with local build                 |
 | [nuxt](./nuxt)                 | Nuxt build and static generation tasks                   |
+| [nuxt_static](./nuxt_static)   | Nuxt static site with local generation                   |
 | [pm2](./pm2)                   | Process management with PM2                              |
 | [redis](./redis)               | Flush one, many, or all Redis databases                  |
 | [vitepress](./vitepress)       | Build VitePress locally and upload static artifacts      |

@@ -14,7 +14,7 @@ This recipe runs `next build` locally before the remote deployment starts and se
 
 By default, Catapult transfers `source_path` with SCP through the built-in `deploy:update_code` task. You can optionally import `rsync` if you prefer rsync-based transfers.
 
-See the [example static Next.js project](https://github.com/catapultjs/deploy/tree/main/examples/nextjs_static) for a complete setup, or go directly to [deploy.ts](https://github.com/catapultjs/deploy/blob/main/examples/nextjs_static/deploy.ts).
+See the [example static Next.js project](https://github.com/catapultjs/deploy/tree/main/examples/nextjs) for a complete setup, or go directly to [deploy.ts](https://github.com/catapultjs/deploy/blob/main/examples/nextjs/deploy.static.ts).
 
 **Tasks**
 

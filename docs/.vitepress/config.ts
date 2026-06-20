@@ -127,6 +127,7 @@ export default defineConfig({
                 { text: 'nextjs', link: '/guide/recipes/nextjs' },
                 { text: 'nextjs_static', link: '/guide/recipes/nextjs_static' },
                 { text: 'nuxt', link: '/guide/recipes/nuxt' },
+                { text: 'nuxt_static', link: '/guide/recipes/nuxt_static' },
                 { text: 'pm2', link: '/guide/recipes/pm2' },
                 { text: 'redis', link: '/guide/recipes/redis' },
                 { text: 'vitepress', link: '/guide/recipes/vitepress' },

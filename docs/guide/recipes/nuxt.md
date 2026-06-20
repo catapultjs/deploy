@@ -33,9 +33,9 @@ The recipe runs commands from `{{release_path}}/{{nuxt_path}}`.
 
 ```typescript
 import { set } from '@catapultjs/deploy'
-import '@catapultjs/deploy/recipes/nuxt'
 
 set('nuxt_path', 'apps/web')
+import '@catapultjs/deploy/recipes/nuxt'
 ```
 
 Run the static generation task manually:
@@ -44,4 +44,4 @@ Run the static generation task manually:
 npx cata task nuxt:generate
 ```
 
-If you want to generate a static Nuxt site locally and deploy the generated files, follow the [static deployment example](https://github.com/catapultjs/deploy/blob/main/examples/nuxt/deploy.static.ts).
+For static Nuxt sites generated locally, use [`recipes/nuxt_static`](./nuxt_static).
