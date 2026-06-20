@@ -15,6 +15,6 @@
     "vue-router": "^5.0.6"
   },
   "devDependencies": {
-    "@catapultjs/deploy": "file:../../catapultjs-deploy-0.6.2.tgz"
+    "@catapultjs/deploy": "file:../../catapultjs-deploy-0.10.0.tgz"
   }
 }
