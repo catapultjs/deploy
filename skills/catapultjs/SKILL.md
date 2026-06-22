@@ -19,7 +19,7 @@ Read the file matching the task before writing code:
 | --- | --- |
 | Create or update `deploy.ts`: hosts, recipe selection, healthchecks, lifecycle hooks, pipeline tuning, `setPipeline()` | [references/config.md](references/config.md) |
 | Write or modify a recipe or deployment task: task DSL, `onSetup`/`onStatus` hooks, store options, `TaskRegistry` | [references/recipe.md](references/recipe.md) |
-| Use an official recipe (git, rsync, nextjs, nuxt, astro, tanstack, nestjs, adonisjs, vitepress, directus, pm2, redis): tasks added, store keys, monorepo patterns | [references/recipes.md](references/recipes.md) |
+| Use an official recipe (git, rsync, nextjs, nuxt, astro, tanstack, nestjs, adonisjs, vitepress, directus, pm2, redis, caddy): tasks added, store keys, monorepo patterns | [references/recipes.md](references/recipes.md) |
 | Script deployments from Node.js (scripts, CI, bots, dashboards) with the `Catapult` class | [references/api.md](references/api.md) |
 | Set up a GitHub Actions workflow with `catapultjs/deploy-action`: inputs, SSH secrets, env vars | [references/github-actions.md](references/github-actions.md) |
 | Use the `cata` CLI: deploy, rollback, task, status, run, ssh, list commands and their options | [references/cli.md](references/cli.md) |

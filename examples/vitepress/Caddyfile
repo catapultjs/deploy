@@ -1,0 +1,12 @@
+{$SITE_ADDRESS:http://localhost} {
+	root * /home/deploy/deploy-vitepress/current
+	encode zstd gzip
+
+	try_files {path}.html {path}/index.html {path} /404.html
+	file_server
+
+	header {
+		X-Content-Type-Options nosniff
+		Referrer-Policy strict-origin-when-cross-origin
+	}
+}

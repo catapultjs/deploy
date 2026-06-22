@@ -1,5 +1,5 @@
 ---
-description: Drop-in Catapult recipes for Astro, AdonisJS, Directus, NestJS, Next.js, Nuxt, PM2, Redis, TanStack, VitePress, git and rsync.
+description: Drop-in Catapult recipes for Astro, AdonisJS, Caddy, Directus, NestJS, Next.js, Nuxt, PM2, Redis, TanStack, VitePress, git and rsync.
 ---
 
 # Recipes
@@ -10,6 +10,7 @@ Recipes are importable modules that register tasks and insert them into the pipe
 | ------------------------------ | -------------------------------------------------------- |
 | [astro](./astro)               | Astro remote build for server output                     |
 | [astro_static](./astro_static) | Astro static site with local build                       |
+| [caddy](./caddy)               | Validate, reload, and inspect Caddy                      |
 | [git](./git)                   | Clone the repository and log revisions                   |
 | [rsync](./rsync)               | Transfer files via rsync                                 |
 | [adonisjs](./adonisjs)         | AdonisJS-specific deployment steps with remote build     |

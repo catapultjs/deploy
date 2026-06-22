@@ -21,6 +21,7 @@ Full docs: https://catapultjs.com/guide/recipes
 | `recipes/nuxt` | No (pair with `git` or `rsync`) | Nuxt, build on the server |
 | `recipes/nuxt_static` | Uses default SCP; `rsync` optional | Static Nuxt site, generate locally |
 | `recipes/directus` | No (pair with `git` or `rsync`) | Directus, migrations and schema snapshots |
+| `recipes/caddy` | No | Caddy validation, reload, logs, status, and config upload |
 | `recipes/pm2` | No | Process management (add to any stack) |
 | `recipes/redis` | No | Redis cache flush (add to any stack) |
 | `recipes/tanstack` | No (pair with `git` or `rsync`) | TanStack Start, build on the server |
@@ -508,6 +509,43 @@ DB migrations and schema snapshots. Does not override `deploy:update_code` — p
 set('directus_path', 'apps/cms')
 set('directus_snapshot_path', './database/snapshot.yaml')
 import '@catapultjs/deploy/recipes/directus'
+```
+
+---
+
+## `recipes/caddy`
+
+```typescript
+import '@catapultjs/deploy/recipes/caddy'
+```
+
+Manages an existing Caddy installation. Does not deliver application code and does not reload Caddy by default unless `caddy_reload_after_publish` is set before importing the recipe.
+
+| Task | Inserted | Description |
+| --- | --- | --- |
+| `caddy:reload` | after `deploy:publish` when `caddy_reload_after_publish` is true | Validates and reloads Caddy |
+| `caddy:validate` | manual | Runs `caddy validate` |
+| `caddy:fmt` | manual | Formats the configured Caddyfile |
+| `caddy:restart` | manual | Restarts the Caddy service |
+| `caddy:status` | manual | Shows systemd status |
+| `caddy:logs` | manual | Shows the last 100 journal log lines |
+| `caddy:config:show` | manual | Displays the configured Caddyfile |
+| `caddy:config:upload` | manual | Uploads a local Caddyfile, installs it, and validates it |
+
+`onStatus` displays the Caddy version in `cata status`.
+
+| Key | Type | Default | Description |
+| --- | --- | --- | --- |
+| `caddy_config_path` | `string` | `'/etc/caddy/Caddyfile'` | Remote Caddyfile path |
+| `caddy_local_config_path` | `string` | `'./Caddyfile'` | Local Caddyfile for upload |
+| `caddy_service` | `string` | `'caddy'` | systemd service name |
+| `caddy_use_sudo` | `boolean` | `true` | Prefix privileged commands with `sudo` |
+| `caddy_validate_before_reload` | `boolean` | `true` | Validate before reload |
+| `caddy_reload_after_publish` | `boolean` | `false` | Add reload after publish |
+
+```typescript
+set('caddy_reload_after_publish', true)
+import '@catapultjs/deploy/recipes/caddy'
 ```
 
 ---

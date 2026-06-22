@@ -121,6 +121,7 @@ export default defineConfig({
               items: [
                 { text: 'astro', link: '/guide/recipes/astro' },
                 { text: 'astro_static', link: '/guide/recipes/astro_static' },
+                { text: 'caddy', link: '/guide/recipes/caddy' },
                 { text: 'git', link: '/guide/recipes/git' },
                 { text: 'rsync', link: '/guide/recipes/rsync' },
                 { text: 'adonisjs', link: '/guide/recipes/adonisjs' },
