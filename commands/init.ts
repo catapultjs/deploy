@@ -33,11 +33,11 @@ export default class Init extends BaseCommand {
     }
 
     const lang = await this.prompt.choice('Which language do you want to use?', [
-      { name: 'ts', message: 'TypeScript (deploy.ts)' },
-      { name: 'js', message: 'JavaScript (deploy.js)' },
+      { name: 'ts', message: 'TypeScript (deploy.config.ts)' },
+      { name: 'js', message: 'JavaScript (deploy.config.js)' },
     ])
 
-    const filename = lang === 'ts' ? 'deploy.ts' : 'deploy.js'
+    const filename = lang === 'ts' ? 'deploy.config.ts' : 'deploy.config.js'
     const dest = resolve(process.cwd(), filename)
 
     await writeFile(dest, TEMPLATE)
