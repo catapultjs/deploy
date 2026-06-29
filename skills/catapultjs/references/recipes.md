@@ -21,9 +21,10 @@ Full docs: https://catapultjs.com/guide/recipes
 | `recipes/nuxt` | No (pair with `git` or `rsync`) | Nuxt, build on the server |
 | `recipes/nuxt_static` | Uses default SCP; `rsync` optional | Static Nuxt site, generate locally |
 | `recipes/directus` | No (pair with `git` or `rsync`) | Directus, migrations and schema snapshots |
-| `recipes/caddy` | No | Caddy validation, reload, logs, status, and config upload |
+| `recipes/caddy` | No | Caddy validation, reload, and config upload |
 | `recipes/pm2` | No | Process management (add to any stack) |
 | `recipes/redis` | No | Redis cache flush (add to any stack) |
+| `recipes/systemd` | No | systemd service management (add when the host uses systemd) |
 | `recipes/tanstack` | No (pair with `git` or `rsync`) | TanStack Start, build on the server |
 
 ---
@@ -519,16 +520,16 @@ import '@catapultjs/deploy/recipes/directus'
 import '@catapultjs/deploy/recipes/caddy'
 ```
 
-Manages an existing Caddy installation. Does not deliver application code and does not reload Caddy by default unless `caddy_reload_after_publish` is set before importing the recipe.
+Manages Caddy configuration. Does not deliver application code and does not reload Caddy by default unless `caddy_reload_after_publish` is set before importing the recipe. Service management is intentionally separate; combine with `recipes/systemd` and set `systemd_service` to `caddy` when Caddy is managed by systemd.
+
+> [!WARNING]
+> Caddy must be able to traverse every parent directory of the configured web root and read the published files. Deploying under a private home directory such as `/home/deploy/...` may require extra permissions or ACLs. Prefer a web root under `/var/www/<app>` or `/srv/www/<app>` for static sites. On the server, use `namei -l /path/to/current/index.html` to inspect which directory blocks access.
 
 | Task | Inserted | Description |
 | --- | --- | --- |
 | `caddy:reload` | after `deploy:publish` when `caddy_reload_after_publish` is true | Validates and reloads Caddy |
 | `caddy:validate` | manual | Runs `caddy validate` |
 | `caddy:fmt` | manual | Formats the configured Caddyfile |
-| `caddy:restart` | manual | Restarts the Caddy service |
-| `caddy:status` | manual | Shows systemd status |
-| `caddy:logs` | manual | Shows the last 100 journal log lines |
 | `caddy:config:show` | manual | Displays the configured Caddyfile |
 | `caddy:config:upload` | manual | Uploads a local Caddyfile, installs it, and validates it |
 
@@ -538,7 +539,6 @@ Manages an existing Caddy installation. Does not deliver application code and do
 | --- | --- | --- | --- |
 | `caddy_config_path` | `string` | `'/etc/caddy/Caddyfile'` | Remote Caddyfile path |
 | `caddy_local_config_path` | `string` | `'./Caddyfile'` | Local Caddyfile for upload |
-| `caddy_service` | `string` | `'caddy'` | systemd service name |
 | `caddy_use_sudo` | `boolean` | `true` | Prefix privileged commands with `sudo` |
 | `caddy_validate_before_reload` | `boolean` | `true` | Validate before reload |
 | `caddy_reload_after_publish` | `boolean` | `false` | Add reload after publish |
@@ -546,6 +546,34 @@ Manages an existing Caddy installation. Does not deliver application code and do
 ```typescript
 set('caddy_reload_after_publish', true)
 import '@catapultjs/deploy/recipes/caddy'
+```
+
+---
+
+## `recipes/systemd`
+
+```typescript
+import '@catapultjs/deploy/recipes/systemd'
+```
+
+Generic systemd service management. Import only when the target host uses systemd.
+
+| Task | Inserted | Description |
+| --- | --- | --- |
+| `systemd:restart` | manual | Restarts the configured service |
+| `systemd:reload` | manual | Reloads the configured service |
+| `systemd:status` | manual | Shows `systemctl status` for the service |
+| `systemd:logs` | manual | Shows recent `journalctl` lines for the service |
+
+| Key | Type | Default | Description |
+| --- | --- | --- | --- |
+| `systemd_service` | `string` | `'app'` | systemd service name |
+| `systemd_use_sudo` | `boolean` | `true` | Prefix privileged commands with `sudo` |
+| `systemd_logs_lines` | `number` | `100` | Number of journal lines shown by `systemd:logs` |
+
+```typescript
+set('systemd_service', 'caddy')
+import '@catapultjs/deploy/recipes/systemd'
 ```
 
 ---
