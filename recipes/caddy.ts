@@ -7,9 +7,6 @@ declare module '../src/types.ts' {
     'caddy:validate': true
     'caddy:fmt': true
     'caddy:reload': true
-    'caddy:restart': true
-    'caddy:status': true
-    'caddy:logs': true
     'caddy:config:show': true
     'caddy:config:upload': true
   }
@@ -17,10 +14,6 @@ declare module '../src/types.ts' {
 
 function sudo(): string {
   return get<boolean>('caddy_use_sudo', true) ? 'sudo ' : ''
-}
-
-function service(): string {
-  return get<string>('caddy_service', 'caddy')
 }
 
 function configPath(): string {
@@ -71,34 +64,6 @@ task('caddy:reload', async ({ host, logger }: TaskContext) => {
   ].filter(Boolean)
 
   const { stdout } = await ssh(host, commands.join('\n'), { color: true })
-  logger.log(stdout.trim())
-})
-
-desc('Restarts the Caddy service')
-task('caddy:restart', async ({ host, logger }: TaskContext) => {
-  const { stdout } = await ssh(host, `set -e\n${sudo()}systemctl restart ${q(service())}`, {
-    color: true,
-  })
-  logger.log(stdout.trim())
-})
-
-desc('Displays the Caddy service status')
-task('caddy:status', async ({ host, logger }: TaskContext) => {
-  const { stdout } = await ssh(
-    host,
-    `set +e\n${sudo()}systemctl status ${q(service())} --no-pager`,
-    { color: true }
-  )
-  logger.log(stdout.trim())
-})
-
-desc('Displays the last 100 Caddy service log lines')
-task('caddy:logs', async ({ host, logger }: TaskContext) => {
-  const { stdout } = await ssh(
-    host,
-    `set +e\n${sudo()}journalctl -u ${q(service())} -n 100 --no-pager`,
-    { color: true }
-  )
   logger.log(stdout.trim())
 })
 

@@ -4,6 +4,11 @@ description: Catapult changelog — release history and notable changes.
 
 # Changelog
 
+## Unreleased
+
+- Added `recipes/systemd` for generic `systemctl` and `journalctl` service tasks
+- Moved systemd-specific Caddy service tasks out of `recipes/caddy`; combine `recipes/caddy` with `recipes/systemd` when Caddy is managed by systemd
+
 ## 0.11.0
 
 - Added `recipes/nestjs` — wires the standard `deploy:install` and `deploy:build` tasks for NestJS apps built on the remote server, with `.env` shared by default

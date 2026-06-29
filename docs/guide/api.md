@@ -429,6 +429,9 @@ Key/value store for sharing configuration between `deploy.ts` and recipes.
 | `source_path`            | `string`                           | depends recipe      | `recipes/astro`, `recipes/rsync` |
 | `rsync_source_path`      | `string`                           | `./`                | `recipes/rsync`                  |
 | `rsync_excludes`         | `string[]`                         | `[]`                | `recipes/rsync`                  |
+| `systemd_service`        | `string`                           | `'app'`             | `recipes/systemd`                |
+| `systemd_use_sudo`       | `boolean`                          | `true`              | `recipes/systemd`                |
+| `systemd_logs_lines`     | `number`                           | `100`               | `recipes/systemd`                |
 | `vitepress_path`         | `string`                           | `''`                | `recipes/vitepress`              |
 
 ### `set(key, value)`
