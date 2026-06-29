@@ -4,10 +4,15 @@ description: Catapult changelog — release history and notable changes.
 
 # Changelog
 
-## Unreleased
+## 0.12.0
 
+- Added `recipes/caddy` for validating, formatting, reloading, showing, and uploading Caddy configuration, with optional reloads after `deploy:publish`
 - Added `recipes/systemd` for generic `systemctl` and `journalctl` service tasks
-- Moved systemd-specific Caddy service tasks out of `recipes/caddy`; combine `recipes/caddy` with `recipes/systemd` when Caddy is managed by systemd
+- Changed `init` to generate `deploy.config.ts` / `deploy.config.js` by default instead of `deploy.ts` / `deploy.js`
+- Updated the VitePress example with a Caddyfile and `recipes/caddy` configuration
+- Added docs site favicon and touch icon assets
+
+> Released at 2026-06-29
 
 ## 0.11.0
 
