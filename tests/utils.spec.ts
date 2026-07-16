@@ -63,4 +63,44 @@ test.group('utils — findDeployFile', () => {
       await rm(cwd, { recursive: true, force: true })
     }
   })
+
+  test('detects deploy.config.json', async ({ assert }) => {
+    const cwd = await mkdtemp(join(tmpdir(), 'cata-deploy-file-'))
+
+    try {
+      const file = join(cwd, 'deploy.config.json')
+      await writeFile(file, '{}')
+
+      assert.equal(await findDeployFile(cwd), file)
+    } finally {
+      await rm(cwd, { recursive: true, force: true })
+    }
+  })
+
+  test('detects deploy.json', async ({ assert }) => {
+    const cwd = await mkdtemp(join(tmpdir(), 'cata-deploy-file-'))
+
+    try {
+      const file = join(cwd, 'deploy.json')
+      await writeFile(file, '{}')
+
+      assert.equal(await findDeployFile(cwd), file)
+    } finally {
+      await rm(cwd, { recursive: true, force: true })
+    }
+  })
+
+  test('keeps TypeScript config precedence over JSON', async ({ assert }) => {
+    const cwd = await mkdtemp(join(tmpdir(), 'cata-deploy-file-'))
+
+    try {
+      const typescriptFile = join(cwd, 'deploy.config.ts')
+      await writeFile(join(cwd, 'deploy.config.json'), '{}')
+      await writeFile(typescriptFile, 'export default {}')
+
+      assert.equal(await findDeployFile(cwd), typescriptFile)
+    } finally {
+      await rm(cwd, { recursive: true, force: true })
+    }
+  })
 })

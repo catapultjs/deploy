@@ -31,14 +31,14 @@ The skill uses progressive disclosure: a small `SKILL.md` carries the universal 
 
 | Reference | Covers |
 | --- | --- |
-| `references/config.md` | Creating and evolving `deploy.ts`: all config and host options, recipe selection by stack, healthchecks, lifecycle hooks, store options, pipeline tuning and `setPipeline()` |
+| `references/config.md` | Creating and evolving TypeScript, JavaScript or JSON configs: format selection, config and host options, recipe selection, healthchecks, store values, tasks and pipeline tuning |
 | `references/recipe.md` | Writing recipes: conventions, task DSL, `TaskContext`, pipeline insertion, `onSetup`/`onStatus` hooks, `TaskRegistry` augmentation, pre-publication checklist |
 | `references/recipes.md` | Using official recipes (git, rsync, astro, vitepress, adonisjs, nuxt, directus, pm2, redis, caddy, systemd): tasks added, store keys, monorepo patterns |
 | `references/api.md` | Scripting with the [programmatic API](/guide/programmatic): the `Catapult` class, methods with return shapes and CLI equivalents, events, output capture, silent mode |
 | `references/github-actions.md` | Setting up a GitHub Actions workflow with `catapultjs/deploy-action`: inputs, SSH secrets, env vars |
 | `references/cli.md` | The `cata` CLI: all commands, flags, global options and config loading |
 
-See [Getting Started](/guide/getting-started), [Creating a Recipe](/guide/creating-recipes), [Programmatic usage](/guide/programmatic) and [CI/CD](/guide/ci-cd) for the underlying guides.
+See [Getting Started](/guide/getting-started), [JSON configuration](/guide/json-configuration), [Creating a Recipe](/guide/creating-recipes), [Programmatic usage](/guide/programmatic) and [CI/CD](/guide/ci-cd) for the underlying guides.
 
 ## Keeping the skill up to date
 

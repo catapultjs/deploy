@@ -18,6 +18,22 @@ export default defineConfig({
 })
 `
 
+const JSON_TEMPLATE = `{
+  "$schema": "https://catapultjs.com/schema/deploy.schema.json",
+  "version": 1,
+  "config": {
+    "hosts": [
+      {
+        "name": "production",
+        "ssh": "deploy@example.com",
+        "deployPath": "/home/deploy/myapp",
+        "branch": "main"
+      }
+    ]
+  }
+}
+`
+
 export default class Init extends BaseCommand {
   static commandName = 'init'
   static description = 'Create a deploy configuration file'
@@ -35,12 +51,13 @@ export default class Init extends BaseCommand {
     const lang = await this.prompt.choice('Which language do you want to use?', [
       { name: 'ts', message: 'TypeScript (deploy.config.ts)' },
       { name: 'js', message: 'JavaScript (deploy.config.js)' },
+      { name: 'json', message: 'JSON (deploy.config.json)' },
     ])
 
-    const filename = lang === 'ts' ? 'deploy.config.ts' : 'deploy.config.js'
+    const filename = `deploy.config.${lang}`
     const dest = resolve(process.cwd(), filename)
 
-    await writeFile(dest, TEMPLATE)
+    await writeFile(dest, lang === 'json' ? JSON_TEMPLATE : TEMPLATE)
     this.logger.action(`create ${filename}`).succeeded()
 
     if (this.skipInstall) {

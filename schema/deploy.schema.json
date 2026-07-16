@@ -1,0 +1,287 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://catapultjs.com/schema/deploy.schema.json",
+  "title": "Catapult deploy JSON configuration",
+  "description": "Declarative deployment configuration for @catapultjs/deploy.",
+  "type": "object",
+  "required": ["version", "config"],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": { "type": "string" },
+    "version": { "const": 1 },
+    "recipes": {
+      "type": "array",
+      "items": {
+        "enum": [
+          "adonisjs",
+          "adonisjs_local",
+          "astro",
+          "astro_static",
+          "caddy",
+          "directus",
+          "git",
+          "nestjs",
+          "nextjs",
+          "nextjs_static",
+          "nuxt",
+          "nuxt_static",
+          "pm2",
+          "redis",
+          "rsync",
+          "systemd",
+          "tanstack",
+          "vitepress"
+        ]
+      },
+      "uniqueItems": true
+    },
+    "config": { "$ref": "#/definitions/config" },
+    "store": { "$ref": "#/definitions/store" },
+    "tasks": {
+      "type": "object",
+      "propertyNames": { "type": "string", "minLength": 1, "pattern": "^\\S+$" },
+      "additionalProperties": { "$ref": "#/definitions/taskDefinition" }
+    },
+    "pipeline": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1, "pattern": "^\\S+$" },
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "before": {
+      "type": "object",
+      "propertyNames": { "type": "string", "minLength": 1, "pattern": "^\\S+$" },
+      "additionalProperties": {
+        "oneOf": [
+          { "type": "string", "minLength": 1, "pattern": "^\\S+$" },
+          {
+            "type": "array",
+            "items": { "type": "string", "minLength": 1, "pattern": "^\\S+$" },
+            "minItems": 1,
+            "uniqueItems": true
+          }
+        ]
+      }
+    },
+    "after": {
+      "type": "object",
+      "propertyNames": { "type": "string", "minLength": 1, "pattern": "^\\S+$" },
+      "additionalProperties": {
+        "oneOf": [
+          { "type": "string", "minLength": 1, "pattern": "^\\S+$" },
+          {
+            "type": "array",
+            "items": { "type": "string", "minLength": 1, "pattern": "^\\S+$" },
+            "minItems": 1,
+            "uniqueItems": true
+          }
+        ]
+      }
+    },
+    "remove": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1, "pattern": "^\\S+$" },
+      "uniqueItems": true
+    }
+  },
+  "definitions": {
+    "store": {
+      "type": "object",
+      "properties": {
+        "shared_dirs": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+        "shared_files": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+        "writable_dirs": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+        "source_path": { "type": "string" },
+        "adonisjs_path": { "type": "string" },
+        "astro_mode": {
+          "oneOf": [
+            { "type": "string", "minLength": 1 },
+            {
+              "type": "object",
+              "minProperties": 1,
+              "propertyNames": { "type": "string", "minLength": 1 },
+              "additionalProperties": { "type": "string", "minLength": 1 }
+            }
+          ]
+        },
+        "astro_path": { "type": "string" },
+        "caddy_config_path": { "type": "string", "minLength": 1 },
+        "caddy_local_config_path": { "type": "string", "minLength": 1 },
+        "caddy_use_sudo": { "type": "boolean" },
+        "caddy_validate_before_reload": { "type": "boolean" },
+        "caddy_reload_after_publish": { "type": "boolean" },
+        "directus_path": { "type": "string" },
+        "directus_snapshot_path": { "type": "string", "minLength": 1 },
+        "nextjs_path": { "type": "string" },
+        "nextjs_out_path": { "type": "string", "minLength": 1 },
+        "nuxt_path": { "type": "string" },
+        "redis_db": {
+          "oneOf": [
+            { "type": "integer", "minimum": 0 },
+            {
+              "type": "array",
+              "items": { "type": "integer", "minimum": 0 },
+              "minItems": 1,
+              "uniqueItems": true
+            }
+          ]
+        },
+        "rsync_source_path": { "type": "string", "minLength": 1 },
+        "rsync_excludes": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+        "systemd_service": { "type": "string", "minLength": 1 },
+        "systemd_use_sudo": { "type": "boolean" },
+        "systemd_logs_lines": { "type": "number", "exclusiveMinimum": 0 },
+        "vitepress_path": { "type": "string" }
+      },
+      "required": [],
+      "additionalProperties": false
+    },
+    "config": {
+      "type": "object",
+      "properties": {
+        "keepReleases": { "type": "integer", "minimum": 1 },
+        "repository": { "type": "string", "minLength": 1 },
+        "packageManager": { "enum": ["npm", "pnpm", "yarn", "bun"] },
+        "hosts": { "type": "array", "items": { "$ref": "#/definitions/host" }, "minItems": 1 },
+        "verbose": { "enum": [0, 1, 2, 3] }
+      },
+      "required": ["hosts"],
+      "additionalProperties": false
+    },
+    "host": {
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "ssh": {
+          "oneOf": [
+            { "type": "string", "minLength": 1 },
+            {
+              "type": "object",
+              "properties": {
+                "user": { "type": "string", "minLength": 1 },
+                "host": { "type": "string", "minLength": 1 },
+                "port": { "type": "integer", "minimum": 1, "maximum": 65535 }
+              },
+              "required": ["user", "host"],
+              "additionalProperties": false
+            }
+          ]
+        },
+        "deployPath": { "type": "string", "minLength": 1, "pattern": "^/" },
+        "branch": {
+          "oneOf": [
+            { "type": "string", "minLength": 1 },
+            {
+              "type": "object",
+              "properties": {
+                "name": { "type": "string", "minLength": 1 },
+                "ask": { "type": "boolean" }
+              },
+              "required": ["name", "ask"],
+              "additionalProperties": false
+            }
+          ]
+        },
+        "healthcheck": {
+          "type": "object",
+          "properties": {
+            "url": { "type": "string", "minLength": 1 },
+            "retries": { "type": "integer", "minimum": 1 },
+            "delayMs": { "type": "integer", "minimum": 0 }
+          },
+          "required": [],
+          "additionalProperties": false
+        },
+        "bin": {
+          "type": "object",
+          "propertyNames": { "type": "string", "minLength": 1 },
+          "additionalProperties": { "type": "string", "minLength": 1 }
+        }
+      },
+      "required": ["name", "ssh", "deployPath"],
+      "additionalProperties": false
+    },
+    "taskStep": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": { "cd": { "type": "string", "minLength": 1 } },
+          "required": ["cd"],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": { "run": { "type": "string", "minLength": 1 } },
+          "required": ["run"],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "local": {
+              "type": "object",
+              "properties": {
+                "command": { "type": "string", "minLength": 1 },
+                "cwd": { "type": "string", "minLength": 1 }
+              },
+              "required": ["command"],
+              "additionalProperties": false
+            }
+          },
+          "required": ["local"],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "upload": {
+              "type": "object",
+              "properties": {
+                "local": { "type": "string", "minLength": 1 },
+                "remote": { "type": "string", "minLength": 1 }
+              },
+              "required": ["local", "remote"],
+              "additionalProperties": false
+            }
+          },
+          "required": ["upload"],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "download": {
+              "type": "object",
+              "properties": {
+                "remote": { "type": "string", "minLength": 1 },
+                "local": { "type": "string", "minLength": 1 }
+              },
+              "required": ["remote", "local"],
+              "additionalProperties": false
+            }
+          },
+          "required": ["download"],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "taskDefinition": {
+      "oneOf": [
+        { "type": "array", "items": { "$ref": "#/definitions/taskStep" }, "minItems": 1 },
+        {
+          "type": "object",
+          "properties": {
+            "description": { "type": "string", "minLength": 1 },
+            "steps": {
+              "type": "array",
+              "items": { "$ref": "#/definitions/taskStep" },
+              "minItems": 1
+            }
+          },
+          "required": ["steps"],
+          "additionalProperties": false
+        }
+      ]
+    }
+  }
+}

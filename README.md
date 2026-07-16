@@ -19,13 +19,13 @@ Full documentation at **https://catapultjs.com/**
 
 ## Quick start
 
-Run `init` at the root of your project — it creates a `deploy.ts` config file and installs `@catapultjs/deploy` as a dev dependency:
+Run `init` at the root of your project. It lets you choose TypeScript, JavaScript or JSON, creates the matching `deploy.config.*` file, and installs `@catapultjs/deploy` as a dev dependency:
 
 ```bash
 npx @catapultjs/deploy init
 ```
 
-Edit `deploy.ts` to describe your hosts and pick your recipes:
+Edit the generated config to describe your hosts and pick your recipes. With TypeScript:
 
 ```typescript
 import { defineConfig } from '@catapultjs/deploy'
@@ -42,6 +42,27 @@ export default defineConfig({
   ],
 })
 ```
+
+For a fully declarative config, choose JSON. Catapult validates it against the schema shipped with the package and supports built-in recipes, store values, custom task steps and declarative pipeline controls:
+
+```json
+{
+  "$schema": "https://catapultjs.com/schema/deploy.schema.json",
+  "version": 1,
+  "recipes": ["git", "pm2"],
+  "config": {
+    "hosts": [
+      {
+        "name": "production",
+        "ssh": "deploy@example.com",
+        "deployPath": "/home/deploy/myapp"
+      }
+    ]
+  }
+}
+```
+
+See the [JSON configuration guide](https://catapultjs.com/guide/json-configuration) for tasks, pipeline customization, supported recipes and the cases that still require TypeScript or JavaScript.
 
 Prepare the server (once per host), then deploy:
 
@@ -69,18 +90,18 @@ npx cata deploy
 
 ## Recipes
 
-| Recipe           | Description                                                                 |
-| ---------------- | --------------------------------------------------------------------------- |
+| Recipe           | Description                                                                |
+| ---------------- | -------------------------------------------------------------------------- |
 | `git`            | Clones the repository into each release, keeps a bare mirror on the server |
-| `rsync`          | Pushes a local directory into the release with rsync                        |
-| `pm2`            | Start, reload and manage PM2 processes                                      |
-| `adonisjs`       | Install, build and migration tasks for AdonisJS apps                        |
-| `adonisjs_local` | Builds the AdonisJS app locally, uploads the artifact                       |
-| `astro`          | Builds locally with `astro build`, uploads the output                       |
-| `nuxt`           | Build tasks for Nuxt apps                                                   |
-| `vitepress`      | Builds locally with `vitepress build`, uploads the static files             |
-| `directus`       | Directus database migration and schema snapshot tasks                       |
-| `redis`          | Flush one, many or all Redis databases                                      |
+| `rsync`          | Pushes a local directory into the release with rsync                       |
+| `pm2`            | Start, reload and manage PM2 processes                                     |
+| `adonisjs`       | Install, build and migration tasks for AdonisJS apps                       |
+| `adonisjs_local` | Builds the AdonisJS app locally, uploads the artifact                      |
+| `astro`          | Builds locally with `astro build`, uploads the output                      |
+| `nuxt`           | Build tasks for Nuxt apps                                                  |
+| `vitepress`      | Builds locally with `vitepress build`, uploads the static files            |
+| `directus`       | Directus database migration and schema snapshot tasks                      |
+| `redis`          | Flush one, many or all Redis databases                                     |
 
 ## Requirements
 

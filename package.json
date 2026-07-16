@@ -14,10 +14,12 @@
   },
   "files": [
     "build",
+    "schema",
     "skills",
     "!build/bin/test.js",
     "!build/bin/test.d.ts",
     "!build/bin/test.js.map",
+    "!build/scripts",
     "!build/docs",
     "!build/examples",
     "!build/tests"
@@ -25,9 +27,10 @@
   "scripts": {
     "lint": "eslint .",
     "format": "prettier --write .",
+    "schema:generate": "node scripts/generate_json_schema.ts",
     "typecheck": "tsc --noEmit",
     "build": "tsc",
-    "prepublishOnly": "npm run build",
+    "prepublishOnly": "npm run schema:generate && npm run build",
     "docs:dev": "vitepress dev docs",
     "docs:build": "vitepress build docs",
     "docs:preview": "vitepress preview docs",
@@ -73,6 +76,7 @@
       "types": "./build/src/api.d.ts",
       "import": "./build/src/api.js"
     },
+    "./schema/deploy.schema.json": "./schema/deploy.schema.json",
     "./recipes/*": {
       "types": "./build/recipes/*.d.ts",
       "import": "./build/recipes/*.js"
@@ -92,6 +96,7 @@
   },
   "dependencies": {
     "@adonisjs/ace": "^14.1.0",
+    "ajv": "^8.20.0",
     "execa": "^9.6.1"
   },
   "eslintConfig": {

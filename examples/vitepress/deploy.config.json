@@ -1,0 +1,27 @@
+{
+  "$schema": "https://catapultjs.com/schema/deploy.schema.json",
+  "version": 1,
+
+  "store": {
+    "caddy_local_config_path": "./Caddyfile",
+    "caddy_config_path": "/etc/caddy/Caddyfile",
+    "caddy_reload_after_publish": true
+  },
+  
+  "recipes": ["vitepress", "caddy"],
+
+  "config": {
+    "keepReleases": 2,
+    "hosts": [
+      {
+        "name": "production",
+        "ssh": {
+          "host": "localhost",
+          "user": "deploy",
+          "port": 2222
+        },
+        "deployPath": "/home/deploy/deploy-vitepress"
+      }
+    ]
+  }
+}
