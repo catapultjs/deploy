@@ -104,7 +104,7 @@ task('my-recipe:sync', () => {
 })
 ```
 
-Users set values in `deploy.ts` with `set('my_recipe_excludes', […])` before or after the import. Two store keys have built-in meaning during setup: `writable_dirs` (string[], created under `shared/`) and `shared_files` (string[], touched under `shared/`).
+Users set values in `deploy.ts` with `set('my_recipe_excludes', […])`. Values read inside task functions can be set before or after a static import. Values read while the recipe module is loaded, especially options that change pipeline wiring, require `set(...)` followed by `await import(...)` because static ESM imports run before the module body. Two store keys have built-in meaning during setup: `writable_dirs` (string[], created under `shared/`) and `shared_files` (string[], touched under `shared/`).
 
 ## Checklist before shipping
 

@@ -520,7 +520,7 @@ import '@catapultjs/deploy/recipes/directus'
 import '@catapultjs/deploy/recipes/caddy'
 ```
 
-Manages Caddy configuration. Does not deliver application code and does not reload Caddy by default unless `caddy_reload_after_publish` is set before importing the recipe. Service management is intentionally separate; combine with `recipes/systemd` and set `systemd_service` to `caddy` when Caddy is managed by systemd.
+Manages Caddy configuration. Does not deliver application code and does not reload Caddy by default unless `caddy_reload_after_publish` is set before loading the recipe. Service management is intentionally separate; combine with `recipes/systemd` and set `systemd_service` to `caddy` when Caddy is managed by systemd.
 
 > [!WARNING]
 > Caddy must be able to traverse every parent directory of the configured web root and read the published files. Deploying under a private home directory such as `/home/deploy/...` may require extra permissions or ACLs. Prefer a web root under `/var/www/<app>` or `/srv/www/<app>` for static sites. On the server, use `namei -l /path/to/current/index.html` to inspect which directory blocks access.
@@ -545,8 +545,10 @@ Manages Caddy configuration. Does not deliver application code and does not relo
 
 ```typescript
 set('caddy_reload_after_publish', true)
-import '@catapultjs/deploy/recipes/caddy'
+await import('@catapultjs/deploy/recipes/caddy')
 ```
+
+Use a dynamic import when a recipe option changes pipeline wiring. Static ESM imports run before `set()` calls in the module body.
 
 ---
 

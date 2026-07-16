@@ -4,8 +4,8 @@ set('caddy_local_config_path', './Caddyfile')
 set('caddy_config_path', '/etc/caddy/Caddyfile')
 set('caddy_reload_after_publish', true)
 
-import '@catapultjs/deploy/recipes/vitepress'
-import '@catapultjs/deploy/recipes/caddy'
+await import('@catapultjs/deploy/recipes/vitepress')
+await import('@catapultjs/deploy/recipes/caddy')
 
 export default defineConfig({
   keepReleases: 2,

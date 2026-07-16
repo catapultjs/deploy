@@ -56,15 +56,16 @@ Example:
 ```typescript
 import { defineConfig, set } from '@catapultjs/deploy'
 
+import '@catapultjs/deploy/recipes/git'
+import '@catapultjs/deploy/recipes/nextjs'
+import '@catapultjs/deploy/recipes/pm2'
+import '@catapultjs/deploy/recipes/systemd'
+
 set('caddy_reload_after_publish', true)
 set('caddy_config_path', '/etc/caddy/Caddyfile')
 set('systemd_service', 'caddy')
 
-import '@catapultjs/deploy/recipes/git'
-import '@catapultjs/deploy/recipes/nextjs'
-import '@catapultjs/deploy/recipes/pm2'
-import '@catapultjs/deploy/recipes/caddy'
-import '@catapultjs/deploy/recipes/systemd'
+await import('@catapultjs/deploy/recipes/caddy')
 
 export default defineConfig({
   hosts: [
@@ -77,6 +78,8 @@ export default defineConfig({
   ],
 })
 ```
+
+Use a dynamic import when a recipe option changes pipeline wiring. Static ESM imports run before the `set()` calls in the module body, even when they are written later in the file.
 
 Manual tasks:
 
