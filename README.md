@@ -4,18 +4,18 @@
 [![node version](https://img.shields.io/node/v/@catapultjs/deploy)](https://nodejs.org)
 [![license](https://img.shields.io/npm/l/@catapultjs/deploy)](https://github.com/catapultjs/deploy/blob/main/LICENSE)
 
-A Capistrano-style deployment tool for Node.js — versioned releases, shared directories, composable task pipeline, automatic rollback. No agent, no container, no server-side dependency, just SSH.
+A Capistrano-style deployment tool for Node.js, versioned releases, shared directories, composable task pipeline, automatic rollback. No agent, no container, no server-side dependency, just SSH.
 
 Full documentation at **https://catapultjs.com/**
 
 ## Features
 
-- **SSH-based** — deploys directly over SSH; nothing to install on the server beyond a remote shell
-- **Versioned releases** — every deploy goes into `releases/<timestamp>`, activated by an atomic `current` symlink, with automatic rollback on failure
-- **Composable pipeline** — insert, remove or replace any task with a single function call, or rewrite the whole sequence
-- **Drop-in recipes** — import once, tasks register themselves and wire into the pipeline
-- **Multi-host** — deploy to one server or several, with per-host configuration
-- **Healthcheck** — verify the app responds after a deploy, with automatic rollback on failure
+- **SSH-based**: deploys directly over SSH; nothing to install on the server beyond a remote shell
+- **Versioned releases**: every deploy goes into `releases/<timestamp>`, activated by an atomic `current` symlink, with automatic rollback on failure
+- **Composable pipeline**: insert, remove or replace any task with a single function call, or rewrite the whole sequence
+- **Drop-in recipes**: import once, tasks register themselves and wire into the pipeline
+- **Multi-host**: deploy to one server or several, with per-host configuration
+- **Healthcheck**: verify the app responds after a deploy, with automatic rollback on failure
 
 ## Quick start
 
