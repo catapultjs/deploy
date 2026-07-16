@@ -1,9 +1,6 @@
 #!/usr/bin/env node
 
-import { pathToFileURL } from 'node:url'
-import { resolve } from 'node:path'
-import { access } from 'node:fs/promises'
-import { findDeployFile } from '../src/utils.ts'
+import { loadDeployConfig } from '../src/config/loader.ts'
 import { Context } from '../src/context.ts'
 import { logger } from '../src/logger.ts'
 import { Verbose } from '../src/enums.ts'
@@ -21,6 +18,10 @@ import Pipeline from '../commands/pipeline.ts'
 import RunTask from '../commands/run_task.ts'
 import Ssh from '../commands/ssh.ts'
 import Run from '../commands/run.ts'
+import ConfigValidate from '../commands/config_validate.ts'
+import { resolveDeployConfigFile } from '../src/config/resolve.ts'
+
+const cliArgs = process.argv.slice(2)
 
 function parseVerboseLevel(argv: string[]): Verbose {
   let count = 0
@@ -31,45 +32,19 @@ function parseVerboseLevel(argv: string[]): Verbose {
   return Math.min(count, Verbose.DEBUG) as Verbose
 }
 
-function parseConfigFlag(argv: string[]): string | null {
-  for (let i = 0; i < argv.length; i++) {
-    if ((argv[i] === '--config' || argv[i] === '-c') && argv[i + 1]) {
-      return argv[i + 1]
-    }
-  }
-  return null
-}
-
-const skipDeployFile = ['init', 'version'].includes(process.argv[2])
+const skipDeployFile = ['init', 'version', 'config:validate'].includes(cliArgs[0])
 
 if (!skipDeployFile) {
-  const configFlag = parseConfigFlag(process.argv.slice(2))
-  let deployFile: string | null = null
-
-  if (configFlag) {
-    const resolved = resolve(process.cwd(), configFlag)
-    try {
-      await access(resolved)
-      deployFile = resolved
-    } catch {
-      logger.error(`Config file not found: ${configFlag}`)
-      process.exit(1)
-    }
-  } else {
-    deployFile = await findDeployFile()
-  }
-
-  if (!deployFile) {
-    logger.error(
-      'No supported deploy config file found in current directory. Run `npx cata init` to create one.'
-    )
+  try {
+    const deployFile = await resolveDeployConfigFile(cliArgs)
+    const initialize = await loadDeployConfig(deployFile)
+    await initialize()
+  } catch (error) {
+    logger.error(error instanceof Error ? error.message : String(error))
     process.exit(1)
   }
 
-  const mod = await import(pathToFileURL(deployFile).href)
-  await mod.default()
-
-  const verboseLevel = parseVerboseLevel(process.argv.slice(2))
+  const verboseLevel = parseVerboseLevel(cliArgs)
   if (verboseLevel > Verbose.SILENT) Context.get().config.verbose = verboseLevel
 }
 
@@ -86,6 +61,11 @@ kernel.defineFlag('config', {
   type: 'string',
   alias: 'c',
   description: 'Path to the deploy config file (default: auto-detected)',
+})
+
+kernel.defineFlag('json', {
+  type: 'boolean',
+  description: 'Output result as JSON when supported by the command',
 })
 
 kernel.on('help', async (command, $kernel, parsed) => {
@@ -107,11 +87,12 @@ kernel.addLoader(
     ListRevisions,
     ListTasks,
     Pipeline,
+    ConfigValidate,
     RunTask,
     Ssh,
     Run,
   ])
 )
 
-await kernel.handle(process.argv.splice(2))
+await kernel.handle(cliArgs)
 process.exitCode = kernel.exitCode ?? 0

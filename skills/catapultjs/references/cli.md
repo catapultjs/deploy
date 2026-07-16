@@ -4,7 +4,7 @@ The CLI is `cata`, invoked via `npx cata <command>`. Full docs: https://catapult
 
 ## Config loading
 
-`version` and `init` work without a config file. All other commands load `deploy.ts`, `deploy.config.ts`, `deploy.js`, or `deploy.config.js` from the current directory, or use `--config <path>` / `-c <path>` to specify another file.
+`version` and `init` work without a config file. All other commands auto-detect `deploy.ts`, `deploy.config.ts`, `deploy.js`, `deploy.config.js`, `deploy.config.json` or `deploy.json` from the current directory, or use `--config <path>` / `-c <path>` to specify another file. JSON configs are schema-validated before command execution.
 
 ## Global options
 
@@ -145,10 +145,19 @@ npx cata pipeline --json
 
 ### `init`
 
-Generates a starter `deploy.ts` in the current directory. No config required.
+Prompts for TypeScript, JavaScript or JSON and generates `deploy.config.ts`, `deploy.config.js` or `deploy.config.json` in the current directory. The JSON template includes `version: 1` and `"$schema": "https://catapultjs.com/schema/deploy.schema.json"`. No config required.
 
 ```bash
 npx cata init
+```
+
+### `config:validate`
+
+Loads the deploy config and exits without running deployment tasks or connecting to hosts. Supports `--config <path>` / `-c <path>` and `--json`. JSON output is `{ "valid": true, "file": "..." }` on success and `{ "valid": false, "file": "...", "error": "..." }` on validation failure.
+
+```bash
+npx cata config:validate
+npx cata config:validate --json
 ```
 
 ### `version`
