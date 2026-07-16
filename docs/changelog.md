@@ -4,6 +4,14 @@ description: Catapult changelog — release history and notable changes.
 
 # Changelog
 
+## 0.13.0
+
+- Added `config:validate` to validate deploy configuration files without running deployment tasks
+- Added strict JSON configuration support with runtime schema validation, built-in recipe loading, declarative tasks, direct `pipeline`, `remove`, `before`, and `after` controls, and `deploy.config.json` / `deploy.json` auto-detection
+- Fixed the recipe documentation to use dynamic imports for store-dependent pipeline wiring, such as enabling `caddy_reload_after_publish` before loading the Caddy recipe in the VitePress example
+
+> Released at 2026-07-16
+
 ## 0.12.0
 
 - Added `recipes/caddy` for validating, formatting, reloading, showing, and uploading Caddy configuration, with optional reloads after `deploy:publish`
