@@ -227,6 +227,7 @@ export const deployJsonSchema: AnySchemaObject = {
                 user: nonEmptyString,
                 host: nonEmptyString,
                 port: { type: 'integer', minimum: 1, maximum: 65535 },
+                identityFile: nonEmptyString,
               },
               ['user', 'host']
             ),
@@ -258,6 +259,7 @@ export const deployJsonSchema: AnySchemaObject = {
           propertyNames: nonEmptyString,
           additionalProperties: nonEmptyString,
         },
+        multiplexing: { type: 'boolean' },
       },
       ['name', 'ssh', 'deployPath']
     ),

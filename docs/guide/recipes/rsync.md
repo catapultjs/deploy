@@ -26,6 +26,14 @@ import '@catapultjs/deploy/recipes/rsync'
 
 The recipe always syncs to the new release directory and always uses `--delete`.
 
+::: warning Windows
+This recipe requires an `rsync` binary on the `PATH`. Native Windows (built-in
+OpenSSH) has no `rsync`, so run Catapult from **WSL**, Git Bash or MSYS2 when using
+this recipe. Recipes that rely only on `ssh`/`scp` work on native Windows once
+connection multiplexing is disabled (auto-detected off on Windows, see the
+[`multiplexing`](/guide/api) host option).
+:::
+
 Build locally, then sync only generated artifacts:
 
 ```typescript

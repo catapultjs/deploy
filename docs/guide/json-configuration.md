@@ -100,11 +100,12 @@ Each host accepts:
 | Field         | Type             | Notes                                                                                                                       |
 | ------------- | ---------------- | --------------------------------------------------------------------------------------------------------------------------- |
 | `name`        | string           | Required identifier used by `--host`.                                                                                       |
-| `ssh`         | string or object | Required. Use `"user@host"` or `{ "user": "deploy", "host": "example.com", "port": 22 }`.                                   |
+| `ssh`         | string or object | Required. Use `"user@host"` or `{ "user": "deploy", "host": "example.com", "port": 22, "identityFile": "~/.ssh/deploy_ed25519" }`. On Windows, write `identityFile` with forward slashes (`"C:/Users/me/.ssh/key"`) or `~` to avoid backslash escaping. |
 | `deployPath`  | string           | Required absolute path on the server.                                                                                       |
 | `branch`      | string or object | A branch name, or `{ "name": "main", "ask": true }` to prompt in the CLI.                                                   |
 | `healthcheck` | object           | Optional `url`, `retries` and `delayMs` values.                                                                             |
 | `bin`         | object           | Optional per-host binary paths, such as `{ "node": "/opt/node/bin/node" }`; built-in recipes can resolve them with `bin()`. |
+| `multiplexing` | boolean         | Optional. SSH connection multiplexing. Auto-detected when unset (on Unix, off on Windows); set explicitly to override.      |
 
 Function-valued lifecycle hooks are intentionally excluded from JSON. Static per-host `bin` values are supported, but a declarative task step cannot call the dynamic `bin()` helper itself.
 

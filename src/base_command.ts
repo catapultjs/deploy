@@ -2,6 +2,7 @@ import type { DeployContext, Host } from './types.ts'
 import { BaseCommand, flags } from '@adonisjs/ace'
 import { Context } from './context.ts'
 import { isHostSetup } from './deployer.ts'
+import { isSshConnectionError, sshErrorMessage } from './utils.ts'
 
 export abstract class BaseDeployCommand extends BaseCommand {
   @flags.string({ alias: 'H', description: 'Target a specific host' })
@@ -48,9 +49,14 @@ export abstract class BaseDeployCommand extends BaseCommand {
   }
 
   protected async ensureHostSetup(ctx: DeployContext, host: Host): Promise<boolean> {
-    if (await isHostSetup(ctx, host)) return true
+    try {
+      if (await isHostSetup(ctx, host)) return true
+      this.logger.error(this.missingSetupMessage(host))
+    } catch (error) {
+      if (!isSshConnectionError(error)) throw error
+      this.logger.error(`[${host.name}] SSH connection failed: ${sshErrorMessage(error)}`)
+    }
 
-    this.logger.error(this.missingSetupMessage(host))
     this.exitCode = 1
     return false
   }

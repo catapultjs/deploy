@@ -1,7 +1,7 @@
 import type { Host } from '../src/types.ts'
 import { execa } from 'execa'
 import { Context } from '../src/context.ts'
-import { resolveSshArgs, sshControlArgs, q } from '../src/utils.ts'
+import { resolveSshArgs, sshControlArgs, q, isSshConnectionError } from '../src/utils.ts'
 import { BaseDeployCommand } from '../src/base_command.ts'
 
 export default class Ssh extends BaseDeployCommand {
@@ -51,6 +51,17 @@ export default class Ssh extends BaseDeployCommand {
       `cd ${q(host.deployPath)} && exec $SHELL`,
     ]
 
-    await execa('ssh', sshArgs, { stdio: 'inherit' })
+    try {
+      await execa('ssh', sshArgs, { stdio: 'inherit' })
+    } catch (error) {
+      // ssh output is inherited, so any error (e.g. "Permission denied") is already
+      // on screen. Just propagate the exit code without dumping an ExecaError stack;
+      // add a concise line only when the connection itself failed.
+      if (isSshConnectionError(error)) {
+        this.logger.error(`[${host.name}] SSH connection failed`)
+      }
+      const code = (error as { exitCode?: number }).exitCode
+      this.exitCode = typeof code === 'number' ? code : 1
+    }
   }
 }

@@ -54,18 +54,27 @@ export default defineConfig({
 | `branch?`      | `string \| BranchWithPrompt` | Branch to deploy                |
 | `healthcheck?` | `Healthcheck`                | Healthcheck configuration       |
 | `bin?`         | `Record<string, string>`     | Per-host binary path overrides  |
+| `multiplexing?` | `boolean`                   | SSH connection multiplexing (`ControlMaster`/`ControlPath`). Auto-detected when unset: enabled on Unix, disabled on Windows (native OpenSSH has no control-socket support). Set explicitly to override |
 
 **SshConfig options**
 
-| Option  | Type     | Description              |
-| ------- | -------- | ------------------------ |
-| `user`  | `string` | SSH user                 |
-| `host`  | `string` | SSH host                 |
-| `port?` | `number` | SSH port (default: `22`) |
+| Option          | Type     | Description                                                     |
+| --------------- | -------- | --------------------------------------------------------------- |
+| `user`          | `string` | SSH user                                                        |
+| `host`          | `string` | SSH host                                                        |
+| `port?`         | `number` | SSH port (default: `22`)                                        |
+| `identityFile?` | `string` | Path to the private key file (`ssh -i`); `~` is expanded by ssh. Implies `IdentitiesOnly=yes` — only this key is used, with no fallback to the agent's other identities or default `~/.ssh/id_*` files |
 
 ```typescript
-ssh: { user: 'deploy', host: 'example.com', port: 2222 }
+ssh: { user: 'deploy', host: 'example.com', port: 2222, identityFile: '~/.ssh/deploy_ed25519' }
 ```
+
+When `ssh` is a plain string (an alias), configure the key via `~/.ssh/config`
+(`IdentityFile`) instead.
+
+On Windows, prefer forward slashes or `~` to avoid backslash escaping in the config
+file — `"C:/Users/me/.ssh/deploy_ed25519"` or `"~/.ssh/deploy_ed25519"`. A native
+path with backslashes must be escaped (`"C:\\Users\\me\\.ssh\\deploy_ed25519"`).
 
 **BranchWithPrompt options**
 

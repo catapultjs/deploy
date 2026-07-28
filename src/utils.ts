@@ -74,13 +74,39 @@ export function getPaths(baseDir: string, releaseName: string): Paths {
   }
 }
 
+/**
+ * Returns the `-i <path>` args when the host declares a private key file, together
+ * with `IdentitiesOnly=yes` so that key is used exclusively — ssh will not fall back
+ * to the agent's other identities nor to default `~/.ssh/id_*` files.
+ */
+export function identityArgs(host: Host): string[] {
+  return typeof host.ssh === 'object' && host.ssh.identityFile
+    ? ['-i', host.ssh.identityFile, '-o', 'IdentitiesOnly=yes']
+    : []
+}
+
+/**
+ * Whether to use SSH connection multiplexing for this host. Honors an explicit
+ * `host.multiplexing`, otherwise auto-detects: off on Windows (native OpenSSH
+ * has no ControlPath socket support), on elsewhere.
+ */
+export function useMultiplexing(host: Host): boolean {
+  if (typeof host.multiplexing === 'boolean') return host.multiplexing
+  return process.platform !== 'win32'
+}
+
 export function resolveSshArgs(host: Host): string[] {
   if (typeof host.ssh === 'string') return [host.ssh]
   const { user, host: h, port } = host.ssh
-  return port ? ['-p', String(port), `${user}@${h}`] : [`${user}@${h}`]
+  const args: string[] = []
+  if (port) args.push('-p', String(port))
+  args.push(...identityArgs(host))
+  args.push(`${user}@${h}`)
+  return args
 }
 
 export function sshControlArgs(host: Host): string[] {
+  if (!useMultiplexing(host)) return []
   const target = typeof host.ssh === 'string' ? host.ssh : `${host.ssh.user}@${host.ssh.host}`
   const hash = createHash('sha1').update(target).digest('hex').slice(0, 8)
   const socket = join(tmpdir(), `cata-${hash}.sock`)
@@ -90,7 +116,7 @@ export function sshControlArgs(host: Host): string[] {
 export function scpArgs(host: Host): string[] {
   const portArgs =
     typeof host.ssh === 'object' && host.ssh.port ? ['-P', String(host.ssh.port)] : []
-  return [...portArgs, ...sshControlArgs(host)]
+  return [...portArgs, ...identityArgs(host), ...sshControlArgs(host)]
 }
 
 export function scpTarget(host: Host): string {
@@ -111,9 +137,10 @@ export function resolveHostStringValue(value: unknown, host: Host, key: string):
 
 /** Returns the -e flag value for rsync, reusing the SSH multiplexing socket. */
 export function rsyncSshFlag(host: Host): string {
-  const controlOpts = sshControlArgs(host).join(' ')
-  const port = typeof host.ssh === 'object' && host.ssh.port ? ` -p ${host.ssh.port}` : ''
-  return `ssh${port} ${controlOpts}`
+  const parts = ['ssh']
+  if (typeof host.ssh === 'object' && host.ssh.port) parts.push('-p', String(host.ssh.port))
+  parts.push(...identityArgs(host), ...sshControlArgs(host))
+  return parts.join(' ')
 }
 
 export function ssh(
@@ -127,6 +154,23 @@ export function ssh(
   const args = [...sshControlArgs(host), ...resolveSshArgs(host)]
 
   return $`ssh ${args} ${"bash -lc 'echo " + b64 + "|base64 -d|bash'"}`
+}
+
+/**
+ * True when an execa SSH failure is a transport/auth error — ssh's own exit code
+ * `255`, or the process failing before it produced an exit code — rather than a
+ * non-zero exit coming from the remote command itself (e.g. a failed test).
+ */
+export function isSshConnectionError(error: unknown): boolean {
+  const code = (error as { exitCode?: number } | null | undefined)?.exitCode
+  return code == null || code === 255
+}
+
+/** Extracts a concise message from an execa error, preferring the SSH stderr. */
+export function sshErrorMessage(error: unknown): string {
+  const e = error as { stderr?: unknown; shortMessage?: string; message?: string }
+  const stderr = typeof e?.stderr === 'string' ? e.stderr.trim() : ''
+  return stderr || e?.shortMessage || e?.message || String(error)
 }
 
 export async function sleep(ms: number): Promise<void> {

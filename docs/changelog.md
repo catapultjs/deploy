@@ -4,6 +4,16 @@ description: Catapult changelog — release history and notable changes.
 
 # Changelog
 
+## 0.14.0
+
+- Added a per-host `identityFile` SSH option to point at a private key file (`ssh -i`) in the object `ssh` form; it implies `IdentitiesOnly=yes` so only that key is used, with no fallback to agent identities or default `~/.ssh/id_*` files. String `ssh` aliases keep using `~/.ssh/config`
+- Added a per-host `multiplexing` option to toggle SSH connection multiplexing (`ControlMaster`/`ControlPath`), auto-detected when unset — disabled on Windows, where native OpenSSH has no control-socket support, and enabled elsewhere; fixes the `getsockname failed: Not a socket` failure on Windows
+- Documented Windows usage: `recipes/rsync` requires an `rsync` binary (WSL, Git Bash or MSYS2), and `identityFile` paths should use forward slashes or `~` to avoid backslash escaping
+- Fixed SSH connection/auth failures (exit `255`) being misreported as "Catapult is not initialized on this server" — `status`, `deploy` and the programmatic API now surface the real SSH error instead
+- Fixed `ssh` printing a full `ExecaError` stack trace on connection failure — it now shows only ssh's own output plus a concise message and propagates the real exit code
+
+> Released at 2026-07-28
+
 ## 0.13.0
 
 - Added `config:validate` to validate deploy configuration files without running deployment tasks

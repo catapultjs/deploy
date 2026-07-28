@@ -9,6 +9,8 @@ export interface SshConfig {
   user: string
   host: string
   port?: number
+  /** Path to the private key file (ssh -i). Tilde (~) is expanded by ssh. */
+  identityFile?: string
 }
 
 export interface Healthcheck {
@@ -24,6 +26,12 @@ export interface Host {
   branch?: string | BranchWithPrompt
   healthcheck?: Healthcheck
   bin?: Record<string, string>
+  /**
+   * SSH connection multiplexing (ControlMaster/ControlPath).
+   * Defaults to enabled on Unix and disabled on Windows (native OpenSSH has no
+   * control-socket support). Set explicitly to override the auto-detection.
+   */
+  multiplexing?: boolean
 }
 
 export interface Paths {

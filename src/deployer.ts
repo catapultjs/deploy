@@ -1,6 +1,6 @@
 import type { Host, DeployContext, Hooks, HookContext } from './types.ts'
 import { Verbose } from './enums.ts'
-import { q, getPaths, ssh, elapsed } from './utils.ts'
+import { q, getPaths, ssh, elapsed, isSshConnectionError } from './utils.ts'
 import { runTask } from './task.ts'
 import { get } from './store.ts'
 import { getPipeline } from './pipeline.ts'
@@ -68,7 +68,11 @@ export async function isHostSetup(ctx: DeployContext, host: Host): Promise<boole
   try {
     await ssh(host, `set -e\n[ -d ${q(paths.cataConfig)} ]`)
     return true
-  } catch {
+  } catch (error) {
+    // A non-zero exit from the remote test (dir absent) means the host is simply
+    // not initialized. An SSH transport/auth failure means we couldn't check at
+    // all — surface it instead of reporting a misleading "not initialized".
+    if (isSshConnectionError(error)) throw error
     return false
   }
 }

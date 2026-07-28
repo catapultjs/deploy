@@ -2,6 +2,7 @@ import { flags } from '@adonisjs/ace'
 import { Context } from '../src/context.ts'
 import { deployHost, initializeHost, isHostSetup } from '../src/deployer.ts'
 import { BaseDeployCommand } from '../src/base_command.ts'
+import { isSshConnectionError, sshErrorMessage } from '../src/utils.ts'
 
 export default class Deploy extends BaseDeployCommand {
   static commandName = 'deploy'
@@ -64,6 +65,11 @@ export default class Deploy extends BaseDeployCommand {
 
         await deployHost(ctx, host)
       } catch (error) {
+        this.logger.error(
+          isSshConnectionError(error)
+            ? `[${host.name}] SSH connection failed: ${sshErrorMessage(error)}`
+            : `[${host.name}] ${sshErrorMessage(error)}`
+        )
         if (ctx.hooks.afterFailure) await ctx.hooks.afterFailure({ hosts, error: error as Error })
         this.exitCode = 1
         return

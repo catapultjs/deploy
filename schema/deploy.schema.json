@@ -160,7 +160,8 @@
               "properties": {
                 "user": { "type": "string", "minLength": 1 },
                 "host": { "type": "string", "minLength": 1 },
-                "port": { "type": "integer", "minimum": 1, "maximum": 65535 }
+                "port": { "type": "integer", "minimum": 1, "maximum": 65535 },
+                "identityFile": { "type": "string", "minLength": 1 }
               },
               "required": ["user", "host"],
               "additionalProperties": false
@@ -196,7 +197,8 @@
           "type": "object",
           "propertyNames": { "type": "string", "minLength": 1 },
           "additionalProperties": { "type": "string", "minLength": 1 }
-        }
+        },
+        "multiplexing": { "type": "boolean" }
       },
       "required": ["name", "ssh", "deployPath"],
       "additionalProperties": false
