@@ -43,7 +43,7 @@ test.group('config loader', () => {
               },
             ],
           },
-          store: { caddy_reload_after_publish: true },
+          store: { caddy_config_path: '/etc/caddy/Caddyfile' },
           tasks: {
             'app:install': [{ run: 'npm ci' }],
             'app:build': {
@@ -52,7 +52,10 @@ test.group('config loader', () => {
             },
             'app:verify': [{ run: 'npm test' }],
           },
-          after: { 'deploy:shared': ['app:install', 'app:build'] },
+          after: {
+            'deploy:shared': ['app:install', 'app:build'],
+            'deploy:publish': 'caddy:reload',
+          },
           before: { 'deploy:publish': 'app:verify' },
           remove: ['deploy:log_revision'],
         })
@@ -71,6 +74,7 @@ test.group('config loader', () => {
         'app:build',
       ])
       assert.equal(pipeline[publishIndex - 1], 'app:verify')
+      assert.equal(pipeline[publishIndex + 1], 'caddy:reload')
       assert.include(
         tasks.map((entry: { name: string }) => entry.name),
         'deploy:log_revision'
@@ -370,21 +374,26 @@ test.group('config loader', () => {
     try {
       const configPath = join(cwd, 'deploy.config.ts')
       const entrypoint = pathToFileURL(join(projectRoot, 'index.ts')).href
+      const caddyRecipe = pathToFileURL(join(projectRoot, 'recipes/caddy.ts')).href
       await writeFile(
         configPath,
         `import { defineConfig } from ${JSON.stringify(entrypoint)}\n` +
+          `import ${JSON.stringify(caddyRecipe)}\n` +
           `export default defineConfig({ hosts: [{ name: 'production', ssh: 'deploy@example.com', deployPath: '/home/deploy/app' }] })\n`
       )
 
       const { result, report } = await inspectConfig(cwd, configPath)
       assert.equal(result.exitCode, 0, `${result.stdout}\n${result.stderr}`)
       assert.include(report.pipeline, 'deploy:release')
+      assert.notInclude(report.pipeline, 'caddy:reload')
     } finally {
       await rm(cwd, { recursive: true, force: true })
     }
   })
 
-  test('supports store-dependent recipes from TypeScript configs', async ({ assert }) => {
+  test('supports explicit Caddy reload hooks with static TypeScript imports', async ({
+    assert,
+  }) => {
     const cwd = await mkdtemp(join(tmpdir(), 'cata-module-loader-'))
 
     try {
@@ -393,9 +402,9 @@ test.group('config loader', () => {
       const caddyRecipe = pathToFileURL(join(projectRoot, 'recipes/caddy.ts')).href
       await writeFile(
         configPath,
-        `import { defineConfig, set } from ${JSON.stringify(entrypoint)}\n` +
-          `set('caddy_reload_after_publish', true)\n` +
-          `await import(${JSON.stringify(caddyRecipe)})\n` +
+        `import { defineConfig, after } from ${JSON.stringify(entrypoint)}\n` +
+          `import ${JSON.stringify(caddyRecipe)}\n` +
+          `after('deploy:publish', 'caddy:reload')\n` +
           `export default defineConfig({ hosts: [{ name: 'production', ssh: 'deploy@example.com', deployPath: '/home/deploy/app' }] })\n`
       )
 

@@ -4,6 +4,10 @@ description: Catapult changelog — release history and notable changes.
 
 # Changelog
 
+## 0.15.0
+
+- Removed `caddy_reload_after_publish`. Use `after('deploy:publish', 'caddy:reload')` in JavaScript/TypeScript configs, or `"after": { "deploy:publish": "caddy:reload" }` in JSON configs
+
 ## 0.14.0
 
 - Added a per-host `identityFile` SSH option to point at a private key file (`ssh -i`) in the object `ssh` form; it implies `IdentitiesOnly=yes` so only that key is used, with no fallback to agent identities or default `~/.ssh/id_*` files. String `ssh` aliases keep using `~/.ssh/config`

@@ -520,14 +520,14 @@ import '@catapultjs/deploy/recipes/directus'
 import '@catapultjs/deploy/recipes/caddy'
 ```
 
-Manages Caddy configuration. Does not deliver application code and does not reload Caddy by default unless `caddy_reload_after_publish` is set before loading the recipe. Service management is intentionally separate; combine with `recipes/systemd` and set `systemd_service` to `caddy` when Caddy is managed by systemd.
+Manages Caddy configuration. Does not deliver application code or insert tasks into the deployment pipeline. To reload Caddy after publishing, add `after('deploy:publish', 'caddy:reload')` explicitly. Service management is intentionally separate; combine with `recipes/systemd` and set `systemd_service` to `caddy` when Caddy is managed by systemd.
 
 > [!WARNING]
 > Caddy must be able to traverse every parent directory of the configured web root and read the published files. Deploying under a private home directory such as `/home/deploy/...` may require extra permissions or ACLs. Prefer a web root under `/var/www/<app>` or `/srv/www/<app>` for static sites. On the server, use `namei -l /path/to/current/index.html` to inspect which directory blocks access.
 
 | Task | Inserted | Description |
 | --- | --- | --- |
-| `caddy:reload` | after `deploy:publish` when `caddy_reload_after_publish` is true | Validates and reloads Caddy |
+| `caddy:reload` | manual | Validates and reloads Caddy |
 | `caddy:validate` | manual | Runs `caddy validate` |
 | `caddy:fmt` | manual | Formats the configured Caddyfile |
 | `caddy:config:show` | manual | Displays the configured Caddyfile |
@@ -539,16 +539,25 @@ Manages Caddy configuration. Does not deliver application code and does not relo
 | --- | --- | --- | --- |
 | `caddy_config_path` | `string` | `'/etc/caddy/Caddyfile'` | Remote Caddyfile path |
 | `caddy_local_config_path` | `string` | `'./Caddyfile'` | Local Caddyfile for upload |
+| `caddy_upload_path` | `string` | `caddy_config_path` | Remote upload destination; creates its parent directory if missing |
 | `caddy_use_sudo` | `boolean` | `true` | Prefix privileged commands with `sudo` |
 | `caddy_validate_before_reload` | `boolean` | `true` | Validate before reload |
-| `caddy_reload_after_publish` | `boolean` | `false` | Add reload after publish |
 
 ```typescript
-set('caddy_reload_after_publish', true)
-await import('@catapultjs/deploy/recipes/caddy')
+import { after } from '@catapultjs/deploy'
+import '@catapultjs/deploy/recipes/caddy'
+
+after('deploy:publish', 'caddy:reload')
 ```
 
-Use a dynamic import when a recipe option changes pipeline wiring. Static ESM imports run before `set()` calls in the module body.
+To upload an imported site file, set `caddy_upload_path` to `/etc/caddy/sites/example.com.caddy`
+and keep `caddy_config_path` pointing at `/etc/caddy/Caddyfile`. The main file must already
+contain `import sites/*.caddy`. Upload installs the site file, then validates the main configuration
+with its imports; it does not validate the site file in isolation or reload Caddy. A validation
+failure fails the task but leaves the uploaded file on disk. All other Caddy tasks still target
+`caddy_config_path`. Omitting `caddy_upload_path` preserves the existing single-file behavior.
+
+Static imports are sufficient. JSON configs use `"after": { "deploy:publish": "caddy:reload" }`.
 
 ---
 

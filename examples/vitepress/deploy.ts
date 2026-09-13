@@ -1,11 +1,10 @@
-import { defineConfig, set } from '@catapultjs/deploy'
+import { defineConfig, set, after } from '@catapultjs/deploy'
+import '@catapultjs/deploy/recipes/vitepress'
+import '@catapultjs/deploy/recipes/caddy'
 
 set('caddy_local_config_path', './Caddyfile')
 set('caddy_config_path', '/etc/caddy/Caddyfile')
-set('caddy_reload_after_publish', true)
-
-await import('@catapultjs/deploy/recipes/vitepress')
-await import('@catapultjs/deploy/recipes/caddy')
+after('deploy:publish', 'caddy:reload')
 
 export default defineConfig({
   keepReleases: 2,

@@ -1,5 +1,6 @@
 import type {} from '../src/types.ts'
-import { type TaskContext, task, desc, after, get, bin, upload, onStatus } from '../index.ts'
+import { posix } from 'node:path'
+import { type TaskContext, task, desc, get, bin, upload, onStatus } from '../index.ts'
 import { ssh, q } from '../src/utils.ts'
 
 declare module '../src/types.ts' {
@@ -22,6 +23,10 @@ function configPath(): string {
 
 function localConfigPath(): string {
   return get<string>('caddy_local_config_path', './Caddyfile')
+}
+
+function uploadPath(): string {
+  return get<string>('caddy_upload_path', configPath())
 }
 
 function validateCommand(): string {
@@ -76,6 +81,7 @@ task('caddy:config:show', async ({ host, logger }: TaskContext) => {
 desc('Uploads and validates a local Caddyfile')
 task('caddy:config:upload', async ({ host, paths, logger }: TaskContext) => {
   const remoteTmp = `${paths.cataConfig}/Caddyfile.upload`
+  const destination = uploadPath()
 
   await ssh(host, `set -e\nmkdir -p ${q(paths.cataConfig)}`)
   await upload(localConfigPath(), remoteTmp)
@@ -84,7 +90,8 @@ task('caddy:config:upload', async ({ host, paths, logger }: TaskContext) => {
     host,
     [
       'set -e',
-      `${sudo()}install -m 0644 ${q(remoteTmp)} ${q(configPath())}`,
+      `${sudo()}mkdir -p ${q(posix.dirname(destination))}`,
+      `${sudo()}install -m 0644 ${q(remoteTmp)} ${q(destination)}`,
       validateCommand(),
     ].join('\n'),
     { color: true }
@@ -92,7 +99,3 @@ task('caddy:config:upload', async ({ host, paths, logger }: TaskContext) => {
 
   logger.log(stdout.trim())
 })
-
-if (get<boolean>('caddy_reload_after_publish', false)) {
-  after('deploy:publish', 'caddy:reload')
-}

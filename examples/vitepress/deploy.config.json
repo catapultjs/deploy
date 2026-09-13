@@ -4,11 +4,14 @@
 
   "store": {
     "caddy_local_config_path": "./Caddyfile",
-    "caddy_config_path": "/etc/caddy/Caddyfile",
-    "caddy_reload_after_publish": true
+    "caddy_config_path": "/etc/caddy/Caddyfile"
   },
-  
+
   "recipes": ["vitepress", "caddy"],
+
+  "after": {
+    "deploy:publish": "caddy:reload"
+  },
 
   "config": {
     "keepReleases": 2,

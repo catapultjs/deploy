@@ -122,6 +122,23 @@ test.group('JSON config — schema', () => {
     assert.throws(() => validateJsonConfig(unknownKey), /custom_recipe_setting/)
   })
 
+  test('accepts a Caddy upload destination and rejects empty or non-string paths', ({ assert }) => {
+    const config = validConfig()
+    config.store = { caddy_upload_path: '/etc/caddy/sites/example.caddy' }
+    assert.doesNotThrow(() => validateJsonConfig(config))
+
+    for (const value of ['', false]) {
+      config.store = { caddy_upload_path: value }
+      assert.throws(() => validateJsonConfig(config), /caddy_upload_path/)
+    }
+  })
+
+  test('rejects the removed Caddy reload store option', ({ assert }) => {
+    const config = validConfig()
+    config.store = { caddy_reload_after_publish: true }
+    assert.throws(() => validateJsonConfig(config), /caddy_reload_after_publish/)
+  })
+
   test('rejects duplicate host names', ({ assert }) => {
     const config = validConfig()
     config.config.hosts.push({ ...config.config.hosts[0] })
