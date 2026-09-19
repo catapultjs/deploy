@@ -1,0 +1,20 @@
+# Catapult
+
+> Catapult is an SSH deployment tool for Node.js applications. It manages versioned releases, atomic publishes, rollback, shared paths, and composable deployment tasks without requiring an agent on the target server.
+
+## Documentation
+
+- [Home](https://catapultjs.com/)
+- [Getting started](https://catapultjs.com/guide/getting-started)
+- [Configuration](https://catapultjs.com/guide/json-configuration)
+- [Deployment pipeline](https://catapultjs.com/guide/pipeline)
+- [Recipes](https://catapultjs.com/guide/recipes/)
+- [CLI reference](https://catapultjs.com/guide/cli/)
+- [Agent skill](https://catapultjs.com/guide/agent-skills)
+- [API reference](https://catapultjs.com/guide/api)
+
+## Project
+
+- [Source code](https://github.com/catapultjs/deploy)
+- [npm package](https://www.npmjs.com/package/@catapultjs/deploy)
+- [Sitemap](https://catapultjs.com/sitemap.xml)

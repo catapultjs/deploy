@@ -1,4 +1,5 @@
 import { defineConfig, type HeadConfig } from 'vitepress'
+import { buildAgentMarkdown } from './agent_markdown.js'
 
 const siteUrl = 'https://catapultjs.com'
 const siteDescription =
@@ -13,6 +14,9 @@ export default defineConfig({
   cleanUrls: true,
   sitemap: {
     hostname: siteUrl,
+  },
+  buildEnd: async ({ srcDir, outDir }) => {
+    await buildAgentMarkdown(srcDir, outDir)
   },
   head: [
     ['link', { rel: 'icon', type: 'image/png', sizes: '32x32', href: '/favicon-32x32.png' }],
