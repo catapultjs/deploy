@@ -30,6 +30,9 @@
     "schema:generate": "node scripts/generate_json_schema.ts",
     "typecheck": "tsc --noEmit",
     "build": "tsc",
+    "sea:bundle": "vite build --config vite.sea.config.ts",
+    "sea:build": "npm run build && npm run sea:bundle && node --build-sea sea-config.json",
+    "sea:test": "npm run sea:build && ./build/sea/cata version",
     "prepublishOnly": "npm run schema:generate && npm run build",
     "docs:dev": "vitepress dev docs",
     "docs:build": "vitepress build docs",
@@ -92,6 +95,7 @@
     "eslint": "^10.10.0",
     "prettier": "^3.9.6",
     "typescript": "^6.0.3",
+    "vite": "^8.3.0",
     "vitepress": "^2.0.0-alpha.20"
   },
   "dependencies": {
@@ -111,6 +115,6 @@
     "node": ">=24.0.0"
   },
   "volta": {
-    "node": "24.13.0"
+    "node": "26.8.2"
   }
 }

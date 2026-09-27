@@ -1,0 +1,6 @@
+{
+  "main": "./build/sea/cata.mjs",
+  "mainFormat": "module",
+  "output": "./build/sea/cata",
+  "disableExperimentalSEAWarning": true
+}
