@@ -3,7 +3,9 @@
  * DESCRIPTION:
  * Builds Next.js locally and uploads a self-contained standalone server.
  */
-import { access, cp, mkdir } from 'node:fs/promises'
+import { access, cp, mkdir, mkdtemp, rm } from 'node:fs/promises'
+import { tmpdir } from 'node:os'
+import { ssh, q } from '../src/utils.ts'
 import { dirname, resolve, join } from 'node:path'
 import { type TaskContext, task, desc, get, set, local, upload, before, pmExec } from '../index.ts'
 
@@ -48,8 +50,26 @@ task('deploy:build', async () => {
 })
 
 desc('Uploads the local Next.js standalone output')
-task('deploy:update_code', async ({ paths }: TaskContext) => {
-  await upload(`${outputPath()}/.`, paths.release)
+task('deploy:update_code', async ({ host, paths }: TaskContext) => {
+  if (!get<boolean>('nextjs_upload_archive', false)) {
+    await upload(`${outputPath()}/.`, paths.release)
+    return
+  }
+  const temporary = await mkdtemp(join(tmpdir(), 'catapult-nextjs-'))
+  const archive = join(temporary, 'release.tar.gz')
+  const remoteArchive = `${paths.cataConfig}/nextjs-${paths.release.split('/').at(-1)}.tar.gz`
+  try {
+    await local(`tar -czf ${q(archive)} -C ${q(outputPath())} .`)
+    await ssh(host, `set -e\nmkdir -p ${q(paths.cataConfig)}`)
+    try {
+      await upload(archive, remoteArchive)
+      await ssh(host, `set -e\ntar -xzf ${q(remoteArchive)} -C ${q(paths.release)}`)
+    } finally {
+      await ssh(host, `set -e\nrm -f ${q(remoteArchive)}`)
+    }
+  } finally {
+    await rm(temporary, { recursive: true, force: true })
+  }
 })
 
 before('deploy:lock', 'deploy:build')

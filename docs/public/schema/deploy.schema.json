@@ -116,6 +116,7 @@
         "nextjs_path": { "type": "string" },
         "nextjs_out_path": { "type": "string", "minLength": 1 },
         "nextjs_server_path": { "type": "string", "minLength": 1 },
+        "nextjs_upload_archive": { "type": "boolean" },
         "nuxt_path": { "type": "string" },
         "redis_db": {
           "oneOf": [

@@ -462,6 +462,7 @@ Do not combine with `git`, `rsync`, `nextjs`, or `nextjs_static`.
 | `nextjs_path` | `string` | `''` | Local application directory |
 | `nextjs_out_path` | `string` | `'.next/standalone'` | Output directory relative to the app or absolute |
 | `nextjs_server_path` | `string` | `'server.js'` | Server entry relative to the output root |
+| `nextjs_upload_archive` | `boolean` | `false` | Compress the standalone directory into one tar.gz file before SCP upload |
 | `shared_files` | `string[]` | `['.env']` | Default only when not configured |
 
 Copies `.next/static` and optional `public` alongside the server entry, and optional
@@ -469,6 +470,11 @@ Copies `.next/static` and optional `public` alongside the server entry, and opti
 Run `node server.js` from `current`; add PM2 or systemd explicitly for process management.
 For monorepos with workspace tracing, e.g. `apps/web`, set `nextjs_path: 'apps/web'`
 and `nextjs_server_path: 'apps/web/server.js'`, and run that nested server entry.
+Set `nextjs_upload_archive: true` to create a temporary tar.gz during `deploy:update_code`,
+upload one file via SCP and extract it into the release. Both temporary archives are
+cleaned up on success or failure. Requires tar with gzip locally and remotely; no fallback.
+Default false preserves recursive SCP. Includes additions from post-build packaging hooks;
+remove custom tar creation and transfer overrides when enabling this option.
 The entire standalone tree is preserved. Build-time env must be available locally;
 runtime env belongs in the process manager. Build native dependencies on a platform
 compatible with the server. The app's static assets are read from `.next/static`.

@@ -148,6 +148,15 @@ test.group('JSON config — schema', () => {
     assert.throws(() => validateJsonConfig(config), /systemd_unit_files/)
   })
 
+  test('validates the optional Next.js archive transfer flag', ({ assert }) => {
+    const config = validConfig()
+    config.recipes = ['nextjs_local']
+    config.store = { nextjs_upload_archive: true }
+    assert.doesNotThrow(() => validateJsonConfig(config))
+    config.store = { nextjs_upload_archive: 'true' }
+    assert.throws(() => validateJsonConfig(config), /nextjs_upload_archive/)
+  })
+
   test('rejects the removed Caddy reload store option', ({ assert }) => {
     const config = validConfig()
     config.store = { caddy_reload_after_publish: true }

@@ -30,12 +30,13 @@ standalone `server.js`. An optional `ecosystem.config.cjs` from the app director
 to the uploaded output root. Files are copied, so deployed assets do not depend on paths
 on the build machine. A missing standalone server fails the build before upload.
 
-| Key                  | Type       | Default              | Description                                                               |
-| -------------------- | ---------- | -------------------- | ------------------------------------------------------------------------- |
-| `nextjs_path`        | `string`   | `''`                 | Local app directory, relative to the working directory or absolute        |
-| `nextjs_out_path`    | `string`   | `'.next/standalone'` | Standalone output directory, relative to the app or absolute              |
-| `nextjs_server_path` | `string`   | `'server.js'`        | Server entry relative to the standalone output root                       |
-| `shared_files`       | `string[]` | `['.env']`           | Shared files linked into the release; existing configuration is preserved |
+| Key                     | Type       | Default              | Description                                                               |
+| ----------------------- | ---------- | -------------------- | ------------------------------------------------------------------------- |
+| `nextjs_path`           | `string`   | `''`                 | Local app directory, relative to the working directory or absolute        |
+| `nextjs_out_path`       | `string`   | `'.next/standalone'` | Standalone output directory, relative to the app or absolute              |
+| `nextjs_server_path`    | `string`   | `'server.js'`        | Server entry relative to the standalone output root                       |
+| `nextjs_upload_archive` | `boolean`  | `false`              | Compress the standalone directory into one tar.gz file before SCP upload  |
+| `shared_files`          | `string[]` | `['.env']`           | Shared files linked into the release; existing configuration is preserved |
 
 Example JSON configuration:
 
@@ -77,3 +78,27 @@ variables, including `NEXT_PUBLIC_*`, must be available locally. Configure runti
 variables through your process manager; linking `.env` does not inject it into systemd.
 
 See the [Next.js standalone output documentation](https://nextjs.org/docs/app/api-reference/config/next-config-js/output).
+
+## Optional archive transfer
+
+For standalone outputs with many files, enable archive transfer:
+
+```json
+{
+  "store": {
+    "nextjs_upload_archive": true
+  }
+}
+```
+
+The default remains recursive SCP. With this option, Catapult creates a temporary
+`.tar.gz`, uploads that single file via SCP, extracts it into the release, and removes
+the temporary archives locally and remotely, including on upload or extraction failure.
+`tar` with gzip support must be available locally and on the server. No automatic
+fallback is attempted if archiving fails. Native Windows environments without compatible
+`tar` support can keep the default transfer.
+
+The archive is created during `deploy:update_code`, so files added by tasks after
+`deploy:build` are included. Application-specific packaging tasks can remain unchanged;
+remove their archive creation commands and custom `deploy:update_code` override when
+switching to this option.

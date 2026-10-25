@@ -182,6 +182,7 @@ export const deployJsonSchema: AnySchemaObject = {
         nextjs_path: stringValue,
         nextjs_out_path: nonEmptyString,
         nextjs_server_path: nonEmptyString,
+        nextjs_upload_archive: { type: 'boolean' },
         nuxt_path: stringValue,
         redis_db: {
           oneOf: [
