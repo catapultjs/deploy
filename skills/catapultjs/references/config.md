@@ -102,7 +102,7 @@ Top-level contract:
 | `before`   | Optional target-to-task mapping, equivalent to `before()`                                           |
 | `after`    | Optional target-to-task mapping, equivalent to `after()`                                            |
 
-Built-in recipe names accepted by JSON: `adonisjs`, `adonisjs_local`, `astro`, `astro_static`, `caddy`, `directus`, `git`, `nestjs`, `nextjs`, `nextjs_static`, `nuxt`, `nuxt_static`, `pm2`, `redis`, `rsync`, `systemd`, `tanstack`, `vitepress`. Do not use module paths such as `recipes/git`.
+Built-in recipe names accepted by JSON: `adonisjs`, `adonisjs_local`, `astro`, `astro_static`, `caddy`, `directus`, `git`, `nestjs`, `nextjs`, `nextjs_local`, `nextjs_static`, `nuxt`, `nuxt_static`, `pm2`, `redis`, `rsync`, `systemd`, `tanstack`, `vitepress`. Do not use module paths such as `recipes/git`.
 
 The schema validates known `store` key types and rejects unknown keys. Use TypeScript or JavaScript when a custom recipe needs its own store contract.
 
@@ -158,7 +158,7 @@ Avoid combining providers that override `deploy:update_code` (`git`, `rsync`, `a
 
 Inspect the project (`package.json`, lock file, config files) before choosing:
 
-- **Next.js**: `nextjs` for standalone server builds on the server (pair with `git` or `rsync`); `nextjs_static` for static export built locally and uploaded from `./out/.` using default SCP unless `rsync` is imported.
+- **Next.js**: `nextjs` for standalone server builds on the server (pair with `git` or `rsync`); `nextjs_local` for a standalone server built locally and uploaded with dependencies included; `nextjs_static` for static export built locally and uploaded from `./out/.` using default SCP unless `rsync` is imported.
 - **Nuxt**: `nuxt` for server builds on the server (pair with `git` or `rsync`); `nuxt_static` for local static generation uploaded from `./.output/public/.` using default SCP unless `rsync` is imported.
 - **Astro**: `astro` for standalone server builds on the server (pair with `git` or `rsync`); `astro_static` for static sites built locally and uploaded from `./dist/.` using default SCP unless `rsync` is imported.
 - **TanStack Start**: `tanstack` for server builds on the server (pair with `git` or `rsync`); configure Vite with Nitro `node-server`.

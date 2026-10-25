@@ -22,6 +22,7 @@
           "git",
           "nestjs",
           "nextjs",
+          "nextjs_local",
           "nextjs_static",
           "nuxt",
           "nuxt_static",
@@ -114,6 +115,7 @@
         "directus_snapshot_path": { "type": "string", "minLength": 1 },
         "nextjs_path": { "type": "string" },
         "nextjs_out_path": { "type": "string", "minLength": 1 },
+        "nextjs_server_path": { "type": "string", "minLength": 1 },
         "nuxt_path": { "type": "string" },
         "redis_db": {
           "oneOf": [
@@ -129,6 +131,18 @@
         "rsync_source_path": { "type": "string", "minLength": 1 },
         "rsync_excludes": { "type": "array", "items": { "type": "string", "minLength": 1 } },
         "systemd_service": { "type": "string", "minLength": 1 },
+        "systemd_services": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "systemd_unit_files": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "type": "string", "pattern": "\\.service$" }
+        },
         "systemd_use_sudo": { "type": "boolean" },
         "systemd_logs_lines": { "type": "number", "exclusiveMinimum": 0 },
         "vitepress_path": { "type": "string" }

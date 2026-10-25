@@ -133,6 +133,21 @@ test.group('JSON config — schema', () => {
     }
   })
 
+  test('validates systemd service and unit lists', ({ assert }) => {
+    const config = validConfig()
+    config.store = {
+      systemd_services: ['web', 'worker'],
+      systemd_unit_files: ['deploy/web.service'],
+    }
+    assert.doesNotThrow(() => validateJsonConfig(config))
+    for (const value of [[], [''], ['web', 'web'], 'web']) {
+      config.store = { systemd_services: value }
+      assert.throws(() => validateJsonConfig(config), /systemd_services/)
+    }
+    config.store = { systemd_unit_files: ['deploy/web.txt'] }
+    assert.throws(() => validateJsonConfig(config), /systemd_unit_files/)
+  })
+
   test('rejects the removed Caddy reload store option', ({ assert }) => {
     const config = validConfig()
     config.store = { caddy_reload_after_publish: true }

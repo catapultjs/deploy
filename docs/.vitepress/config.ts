@@ -134,6 +134,7 @@ export default defineConfig({
                 { text: 'directus', link: '/guide/recipes/directus' },
                 { text: 'nestjs', link: '/guide/recipes/nestjs' },
                 { text: 'nextjs', link: '/guide/recipes/nextjs' },
+                { text: 'nextjs_local', link: '/guide/recipes/nextjs_local' },
                 { text: 'nextjs_static', link: '/guide/recipes/nextjs_static' },
                 { text: 'nuxt', link: '/guide/recipes/nuxt' },
                 { text: 'nuxt_static', link: '/guide/recipes/nuxt_static' },

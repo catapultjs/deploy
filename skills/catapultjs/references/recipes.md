@@ -17,6 +17,7 @@ Full docs: https://catapultjs.com/guide/recipes
 | `recipes/adonisjs` | No (pair with `git` or `rsync`) | AdonisJS, build on the server |
 | `recipes/nestjs` | No (pair with `git` or `rsync`) | NestJS, build on the server |
 | `recipes/nextjs` | No (pair with `git` or `rsync`) | Next.js, build on the server |
+| `recipes/nextjs_local` | Yes | Next.js standalone server, build locally, upload dependencies and assets |
 | `recipes/nextjs_static` | Uses default SCP; `rsync` optional | Static Next.js export, build locally |
 | `recipes/nuxt` | No (pair with `git` or `rsync`) | Nuxt, build on the server |
 | `recipes/nuxt_static` | Uses default SCP; `rsync` optional | Static Nuxt site, generate locally |
@@ -445,6 +446,35 @@ Upstream output docs: https://nextjs.org/docs/pages/api-reference/config/next-co
 
 ---
 
+## `recipes/nextjs_local`
+
+```typescript
+import '@catapultjs/deploy/recipes/nextjs_local'
+```
+
+Requires `output: 'standalone'`. Runs the configured package manager's `next build`
+locally before `deploy:lock`, then uploads standalone contents via SCP in
+`deploy:update_code`. Includes traced runtime dependencies; no remote install or build.
+Do not combine with `git`, `rsync`, `nextjs`, or `nextjs_static`.
+
+| Key | Type | Default | Description |
+| --- | --- | --- | --- |
+| `nextjs_path` | `string` | `''` | Local application directory |
+| `nextjs_out_path` | `string` | `'.next/standalone'` | Output directory relative to the app or absolute |
+| `nextjs_server_path` | `string` | `'server.js'` | Server entry relative to the output root |
+| `shared_files` | `string[]` | `['.env']` | Default only when not configured |
+
+Copies `.next/static` and optional `public` alongside the server entry, and optional
+`ecosystem.config.cjs` to the output root. Fails before upload if the server is missing.
+Run `node server.js` from `current`; add PM2 or systemd explicitly for process management.
+For monorepos with workspace tracing, e.g. `apps/web`, set `nextjs_path: 'apps/web'`
+and `nextjs_server_path: 'apps/web/server.js'`, and run that nested server entry.
+The entire standalone tree is preserved. Build-time env must be available locally;
+runtime env belongs in the process manager. Build native dependencies on a platform
+compatible with the server. The app's static assets are read from `.next/static`.
+
+---
+
 ## `recipes/nextjs_static`
 
 ```typescript
@@ -568,6 +598,20 @@ import '@catapultjs/deploy/recipes/systemd'
 ```
 
 Generic systemd service management. Import only when the target host uses systemd.
+
+Use `systemd_services` (non-empty string array) for several services; it takes precedence
+over `systemd_service`. `systemd:restart` checks each service separately after restarting.
+`systemd:check` performs this check manually. `cata status` reports activity for each service.
+
+Set `systemd_unit_files` to local `.service` paths, then run `systemd:install` after setup.
+It uploads units, installs them under `/etc/systemd/system/`, reloads the daemon and enables
+them without starting them. Basenames must be unique; existing units are overwritten.
+Additional manual tasks: `systemd:start`, `systemd:stop`, `systemd:enable`,
+`systemd:disable`, and `systemd:daemon-reload`.
+
+Explicitly add `systemd:restart` after `deploy:publish` to restart on deployment.
+When present in the pipeline, it also runs after manual and automatic rollback,
+before the application healthcheck. Units should resolve the application through `current`.
 
 | Task | Inserted | Description |
 | --- | --- | --- |

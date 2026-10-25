@@ -18,6 +18,7 @@ Recipes are importable modules that register tasks and insert them into the pipe
 | [directus](./directus)         | Directus schema and database tasks                       |
 | [nestjs](./nestjs)             | NestJS remote build using standard Node.js tasks         |
 | [nextjs](./nextjs)             | Next.js remote build with standalone output symlinks     |
+| [nextjs_local](./nextjs_local) | Next.js standalone server built locally and uploaded |
 | [nextjs_static](./nextjs_static) | Next.js static export with local build                 |
 | [nuxt](./nuxt)                 | Nuxt build and static generation tasks                   |
 | [nuxt_static](./nuxt_static)   | Nuxt static site with local generation                   |

@@ -32,7 +32,7 @@ When the user asks to create, initialize, or configure a Catapult deployment and
 
 Do not invent production values. At minimum, determine:
 
-- app stack/recipe (`nextjs`, `nextjs_static`, `nuxt`, `astro`, `nestjs`, `tanstack`, `adonisjs`, etc.)
+- app stack/recipe (`nextjs`, `nextjs_local`, `nextjs_static`, `nuxt`, `astro`, `nestjs`, `tanstack`, `adonisjs`, etc.)
 - config format: strict declarative JSON, or TypeScript/JavaScript when executable behavior is required
 - code delivery mode (default SCP via `source_path`, `git`, `rsync`, local-build/static recipe, or custom)
 - host name, SSH target, deploy path, and branch if using `git`

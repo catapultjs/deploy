@@ -168,6 +168,10 @@ export async function rollbackHost(ctx: DeployContext, host: Host, target?: stri
     await runTask('pm2:start', ctx, host)
   }
 
+  if (getPipeline().includes('systemd:restart')) {
+    await runTask('systemd:restart', ctx, host)
+  }
+
   if (getPipeline().includes('deploy:healthcheck')) {
     await runTask('deploy:healthcheck', ctx, host)
   }

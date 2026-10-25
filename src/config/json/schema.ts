@@ -181,6 +181,7 @@ export const deployJsonSchema: AnySchemaObject = {
         directus_snapshot_path: nonEmptyString,
         nextjs_path: stringValue,
         nextjs_out_path: nonEmptyString,
+        nextjs_server_path: nonEmptyString,
         nuxt_path: stringValue,
         redis_db: {
           oneOf: [
@@ -196,6 +197,13 @@ export const deployJsonSchema: AnySchemaObject = {
         rsync_source_path: nonEmptyString,
         rsync_excludes: stringArray,
         systemd_service: nonEmptyString,
+        systemd_services: { type: 'array', minItems: 1, uniqueItems: true, items: nonEmptyString },
+        systemd_unit_files: {
+          type: 'array',
+          minItems: 1,
+          uniqueItems: true,
+          items: { type: 'string', pattern: '\\.service$' },
+        },
         systemd_use_sudo: { type: 'boolean' },
         systemd_logs_lines: { type: 'number', exclusiveMinimum: 0 },
         vitepress_path: stringValue,
