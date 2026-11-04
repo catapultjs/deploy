@@ -4,6 +4,34 @@ description: Catapult changelog — release history and notable changes.
 
 # Changelog
 
+## Unreleased
+
+- Fixed automatic rollback to restore the release active before publication, instead of selecting a potentially incomplete release directory. SSH errors while reading the current release now stop deployment before publication
+- Fixed PM2 rollback to reload processes from the restored release and persist them when `pm2:save` is part of the pipeline
+- Added a `previous` symlink for manual rollback without a target. Rollback validates that the target exists, rejects the current release, and removes the consumed `previous` reference
+- Fixed concurrent deployment locking with exclusive lock creation. The programmatic `Catapult.rollback()` API now acquires and releases the same lock as the CLI
+- Moved `deploy:unlock` after `deploy:cleanup` in the default pipeline. Failures after an explicit unlock no longer trigger rollback or remove another deployment's lock
+- Fixed release cleanup to preserve the targets of `current` and `previous`, even when they fall outside the newest `keepReleases` directories
+
+> **Upgrade notes:** Existing installations without a `previous` symlink must use `cata rollback --interactive` until the next publication records the previous release. After a rollback, another rollback requires an explicit target until a new publication. Custom pipelines should place `deploy:unlock` after cleanup. Protected releases can make the total retained exceed `keepReleases`.
+
+## 0.16.1
+
+- Added optional `nextjs_upload_archive` support to `recipes/nextjs_local`: compress the standalone output into a single `.tar.gz`, upload it via SCP, and extract it on the server. Recursive SCP remains the default
+- Temporary archives are cleaned up locally and remotely, including after upload or extraction failures. Archive transfer requires `tar` with gzip support on both machines
+
+> Released at 2026-10-25
+
+## 0.16.0
+
+- Added `recipes/nextjs_local` to build a Next.js standalone server locally and upload its runtime dependencies and static assets via SCP, without installing dependencies or building on the server. Supports custom output paths and nested monorepo servers
+- Added multi-service systemd management through `systemd_services`, while preserving the existing `systemd_service` option
+- Added `systemd:install` with `systemd_unit_files` to upload, install, and enable local service units, plus explicit start, stop, enable, disable, daemon-reload, and activity-check tasks
+- Systemd restart now verifies that every configured service is active. Manual and automatic rollbacks restart services before the healthcheck when `systemd:restart` is in the deployment pipeline
+- Added JSON configuration support, documentation, and bundled skill guidance for the new recipe and systemd options
+
+> Released at 2026-10-25
+
 ## 0.15.0
 
 - Removed `caddy_reload_after_publish`. Use `after('deploy:publish', 'caddy:reload')` in JavaScript/TypeScript configs, or `"after": { "deploy:publish": "caddy:reload" }` in JSON configs
