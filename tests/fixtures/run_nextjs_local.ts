@@ -1,3 +1,4 @@
+import { writeSync } from 'node:fs'
 import { set, runTask } from '../../index.ts'
 import { Context } from '../../src/context.ts'
 import { getPipeline } from '../../src/pipeline.ts'
@@ -15,4 +16,4 @@ const context = { release: 'test', hooks: {}, config: { hosts: [host], keepRelea
 Context.set(context)
 if (!uploadOnly) await runTask('deploy:build', context, host)
 await runTask('deploy:update_code', context, host)
-console.log(JSON.stringify(getPipeline()))
+writeSync(1, JSON.stringify(getPipeline()) + '\n')
