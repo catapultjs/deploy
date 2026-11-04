@@ -19,8 +19,8 @@ const DEFAULT_PIPELINE = [
   'deploy:publish',
   'deploy:log_revision',
   'deploy:healthcheck',
-  'deploy:unlock',
   'deploy:cleanup',
+  'deploy:unlock',
 ]
 
 test.group('pipeline', (group) => {

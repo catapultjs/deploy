@@ -325,8 +325,8 @@ setPipeline([
   'deploy:update_code',
   'deploy:shared',
   'deploy:publish',
-  'deploy:unlock',
   'deploy:cleanup',
+  'deploy:unlock',
 ])
 ```
 

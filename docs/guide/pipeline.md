@@ -19,8 +19,12 @@ Run `cata pipeline` to list the current pipeline and inspect the task order.
 | `deploy:publish`      | Switches the `current` symlink to the new release           |
 | `deploy:log_revision` | Records the deployment as JSON in `.catapult/revisions.log` |
 | `deploy:healthcheck`  | Checks that the application is responding                   |
-| `deploy:unlock`       | Removes the lock file (also called on failure)              |
-| `deploy:cleanup`      | Removes old releases                                        |
+| `deploy:cleanup`      | Removes old releases, preserving `current` and `previous`    |
+| `deploy:unlock`       | Removes the lock file (also called on failure)               |
+
+Cleanup retains the newest `keepReleases` directories and always protects the targets of `current` and `previous`, so the total retained can exceed `keepReleases`. Keep `deploy:unlock` after cleanup in custom pipelines.
+
+Publication records the replaced release in `previous`. Rollback consumes this reference; a later rollback requires an explicit target until another publication creates it. Existing installations without `previous` must select a release with `cata rollback --interactive`.
 
 `deploy:healthcheck` is automatically removed if no host defines a `healthcheck`.
 
@@ -106,8 +110,8 @@ setPipeline([
   'deploy:update_code',
   'deploy:shared',
   'deploy:publish',
-  'deploy:unlock',
   'deploy:cleanup',
+  'deploy:unlock',
 ])
 ```
 

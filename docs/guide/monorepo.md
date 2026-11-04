@@ -70,8 +70,8 @@ deploy:publish
 pm2:startOrReload
 pm2:save
 deploy:log_revision
-deploy:unlock
 deploy:cleanup
+deploy:unlock
 ```
 
 

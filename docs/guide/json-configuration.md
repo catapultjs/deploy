@@ -211,8 +211,8 @@ Providing `pipeline` replaces recipe insertions as well as the default sequence.
     "deploy:shared",
     "app:build",
     "deploy:publish",
-    "deploy:unlock",
-    "deploy:cleanup"
+    "deploy:cleanup",
+    "deploy:unlock"
   ]
 }
 ```

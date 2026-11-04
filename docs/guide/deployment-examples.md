@@ -47,8 +47,8 @@ pm2:startOrReload    → pm2 startOrReload ecosystem.config.cjs --update-env
 pm2:save             → pm2 save
 deploy:log_revision
 deploy:healthcheck   → if configured
-deploy:unlock
 deploy:cleanup
+deploy:unlock
 ```
 
 ---
@@ -90,8 +90,8 @@ pm2:startOrReload    → pm2 startOrReload ecosystem.config.cjs --update-env
 pm2:save             → pm2 save
 deploy:log_revision
 deploy:healthcheck   → if configured
-deploy:unlock
 deploy:cleanup
+deploy:unlock
 ```
 
 ---
@@ -129,8 +129,8 @@ pm2:startOrReload    → pm2 startOrReload ecosystem.config.cjs --update-env
 pm2:save             → pm2 save
 deploy:log_revision
 deploy:healthcheck   → if configured
-deploy:unlock
 deploy:cleanup
+deploy:unlock
 ```
 
 ---
@@ -165,8 +165,8 @@ deploy:shared        → if configured
 deploy:publish       → current → releases/<release>
 deploy:log_revision
 deploy:healthcheck   → if configured
-deploy:unlock
 deploy:cleanup
+deploy:unlock
 ```
 
 ---
@@ -217,8 +217,8 @@ deploy:shared        → if configured
 deploy:publish       → current → releases/<release>
 deploy:log_revision
 deploy:healthcheck   → if configured
-deploy:unlock
 deploy:cleanup
+deploy:unlock
 ```
 
 In practice, `source_path` is reused by `rsync` when `rsync_source_path` is not set, so the same `./dist` output works for both recipes.

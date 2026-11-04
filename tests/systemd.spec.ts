@@ -22,7 +22,7 @@ const command = basename(process.argv[1]) === 'ssh'
   ? Buffer.from(args.at(-1).match(/echo ([A-Za-z0-9+/=]+)\\|/)[1], 'base64').toString()
   : args
 appendFileSync(process.env.SYSTEMD_TEST_LOG, JSON.stringify(command) + '\\n')
-if (typeof command === 'string' && command.includes('basename')) process.stdout.write('test\\n')
+if (typeof command === 'string' && command.includes('basename')) require('node:fs').writeSync(1, 'previous\\n')
 if (typeof command === 'string' && command.includes('ls -1dt')) process.stdout.write('test/\\nprevious/\\n')
 if (process.env.SYSTEMD_TEST_FAIL === '1' && typeof command === 'string' && command.includes("is-active --quiet 'worker'")) process.exit(1)
 `
@@ -56,6 +56,15 @@ if (process.env.SYSTEMD_TEST_FAIL === '1' && typeof command === 'string' && comm
 }
 
 test.group('systemd recipe', () => {
+  test('reloads PM2 from the restored release', async ({ assert }) => {
+    const { result, commands } = await runSystemd({}, ['pm2-rollback'])
+    assert.equal(result.exitCode, 0, result.stderr)
+    assert.include(commands[1], "cd '/srv/app/releases/previous'")
+    assert.include(commands[1], 'pm2 startOrReload ecosystem.config.cjs --update-env')
+    assert.include(commands[2], "cd '/srv/app/releases/previous'")
+    assert.include(commands[2], 'pm2 save')
+  })
+
   test('preserves single-service configuration and checks activity', async ({ assert }) => {
     const { result, commands } = await runSystemd({ systemd_service: 'web' })
     assert.equal(result.exitCode, 0, result.stderr)

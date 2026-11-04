@@ -22,7 +22,14 @@ task('deploy:cleanup', async ({ config, host, paths }: TaskContext) => {
       exit 0
     fi
 
-    find . -mindepth 1 -maxdepth 1 -type d -printf '%P\n' | sort -r | tail -n +$(( ${config.keepReleases} + 1 )) | xargs -r rm -rf
+    current=$(readlink -f ${q(paths.current)} || true)
+    previous=$(readlink -f ${q(paths.base + '/previous')} || true)
+    while IFS= read -r -d '' release; do
+      resolved=$(readlink -f "$release")
+      [ "$resolved" = "$current" ] && continue
+      [ "$resolved" = "$previous" ] && continue
+      rm -rf -- "$release"
+    done < <(find . -mindepth 1 -maxdepth 1 -type d -printf '%P\\0' | sort -zr | tail -z -n +$(( ${config.keepReleases} + 1 )))
   `
   )
 })

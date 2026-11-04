@@ -220,7 +220,12 @@ export class Catapult extends EventEmitter {
   async rollback(options: RollbackOptions = {}): Promise<void> {
     const ctx = await this.#context()
     for (const host of this.#resolveHosts(ctx, options.hosts)) {
-      await rollbackHost(ctx, host, options.release)
+      await runTask('deploy:lock', ctx, host)
+      try {
+        await rollbackHost(ctx, host, options.release)
+      } finally {
+        await runTask('deploy:unlock', ctx, host)
+      }
     }
   }
 

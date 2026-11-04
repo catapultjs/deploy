@@ -80,20 +80,16 @@ export async function isHostSetup(ctx: DeployContext, host: Host): Promise<boole
 export async function getCurrentRelease(ctx: DeployContext, host: Host): Promise<string | null> {
   const paths = getPaths(host.deployPath, ctx.release)
 
-  try {
-    const { stdout } = await ssh(
-      host,
-      `
+  const { stdout } = await ssh(
+    host,
+    `
       set -e
       if [ -L ${q(paths.current)} ]; then
         basename "$(readlink ${q(paths.current)})"
       fi
     `
-    )
-    return stdout.trim() || null
-  } catch {
-    return null
-  }
+  )
+  return stdout.trim() || null
 }
 
 export async function getReleaseNames(ctx: DeployContext, host: Host): Promise<string[]> {
@@ -142,14 +138,12 @@ export async function getRevisions(
 }
 
 async function getPreviousReleaseName(ctx: DeployContext, host: Host): Promise<string | null> {
-  const currentRelease = await getCurrentRelease(ctx, host)
-  const releases = await getReleaseNames(ctx, host)
-
-  if (!currentRelease) {
-    return releases[1] || releases[0] || null
-  }
-
-  return releases.find((name) => name !== currentRelease) ?? null
+  const paths = getPaths(host.deployPath, ctx.release)
+  const { stdout } = await ssh(
+    host,
+    `set -e\nif [ -L ${q(paths.base + '/previous')} ]; then basename "$(readlink ${q(paths.base + '/previous')})"; fi`
+  )
+  return stdout.trim() || null
 }
 
 export async function rollbackHost(ctx: DeployContext, host: Host, target?: string): Promise<void> {
@@ -162,18 +156,33 @@ export async function rollbackHost(ctx: DeployContext, host: Host, target?: stri
 
   if ((ctx.config.verbose ?? 0) >= Verbose.NORMAL) logger.step(host.name, `rollback to ${previous}`)
 
-  await ssh(host, `set -e\nln -sfn ${q(paths.releases + '/' + previous)} ${q(paths.current)}`)
+  if (!/^[a-zA-Z0-9_-]+$/.test(previous)) throw new Error('Invalid rollback release')
+  const rollbackCtx = { ...ctx, release: previous }
 
-  if (getPipeline().includes('pm2:start')) {
-    await runTask('pm2:start', ctx, host)
+  await ssh(
+    host,
+    `set -e
+[ -d ${q(paths.releases + '/' + previous)} ]
+if [ -L ${q(paths.current)} ] && [ "$(readlink -f ${q(paths.current)})" = "$(readlink -f ${q(paths.releases + '/' + previous)})" ]; then
+  echo 'Rollback target is already current' >&2
+  exit 1
+fi
+ln -sfn ${q(paths.releases + '/' + previous)} ${q(paths.current)}
+rm -f ${q(paths.base + '/previous')}`
+  )
+
+  const pm2Task = ['pm2:startOrReload', 'pm2:start'].find((name) => getPipeline().includes(name))
+  if (pm2Task) {
+    await runTask(pm2Task, rollbackCtx, host)
+    if (getPipeline().includes('pm2:save')) await runTask('pm2:save', rollbackCtx, host)
   }
 
   if (getPipeline().includes('systemd:restart')) {
-    await runTask('systemd:restart', ctx, host)
+    await runTask('systemd:restart', rollbackCtx, host)
   }
 
   if (getPipeline().includes('deploy:healthcheck')) {
-    await runTask('deploy:healthcheck', ctx, host)
+    await runTask('deploy:healthcheck', rollbackCtx, host)
   }
 }
 
@@ -190,6 +199,7 @@ export async function deployHost(
 ): Promise<void> {
   let locked = false
   let published = false
+  let previousRelease: string | null = null
   let currentTask = ''
   const deployStart = Date.now()
 
@@ -202,10 +212,15 @@ export async function deployHost(
       if (verbose >= Verbose.NORMAL)
         logger.task(elapsed(Date.now() - deployStart), host.name, taskName)
       observer?.taskStart?.(host, taskName)
+      if (taskName === 'deploy:publish') previousRelease = await getCurrentRelease(ctx, host)
       await runTask(taskName, ctx, host)
-      observer?.taskDone?.(host, taskName)
       if (taskName === 'deploy:lock') locked = true
       if (taskName === 'deploy:publish') published = true
+      if (taskName === 'deploy:unlock') {
+        locked = false
+        published = false
+      }
+      observer?.taskDone?.(host, taskName)
     }
 
     logger.ok(host.name, `deploy OK -> ${ctx.release}`, elapsed(Date.now() - deployStart))
@@ -215,7 +230,8 @@ export async function deployHost(
 
     if (published) {
       try {
-        await rollbackHost(ctx, host)
+        if (!previousRelease) throw new Error('No previous release available')
+        await rollbackHost(ctx, host, previousRelease)
         logger.rollback(host.name, 'auto rollback OK')
       } catch (rollbackError) {
         logger.boom(host.name, `auto rollback failed: ${(rollbackError as Error).message}`)

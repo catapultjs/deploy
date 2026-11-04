@@ -16,11 +16,10 @@ task('deploy:lock', async ({ host, release, paths }: TaskContext) => {
       host,
       `
       set -e
-      if [ -f ${q(paths.lock)} ]; then
+      if ! (set -C; echo ${q(release)} > ${q(paths.lock)}) 2>/dev/null; then
         echo "Deploy lock already present: ${paths.lock}" >&2
         exit 1
       fi
-      echo ${q(release)} > ${q(paths.lock)}
     `,
       { quiet: true }
     )

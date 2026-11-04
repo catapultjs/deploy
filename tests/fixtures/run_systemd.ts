@@ -21,7 +21,11 @@ const context = {
 }
 
 for (const name of tasks as TaskName[]) {
-  if (name === 'auto-rollback') {
+  if (name === 'pm2-rollback') {
+    await import('../../recipes/pm2.ts')
+    setPipeline(['pm2:startOrReload', 'pm2:save'])
+    await rollbackHost(context, host, 'previous')
+  } else if (name === 'auto-rollback') {
     setPipeline(['deploy:publish', 'systemd:restart', 'deploy:healthcheck'])
     task('deploy:publish', () => {
       run('publish-marker')
