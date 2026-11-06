@@ -4,7 +4,7 @@ description: Catapult changelog — release history and notable changes.
 
 # Changelog
 
-## Unreleased
+## 0.17.0
 
 - Fixed automatic rollback to restore the release active before publication, instead of selecting a potentially incomplete release directory. SSH errors while reading the current release now stop deployment before publication
 - Fixed PM2 rollback to reload processes from the restored release and persist them when `pm2:save` is part of the pipeline
@@ -14,6 +14,8 @@ description: Catapult changelog — release history and notable changes.
 - Fixed release cleanup to preserve the targets of `current` and `previous`, even when they fall outside the newest `keepReleases` directories
 
 > **Upgrade notes:** Existing installations without a `previous` symlink must use `cata rollback --interactive` until the next publication records the previous release. After a rollback, another rollback requires an explicit target until a new publication. Custom pipelines should place `deploy:unlock` after cleanup. Protected releases can make the total retained exceed `keepReleases`.
+
+> Released at 2026-11-06
 
 ## 0.16.1
 
