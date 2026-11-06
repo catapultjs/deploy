@@ -41,7 +41,7 @@ after('deploy:update_code', 'my-recipe:build')
 
 Pipeline functions: `after(existing, newTask)`, `before(existing, newTask)`, `remove(name)`, `inPipeline(name)`, `getPipeline()`, `setPipeline(tasks)`.
 
-Default pipeline: `deploy:lock`, `deploy:release`, `deploy:update_code`, `deploy:shared`, `deploy:publish`, `deploy:log_revision`, `deploy:healthcheck`, `deploy:unlock`, `deploy:cleanup`. Recipes may override a built-in task by registering the same name (e.g. `git`/`rsync` recipes provide `deploy:update_code`).
+Default pipeline: `deploy:lock`, `deploy:release`, `deploy:update_code`, `deploy:shared`, `deploy:publish`, `deploy:log_revision`, `deploy:healthcheck`, `deploy:cleanup`, `deploy:unlock`. Recipes may override a built-in task by registering the same name (e.g. `git`/`rsync` recipes provide `deploy:update_code`).
 
 Use `inPipeline()` to attach relative to optional steps (`deploy:healthcheck` is removed when no host defines one). Insertion deduplicates: re-adding a task moves it, the last position wins.
 

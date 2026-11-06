@@ -44,9 +44,34 @@ This checks immediate activity; use an application healthcheck to verify readine
 `systemd_unit_files` (`string[]`) lists local `.service` files for `systemd:install`.
 Unit basenames must be unique. Installation uploads files to `.catapult/systemd/`, installs
 them under `/etc/systemd/system/`, runs `daemon-reload`, and enables the uploaded units.
-Run it explicitly after `deploy:setup`; it does not start or restart services.
+For the first deployment, run it as a pipeline task before publication (see below); it does not start or restart services. Manual `cata task systemd:install` requires an existing current release.
 With sudo enabled, installation uses root privileges; without sudo, the SSH user must
 have permission to write the system unit directory. Existing units are overwritten.
+
+## First installation
+
+Configure local unit files with a working directory under `current`, and load the application and systemd recipes. For example, a Next.js standalone deployment can use:
+
+```json
+{
+  "$schema": "https://catapultjs.com/schema/deploy.schema.json",
+  "version": 1,
+  "recipes": ["nextjs_local", "systemd"],
+  "store": {
+    "systemd_service": "myapp",
+    "systemd_unit_files": ["deploy/myapp.service"]
+  },
+  "before": { "deploy:publish": "systemd:install" },
+  "after": { "deploy:publish": "systemd:restart" },
+  "config": {
+    "hosts": [{ "name": "production", "ssh": "deploy@example.com", "deployPath": "/srv/myapp" }]
+  }
+}
+```
+
+Create `deploy/myapp.service` with your runtime command and user, enable Next.js standalone output, then run `npx cata deploy:setup` followed by `npx cata deploy`. Installation runs after files are prepared but before `current` switches; the service starts through `systemd:restart` after publication. The SSH user needs the configured sudo permissions.
+
+Keep the `before` mapping to install units on every deployment, or remove it after initial setup and run `npx cata task systemd:install` when units change. The latter command is available once a current release exists.
 
 For a web service and worker, a JSON configuration can use:
 

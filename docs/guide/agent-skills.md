@@ -27,7 +27,7 @@ You can also place it in `~/.claude/skills/` to make it available across all you
 
 ## How it is organised
 
-The skill uses progressive disclosure: a small `SKILL.md` carries the universal rules (notably that one recipe must provide `deploy:update_code`) and routes the agent to a reference file matching the task. References are only read when needed, keeping the agent's context small.
+The skill uses progressive disclosure: a small `SKILL.md` carries the universal rules (notably that core SCP provides `deploy:update_code` by default and transfer recipes replace it) and routes the agent to a reference file matching the task. References are only read when needed, keeping the agent's context small.
 
 | Reference | Covers |
 | --- | --- |
@@ -48,8 +48,21 @@ With the `skills` CLI:
 npx skills update catapultjs
 ```
 
-If you copied it from `node_modules`, the skill is versioned with the package: after upgrading `@catapultjs/deploy`, copy it again so it matches the installed version:
+If you copied it from `node_modules`, upgrading the package does not update your copy. Copy it again after upgrading `@catapultjs/deploy`:
 
 ```bash
 cp -r node_modules/@catapultjs/deploy/skills/catapultjs .claude/skills/
 ```
+
+### Date-based version
+
+The skill declares its own version in the frontmatter of `skills/catapultjs/SKILL.md`:
+
+```yaml
+metadata:
+  version: "2026-11-06.1"
+```
+
+The format is `YYYY-MM-DD.N`: the UTC date of the update, followed by a revision number starting at `1`. A new change set on the same day increments the revision; a later date starts again at `1`. This version covers `SKILL.md` and all bundled references, independently of the npm package version.
+
+Compare `metadata.version` in your installed copy with the source you use to update it. Compare the date first, then the revision numerically. Copy the entire skill directory when updating so the entrypoint and references stay together. The value above illustrates the format; the skill frontmatter is the source of truth for the current version.

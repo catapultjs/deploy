@@ -32,9 +32,11 @@ npx cata task <task-name> [options]
 npx cata list:tasks
 npx cata task deploy:build
 npx cata task deploy:unlock
-npx cata task deploy:restart -H production
+npx cata task pm2:restart -H production
 npx cata task deploy:healthcheck -vv
 ```
+
+The PM2 example requires importing `recipes/pm2`.
 
 The command requires an existing current release on each target host.
 

@@ -68,3 +68,5 @@ const catapult = new Catapult({ verbose: Verbose.SILENT, hosts: […] })
 ## Lower-level functions
 
 When the class is too coarse, the primitives are exported from `@catapultjs/deploy` and take an explicit `DeployContext` + `Host`: `deployHost()`, `rollbackHost()`, `initializeHost()`, `isHostSetup()`, `getCurrentRelease()`, `getReleaseNames()`, `getRevisions()`, `collectHostStatus()`, `runTask(name, ctx, host, { logger? })`.
+
+Serialize operations within a process: task runner and context are shared. `rollback()` acquires the deployment lock, uses the recorded `previous` target unless an explicit release is supplied, and consumes that reference. For first-time systemd installation, place `systemd:install` before `deploy:publish` and `systemd:restart` after it; manual `task()` requires a current release.

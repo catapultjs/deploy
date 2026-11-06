@@ -10,7 +10,7 @@ description: Build an Astro application on the server with the Catapult astro re
 import '@catapultjs/deploy/recipes/astro'
 ```
 
-This recipe runs the Astro build on the server. It does not override `deploy:update_code`, so combine it with a transfer recipe such as `git` or `rsync`.
+This recipe runs the Astro build on the server. It does not override `deploy:update_code`, so it uses core SCP by default. Import `git` or `rsync` if you want a different transfer.
 
 See the [example Astro project](https://github.com/catapultjs/deploy/tree/main/examples/astro) for a complete setup, or go directly to [deploy.js](https://github.com/catapultjs/deploy/blob/main/examples/astro/deploy.js).
 
@@ -33,8 +33,9 @@ The recipe runs the build command from `{{release_path}}/{{astro_path}}`.
 ```typescript
 import { set } from '@catapultjs/deploy'
 
-set('astro_path', 'apps/web')
 import '@catapultjs/deploy/recipes/astro'
+
+set('astro_path', 'apps/web')
 ```
 
 For standalone server output, make sure your Astro config uses the Node adapter in standalone mode:

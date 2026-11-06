@@ -18,16 +18,18 @@ const catapult = new Catapult({
       name: 'production',
       ssh: 'deploy@example.com',
       deployPath: '/home/deploy/myapp',
+      branch: 'main',
     },
   ],
 })
 
+await catapult.setup() // First installation; review setup hooks before rerunning
 await catapult.deploy()
 ```
 
 The constructor accepts the exact same configuration object as [`defineConfig()`](/guide/api#defineconfig-config): hosts, recipes, hooks and pipeline customisations all work the same way. Import recipes before constructing, like in a `deploy.ts`.
 
-The deploy context is global: use **a single `Catapult` instance per process**. Parallel deployments to multiple hosts of the same instance are fine; two instances with different configs in the same process are not supported.
+The deploy context is global: use **a single `Catapult` instance per process**. Await each operation before starting another. Hosts are processed sequentially; concurrent operations in the same process are unsupported because tasks share a runner and context.
 
 ## Methods
 
@@ -35,7 +37,7 @@ Methods that target servers accept an `options` object with a `hosts` array of h
 
 ### `setup(options?)`
 
-Prepares the remote directory structure (`releases/`, `shared/`, `.catapult/`) and runs the recipes' [`onSetup`](/guide/api#onsetup-fn) hooks. Equivalent to `cata deploy:setup`. Run it once per host; it is non-destructive.
+Prepares the remote directory structure (`releases/`, `shared/`, `.catapult/`) and runs the recipes' [`onSetup`](/guide/api#onsetup-fn) hooks. Equivalent to `cata deploy:setup`. Run it once per host. Directory creation is idempotent; review recipe setup hooks before rerunning them.
 
 ```typescript
 await catapult.setup()
@@ -99,7 +101,9 @@ Throws if the task is unknown, if a host is not initialized, or if no release is
 
 ### `rollback(options?)`
 
-Points the `current` symlink back to a previous release. Without `release`, the release preceding the current one is used.
+Points the `current` symlink back to a previous release. Without `release`, the `previous` symlink recorded at publication is used. The API acquires the deployment lock and releases it on success or failure. The target must exist and differ from `current`. The reference is consumed on rollback; use an explicit `release` for another rollback until the next publication. Existing installations without `previous` also need an explicit target.
+
+PM2 is reloaded and saved when the corresponding tasks are in the pipeline; systemd services are restarted when `systemd:restart` is present, followed by the configured healthcheck. See [rollback](/guide/cli/rollback) for automatic recovery limits.
 
 ```typescript
 await catapult.rollback()
@@ -186,7 +190,7 @@ Returns the current deployment pipeline as an ordered array of task names, like 
 
 ```typescript
 const tasks = await catapult.pipeline()
-// ['deploy:lock', 'deploy:release', …, 'deploy:cleanup']
+// ['deploy:lock', 'deploy:release', …, 'deploy:cleanup', 'deploy:unlock']
 ```
 
 ## Events
@@ -212,7 +216,7 @@ catapult.on('host:done', ({ host, release }) => {
 
 ## Controlling log output
 
-By default Catapult logs task progress to stdout, like the CLI. For a fully silent run where you rely on events and return values only, set the verbosity in the configuration:
+By default Catapult logs task progress to stdout, like the CLI. To suppress task progress and command tracing, set the verbosity in the configuration. Success/failure messages and custom task logs may still be emitted:
 
 ```typescript
 import { Verbose } from '@catapultjs/deploy/enums'

@@ -38,7 +38,7 @@ export default defineConfig({
 | Option            | Type             | Description                                                                                                                                                                                |
 | ----------------- | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `hosts`           | `Host[]`         | List of servers to deploy to                                                                                                                                                               |
-| `keepReleases?`   | `number`         | Number of releases to keep (default: `5`)                                                                                                                                                  |
+| `keepReleases?`   | `number`         | Newest releases to keep (default: `5`), plus protected `current` and `previous` targets                                                                                                                                                  |
 | `repository?`     | `string`         | Git repository URL (auto-detected from origin)                                                                                                                                             |
 | `packageManager?` | `PackageManager` | Package manager used by `pm()`, `pmInstall()`, `pmInstallProd()` (auto-detected from lock files, defaults to `PackageManager.NPM`)                                                         |
 | `hooks?`          | `Hooks`          | Lifecycle hooks (`beforeDeploy`, `afterDeploy`, …)                                                                                                                                         |
@@ -425,23 +425,44 @@ Key/value store for sharing configuration between `deploy.ts` and recipes.
 | `shared_files`  | `string[]` | `[]`    | `deploy:shared`, `deploy:setup` |
 | `writable_dirs` | `string[]` | `[]`    | `deploy:setup`                  |
 
+`source_path` is a core transfer option: built-in SCP uploads it with a default of `./.`. Recipes can replace that task or set an artifact directory. SCP does not honor `.gitignore`.
+
 **Recipe keys**
 
 | Key                      | Type                               | Default             | Used by                          |
 | ------------------------ | ---------------------------------- | ------------------- | -------------------------------- |
 | `adonisjs_path`          | `string`                           | `''`                | `recipes/adonisjs`               |
-| `astro_mode`             | `string \| Record<string, string>` | `'production'`      | `recipes/astro`                  |
+| `astro_mode` | `string \| Record<string, string>` | `'production'` | `recipes/astro_static` |
 | `directus_path`          | `string`                           | `''`                | `recipes/directus`               |
 | `directus_snapshot_path` | `string`                           | `'./snapshot.yaml'` | `recipes/directus`               |
 | `nuxt_path`              | `string`                           | `''`                | `recipes/nuxt`                   |
 | `redis_db`               | `number \| number[]`               | `1`                 | `recipes/redis`                  |
-| `source_path`            | `string`                           | depends recipe      | `recipes/astro`, `recipes/rsync` |
+| `source_path` | `string` | `./.` for core SCP | Core upload, rsync fallback, and recipe-specific artifact/path defaults |
 | `rsync_source_path`      | `string`                           | `./`                | `recipes/rsync`                  |
 | `rsync_excludes`         | `string[]`                         | `[]`                | `recipes/rsync`                  |
 | `systemd_service`        | `string`                           | `'app'`             | `recipes/systemd`                |
 | `systemd_use_sudo`       | `boolean`                          | `true`              | `recipes/systemd`                |
 | `systemd_logs_lines`     | `number`                           | `100`               | `recipes/systemd`                |
 | `vitepress_path`         | `string`                           | `''`                | `recipes/vitepress`              |
+
+Additional options supported by the package:
+
+| Key | Type | Default / behavior | Reference |
+| --- | --- | --- | --- |
+| `astro_path` | `string` | Initialized from `source_path` or `''` | [Astro](./recipes/astro) |
+| `nextjs_path` | `string` | `''` for local builds; remote recipe initializes from `source_path` | [Next.js](./recipes/nextjs), [local](./recipes/nextjs_local) |
+| `nextjs_out_path` | `string` | `.next/standalone` (remote recipe uses a trailing slash) | [Next.js local](./recipes/nextjs_local) |
+| `nextjs_server_path` | `string` | `server.js`, relative to standalone output | [Next.js local](./recipes/nextjs_local) |
+| `nextjs_upload_archive` | `boolean` | `false` | [Next.js local](./recipes/nextjs_local) |
+| `systemd_services` | `string[]` | Non-empty list; overrides `systemd_service` | [systemd](./recipes/systemd) |
+| `systemd_unit_files` | `string[]` | `[]`; local `.service` files for installation | [systemd](./recipes/systemd) |
+| `caddy_config_path` | `string` | `/etc/caddy/Caddyfile` | [Caddy](./recipes/caddy) |
+| `caddy_local_config_path` | `string` | `./Caddyfile` | [Caddy](./recipes/caddy) |
+| `caddy_upload_path` | `string` | Value of `caddy_config_path` | [Caddy](./recipes/caddy) |
+| `caddy_use_sudo` | `boolean` | `true` | [Caddy](./recipes/caddy) |
+| `caddy_validate_before_reload` | `boolean` | `true` | [Caddy](./recipes/caddy) |
+
+Some recipes initialize store values at module evaluation time. Set overrides after loading those recipes, or use the JSON loader's store configuration. Read each recipe's path rules before combining `source_path` with a monorepo subdirectory.
 
 ### `set(key, value)`
 

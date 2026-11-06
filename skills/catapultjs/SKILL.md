@@ -1,6 +1,8 @@
 ---
 name: catapultjs
 description: Work with Catapult (@catapultjs/deploy), the SSH deployment tool for Node.js. Use when creating or updating TypeScript, JavaScript or JSON deploy configs, writing recipes or deployment tasks, customizing the deploy pipeline, or scripting deployments with the programmatic API (Catapult class).
+metadata:
+  version: "2026-11-06.1"
 ---
 
 # Catapult (@catapultjs/deploy)
@@ -42,3 +44,9 @@ Do not invent production values. At minimum, determine:
 Prefer one compact question group over a long interview. If the project files already answer some items, state the inferred values and ask only for the missing or ambiguous ones. After the user answers, generate the config and include the setup/deploy commands.
 
 Use `deploy.config.json` for data-only deployments with built-in recipes, serializable store values, declarative task steps and direct `pipeline`, `remove`, `before`, and `after` controls. Include `"$schema": "https://catapultjs.com/schema/deploy.schema.json"` and `"version": 1`. Static `hosts[].bin` overrides are supported. Use `cata config:validate` to validate a config explicitly in CI or before deployment; add `--json` for machine-readable output. Use TypeScript or JavaScript for callbacks/hooks, external recipes, dynamic `bin()` calls inside custom tasks, conditional pipeline changes or arbitrary task code.
+
+## Skill versioning
+
+`metadata.version` is the version of this entire skill, including its references. It uses `YYYY-MM-DD.N`: the UTC date of the update and a positive revision number starting at `1`. It is independent of the npm package version.
+
+When editing this skill or any bundled reference, update the version once for the completed change set. On a later date, use that date with revision `1`; for another change set on the same date, increment `N`. Never decrease the version. Reading or applying the skill does not change its version. Keep the value quoted in YAML and maintain it only in this frontmatter.

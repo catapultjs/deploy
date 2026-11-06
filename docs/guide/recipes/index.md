@@ -4,7 +4,7 @@ description: Drop-in Catapult recipes for Astro, AdonisJS, Caddy, Directus, Nest
 
 # Recipes
 
-Recipes are importable modules that register tasks and insert them into the pipeline automatically.
+Recipes are importable modules that register tasks. Application recipes usually insert deployment steps; service recipes such as systemd and Caddy require explicit pipeline placement.
 
 | Recipe                         | Description                                              |
 | ------------------------------ | -------------------------------------------------------- |
@@ -27,3 +27,19 @@ Recipes are importable modules that register tasks and insert them into the pipe
 | [systemd](./systemd)           | Restart, reload, inspect, and read logs for services     |
 | [tanstack](./tanstack)         | TanStack Start remote build for Node.js server output    |
 | [vitepress](./vitepress)       | Build VitePress locally and upload static artifacts      |
+
+## Choosing a deployment approach
+
+| Application / recipe | Build location | File transfer | Runtime |
+| --- | --- | --- | --- |
+| `adonisjs`, `astro`, `nestjs`, `nextjs`, `nuxt`, `tanstack` | Server | Core SCP by default; Git or rsync can replace it | Node.js with PM2, systemd, or your own process manager |
+| `adonisjs_local` | Local; production dependencies installed on server | Recipe uploads build output with SCP | Node.js with a process manager |
+| `nextjs_local` | Local | Recipe uploads standalone output with SCP; optional archive | Node.js with a process manager |
+| `astro_static`, `nextjs_static`, `nuxt_static` | Local | Core SCP uploads the generated static directory | Static web server |
+| `vitepress` | Local | Recipe uploads generated documentation with SCP | Static web server |
+
+Choose one provider of `deploy:update_code`. Do not combine Git or rsync with a recipe that already owns artifact delivery unless you deliberately replace its pipeline. A Git transfer deploys repository content, not your locally generated output.
+
+Application build recipes do not automatically choose a process manager. Import `pm2` for its deployment reload steps, or explicitly place `systemd:restart` after `deploy:publish`. Caddy can serve static output or proxy to the application's port; its upload/reload tasks also need explicit placement.
+
+For first-time systemd installation, follow the [bootstrap example](./systemd#first-installation). For complete configurations, see [Deployment Examples](/guide/deployment-examples).

@@ -721,3 +721,5 @@ export default defineConfig({
 ```
 
 `deploy:install` (inserted by `nuxt`/`directus`) runs at the workspace root `{{release_path}}` by default — no override needed for standard monorepos.
+
+For first-time systemd setup, insert `systemd:install` before `deploy:publish` and `systemd:restart` after publication. Run setup, then deploy. Manual `cata task systemd:install` requires an existing current release. Installation overwrites configured unit files and requires permission to install them.

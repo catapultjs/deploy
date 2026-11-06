@@ -45,7 +45,7 @@ npx cata deploy --config deploy.staging.ts
 
 ### `rollback`
 
-Restores the previous release. With `--interactive`, prompts to choose the target release. Automatic rollback also triggers after a failure past `deploy:publish`.
+Restores the recorded `previous` symlink target and consumes that reference. Use `--interactive` when no reference exists or after a rollback. The CLI acquires the deployment lock. Automatic rollback restores the pre-publication release on failure after `deploy:publish` and before `deploy:unlock`; the first deployment has no earlier release to restore.
 
 | Option | Description |
 | --- | --- |
@@ -83,7 +83,7 @@ Runs a registered task against the current release. Requires an existing release
 npx cata list:tasks
 npx cata task deploy:build
 npx cata task deploy:unlock
-npx cata task deploy:restart -H production
+npx cata task pm2:restart -H production
 npx cata task deploy:healthcheck -vv
 ```
 

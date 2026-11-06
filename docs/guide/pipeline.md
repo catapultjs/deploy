@@ -14,7 +14,7 @@ Run `cata pipeline` to list the current pipeline and inspect the task order.
 | --------------------- | ----------------------------------------------------------- |
 | `deploy:lock`         | Creates a lock file to prevent concurrent deployments       |
 | `deploy:release`      | Creates the release directory                               |
-| `deploy:update_code`  | Transfers code to the server (provided by recipe or custom task) |
+| `deploy:update_code`  | Uploads local files via SCP by default; recipes can override it |
 | `deploy:shared`       | Symlinks `shared_dirs` and `shared_files` into the release  |
 | `deploy:publish`      | Switches the `current` symlink to the new release           |
 | `deploy:log_revision` | Records the deployment as JSON in `.catapult/revisions.log` |
@@ -28,7 +28,7 @@ Publication records the replaced release in `previous`. Rollback consumes this r
 
 `deploy:healthcheck` is automatically removed if no host defines a `healthcheck`.
 
-`deploy:update_code` is intentionally empty in the core package. Import a recipe such as `git`, `rsync`, or `astro`, or override the task yourself.
+`deploy:update_code` uploads `source_path` via SCP, defaulting to `./.`. Import `git` or `rsync` to replace that transfer, or define your own task. Application recipes that build remotely can use the default SCP transfer.
 
 For complete examples with official recipes, see [Deployment Examples](/guide/deployment-examples).
 
@@ -106,6 +106,7 @@ if (inPipeline('deploy:healthcheck')) {
 import { setPipeline } from '@catapultjs/deploy'
 
 setPipeline([
+  'deploy:lock',
   'deploy:release',
   'deploy:update_code',
   'deploy:shared',
