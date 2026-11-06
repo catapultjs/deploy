@@ -11,7 +11,10 @@ export function parseConfigFlag(argv: string[]): string | null {
   return null
 }
 
-export async function resolveDeployConfigFile(argv: string[], cwd = process.cwd()): Promise<string> {
+export async function resolveDeployConfigFile(
+  argv: string[],
+  cwd = process.cwd()
+): Promise<string> {
   const configFlag = parseConfigFlag(argv)
 
   if (configFlag) {

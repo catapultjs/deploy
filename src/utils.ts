@@ -163,7 +163,7 @@ export function ssh(
  */
 export function isSshConnectionError(error: unknown): boolean {
   const code = (error as { exitCode?: number } | null | undefined)?.exitCode
-  return code == null || code === 255
+  return code === null || code === undefined || code === 255
 }
 
 /** Extracts a concise message from an execa error, preferring the SSH stderr. */
