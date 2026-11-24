@@ -58,6 +58,10 @@ const taskPlacements: AnySchemaObject = {
   additionalProperties: taskNames,
 }
 
+const composeName: AnySchemaObject = { type: 'string', pattern: '^[a-zA-Z0-9][a-zA-Z0-9_.-]*$' }
+const composeNames: AnySchemaObject = { type: 'array', uniqueItems: true, items: composeName }
+const containerEngine: AnySchemaObject = { enum: ['docker', 'podman'] }
+
 const exactObject = (
   properties: Record<string, AnySchemaObject>,
   required: string[]
@@ -177,6 +181,43 @@ export const deployJsonSchema: AnySchemaObject = {
         caddy_upload_path: nonEmptyString,
         caddy_use_sudo: { type: 'boolean' },
         caddy_validate_before_reload: { type: 'boolean' },
+        compose_files: { type: 'array', minItems: 1, uniqueItems: true, items: nonEmptyString },
+        compose_image_services: composeNames,
+        compose_logs_lines: { type: 'number', exclusiveMinimum: 0 },
+        compose_migrate: exactObject(
+          {
+            service: composeName,
+            command: { type: 'array', minItems: 1, items: { type: 'string' } },
+          },
+          ['service', 'command']
+        ),
+        compose_profiles: composeNames,
+        compose_remove_orphans: { type: 'boolean' },
+        compose_services: composeNames,
+        compose_upload: { type: 'array', uniqueItems: true, items: nonEmptyString },
+        compose_wait_timeout: { type: 'number', exclusiveMinimum: 0 },
+        container_build: exactObject(
+          {
+            file: nonEmptyString,
+            context: nonEmptyString,
+            target: nonEmptyString,
+            platform: nonEmptyString,
+            args: {
+              type: 'object',
+              propertyNames: { pattern: '^[A-Za-z_][A-Za-z0-9_]*$' },
+              additionalProperties: { type: 'string' },
+            },
+          },
+          []
+        ),
+        container_build_engine: containerEngine,
+        container_compression: { enum: ['none', 'gzip', 'zstd'] },
+        container_engine: containerEngine,
+        container_image: { type: 'string', pattern: '^[a-z0-9]+(?:[._-][a-z0-9]+)*$' },
+        container_keep_local: { type: 'integer', minimum: 1 },
+        container_project: { type: 'string', pattern: '^[a-z0-9][a-z0-9_-]*$' },
+        container_source: nonEmptyString,
+        container_transfer: { enum: ['ssh'] },
         directus_path: stringValue,
         directus_snapshot_path: nonEmptyString,
         nextjs_path: stringValue,

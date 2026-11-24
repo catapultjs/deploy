@@ -1,5 +1,5 @@
 ---
-description: Drop-in Catapult recipes for Astro, AdonisJS, Caddy, Directus, NestJS, Next.js, Nuxt, PM2, Redis, systemd, TanStack, VitePress, git and rsync.
+description: Drop-in Catapult recipes for Astro, AdonisJS, Caddy, Docker and Podman Compose, Directus, NestJS, Next.js, Nuxt, PM2, Redis, systemd, TanStack, VitePress, git and rsync.
 ---
 
 # Recipes
@@ -11,6 +11,7 @@ Recipes are importable modules that register tasks. Application recipes usually 
 | [astro](./astro)               | Astro remote build for server output                     |
 | [astro_static](./astro_static) | Astro static site with local build                       |
 | [caddy](./caddy)               | Validate, reload, and upload Caddy configuration         |
+| [compose](./compose)           | Compose stack with Docker or Podman, image over SSH      |
 | [git](./git)                   | Clone the repository and log revisions                   |
 | [rsync](./rsync)               | Transfer files via rsync                                 |
 | [adonisjs](./adonisjs)         | AdonisJS-specific deployment steps with remote build     |
@@ -37,6 +38,7 @@ Recipes are importable modules that register tasks. Application recipes usually 
 | `nextjs_local` | Local | Recipe uploads standalone output with SCP; optional archive | Node.js with a process manager |
 | `astro_static`, `nextjs_static`, `nuxt_static` | Local | Core SCP uploads the generated static directory | Static web server |
 | `vitepress` | Local | Recipe uploads generated documentation with SCP | Static web server |
+| `compose` | Local image build | Recipe streams the image over SSH, no registry | Docker or Podman with Compose |
 
 Choose one provider of `deploy:update_code`. Do not combine Git or rsync with a recipe that already owns artifact delivery unless you deliberately replace its pipeline. A Git transfer deploys repository content, not your locally generated output.
 

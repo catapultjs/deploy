@@ -18,6 +18,7 @@
           "astro",
           "astro_static",
           "caddy",
+          "compose",
           "directus",
           "git",
           "nestjs",
@@ -111,6 +112,68 @@
         "caddy_upload_path": { "type": "string", "minLength": 1 },
         "caddy_use_sudo": { "type": "boolean" },
         "caddy_validate_before_reload": { "type": "boolean" },
+        "compose_files": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "compose_image_services": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "type": "string", "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_.-]*$" }
+        },
+        "compose_logs_lines": { "type": "number", "exclusiveMinimum": 0 },
+        "compose_migrate": {
+          "type": "object",
+          "properties": {
+            "service": { "type": "string", "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_.-]*$" },
+            "command": { "type": "array", "minItems": 1, "items": { "type": "string" } }
+          },
+          "required": ["service", "command"],
+          "additionalProperties": false
+        },
+        "compose_profiles": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "type": "string", "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_.-]*$" }
+        },
+        "compose_remove_orphans": { "type": "boolean" },
+        "compose_services": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "type": "string", "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_.-]*$" }
+        },
+        "compose_upload": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "compose_wait_timeout": { "type": "number", "exclusiveMinimum": 0 },
+        "container_build": {
+          "type": "object",
+          "properties": {
+            "file": { "type": "string", "minLength": 1 },
+            "context": { "type": "string", "minLength": 1 },
+            "target": { "type": "string", "minLength": 1 },
+            "platform": { "type": "string", "minLength": 1 },
+            "args": {
+              "type": "object",
+              "propertyNames": { "pattern": "^[A-Za-z_][A-Za-z0-9_]*$" },
+              "additionalProperties": { "type": "string" }
+            }
+          },
+          "required": [],
+          "additionalProperties": false
+        },
+        "container_build_engine": { "enum": ["docker", "podman"] },
+        "container_compression": { "enum": ["none", "gzip", "zstd"] },
+        "container_engine": { "enum": ["docker", "podman"] },
+        "container_image": { "type": "string", "pattern": "^[a-z0-9]+(?:[._-][a-z0-9]+)*$" },
+        "container_keep_local": { "type": "integer", "minimum": 1 },
+        "container_project": { "type": "string", "pattern": "^[a-z0-9][a-z0-9_-]*$" },
+        "container_source": { "type": "string", "minLength": 1 },
+        "container_transfer": { "enum": ["ssh"] },
         "directus_path": { "type": "string" },
         "directus_snapshot_path": { "type": "string", "minLength": 1 },
         "nextjs_path": { "type": "string" },

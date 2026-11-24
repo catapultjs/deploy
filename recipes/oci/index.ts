@@ -28,7 +28,13 @@ import {
 import { checkHost, hostFacts } from './engine.ts'
 import { buildOnce, builtImage, revisionInfo } from './build.ts'
 import { pullSource, remoteImageId, remoteTag, streamImage } from './transfer.ts'
-import { MANIFEST_FILE, type ManifestImage, readManifest, writeManifest } from './manifest.ts'
+import {
+  MANIFEST_FILE,
+  type ManifestImage,
+  manifestExtras,
+  readManifest,
+  writeManifest,
+} from './manifest.ts'
 import { cleanupLocal, cleanupRemote } from './cleanup.ts'
 
 declare module '../../src/types.ts' {
@@ -161,6 +167,7 @@ task('oci:transfer', async ({ host, config, logger, release, paths }: TaskContex
   }
 
   await writeManifest(host, paths.release, {
+    ...manifestExtras(host.name, release),
     schemaVersion: 1,
     release,
     recipe: get<string>('oci_recipe', 'oci'),

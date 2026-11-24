@@ -32,6 +32,21 @@ export interface Manifest {
   [key: string]: unknown
 }
 
+const extras = new Map<string, Record<string, unknown>>()
+
+/**
+ * Adds recipe data (e.g. compose files and services) to the manifest written by
+ * `oci:transfer` for this host and release. Never pass secrets.
+ */
+export function setManifestExtra(hostName: string, release: string, key: string, value: unknown) {
+  const id = `${hostName}|${release}`
+  extras.set(id, { ...extras.get(id), [key]: value })
+}
+
+export function manifestExtras(hostName: string, release: string): Record<string, unknown> {
+  return extras.get(`${hostName}|${release}`) ?? {}
+}
+
 /** Reads the manifest of a release directory, or null when absent or unreadable. */
 export async function readManifest(host: Host, releasePath: string): Promise<Manifest | null> {
   const { stdout } = await ssh(

@@ -27,6 +27,7 @@ Full docs: https://catapultjs.com/guide/recipes
 | `recipes/redis` | No | Redis cache flush (add to any stack) |
 | `recipes/systemd` | No | systemd service management (add when the host uses systemd) |
 | `recipes/tanstack` | No (pair with `git` or `rsync`) | TanStack Start, build on the server |
+| `recipes/compose` | Not used (own pipeline) | Compose stack on Docker or Podman, image built locally and streamed over SSH |
 
 ---
 
@@ -693,6 +694,40 @@ import '@catapultjs/deploy/recipes/redis'
 // Insert before publish:
 before('deploy:publish', 'redis:db:flush')
 ```
+
+---
+
+## `recipes/compose`
+
+```typescript
+import '@catapultjs/deploy/recipes/compose'
+```
+
+Deploys a Compose stack with Docker or Podman. Owns its whole pipeline (no `deploy:update_code`): never combine with `git`, `rsync` or an application recipe. Full guide: https://catapultjs.com/guide/recipes/compose
+
+Flow: validate config on the server, build `localhost/<container_image>:<release>` locally once for all hosts (server architecture), stream `save | gzip | ssh | load` (only re-tag when unchanged), write `compose.catapult.yml` pinning the release image with `pull_policy: never` for services with `build` or `image: <container_image>`, pull external images, run `compose_migrate` (blocks publication on failure), publish, `up -d --no-build`, wait for running/healthy containers (fails on crash or unhealthy, triggering auto rollback). Rollback runs `up` with the target release's files and override; refused if its manifest, override or image is missing.
+
+| Key | Type | Default | Description |
+| --- | --- | --- | --- |
+| `container_engine` | `'docker' \| 'podman'` | detected (Podman first) | Server engine |
+| `container_build_engine` | `'docker' \| 'podman'` | server engine if installed locally | Local build engine |
+| `container_project` | `string` | `package.json` name | Compose project name (stable volumes/networks) |
+| `container_image` | `string` | `container_project` | Release image repository, no registry/tag |
+| `container_build` | `{ file, context, target, args, platform }` | `{}` | Build options; no secrets in `args` |
+| `container_source` | `string` | none | Existing image pulled on the server instead of building |
+| `container_compression` | `'gzip' \| 'zstd' \| 'none'` | `'gzip'` | Transfer compression |
+| `container_keep_local` | `number` | `2` | Local release images kept |
+| `compose_files` | `string[]` | first of `compose.yaml`, `compose.yml`, `docker-compose.yaml`, `docker-compose.yml` | Relative paths |
+| `compose_upload` | `string[]` | `[]` | Extra files/directories referenced by the stack |
+| `compose_profiles` | `string[]` | `[]` | Profiles |
+| `compose_services` | `string[]` | all | Services started and checked |
+| `compose_image_services` | `string[]` | detected | Services pinned to the release image |
+| `compose_migrate` | `{ service, command: string[] }` | none | `compose run --rm` before publication |
+| `compose_remove_orphans` | `boolean` | `false` | `--remove-orphans` on up and rollback |
+| `compose_wait_timeout` | `number` | `60` | Seconds to wait for readiness |
+| `compose_logs_lines` | `number` | `100` | Lines for `compose:logs` |
+
+Manual tasks: `compose:stop`, `compose:restart`, `compose:down` (keeps volumes), `compose:logs`, `compose:status`. Use `shared_files: ['.env']` and named volumes or `shared_dirs` for data. Add a `.containerignore` excluding `.env`. Server requirements (checked, never installed): Docker Compose plugin; or Podman with a compose provider, `podman.socket` active for the docker-compose provider, `podman-restart.service` enabled for reboots, linger for rootless.
 
 ---
 
