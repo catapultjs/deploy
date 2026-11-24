@@ -68,6 +68,7 @@ The JSON format accepts this closed list of recipes:
 - `astro_static`
 - `caddy`
 - `compose`
+- `container`
 - `directus`
 - `git`
 - `nestjs`

@@ -160,3 +160,27 @@ export function localEngine(preferred: Engine, explicit?: Engine): Promise<Engin
   }
   return pending
 }
+
+/**
+ * Podman has no daemon: containers with a restart policy come back after a reboot
+ * only through podman-restart.service. Warns when it is not enabled.
+ */
+export async function checkPodmanRestart(
+  host: Host,
+  remote: RemoteFacts,
+  logger: CatapultLogger
+): Promise<void> {
+  if (remote.engine !== 'podman') return
+  const user = remote.rootless ? ' --user' : ''
+  const { stdout } = await ssh(
+    host,
+    `set +e\ncommand -v systemctl >/dev/null 2>&1 || exit 0\nsystemctl${user} is-enabled podman-restart.service 2>/dev/null || true`
+  )
+  const value = stdout.trim()
+  if (value && value !== 'enabled') {
+    logger.warning(
+      `podman-restart.service is not enabled: containers will not restart after a reboot. Run \`systemctl${user} enable podman-restart.service\` on the server`,
+      { prefix: host.name }
+    )
+  }
+}

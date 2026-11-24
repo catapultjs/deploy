@@ -61,6 +61,26 @@ const taskPlacements: AnySchemaObject = {
 const composeName: AnySchemaObject = { type: 'string', pattern: '^[a-zA-Z0-9][a-zA-Z0-9_.-]*$' }
 const composeNames: AnySchemaObject = { type: 'array', uniqueItems: true, items: composeName }
 const containerEngine: AnySchemaObject = { enum: ['docker', 'podman'] }
+const commandArgs: AnySchemaObject = { type: 'array', minItems: 1, items: { type: 'string' } }
+const containerService: AnySchemaObject = {
+  type: 'object',
+  properties: {
+    command: commandArgs,
+    entrypoint: nonEmptyString,
+    user: nonEmptyString,
+    env: {
+      type: 'object',
+      propertyNames: { pattern: '^[A-Za-z_][A-Za-z0-9_]*$' },
+      additionalProperties: { type: 'string' },
+    },
+    env_file: { type: 'array', items: nonEmptyString },
+    ports: { type: 'array', items: nonEmptyString },
+    volumes: { type: 'array', items: nonEmptyString },
+    restart: { type: 'string', pattern: '^(no|always|unless-stopped|on-failure(:\\d+)?)$' },
+    labels: { type: 'object', additionalProperties: { type: 'string' } },
+  },
+  additionalProperties: false,
+}
 
 const exactObject = (
   properties: Record<string, AnySchemaObject>,
@@ -215,9 +235,24 @@ export const deployJsonSchema: AnySchemaObject = {
         container_engine: containerEngine,
         container_image: { type: 'string', pattern: '^[a-z0-9]+(?:[._-][a-z0-9]+)*$' },
         container_keep_local: { type: 'integer', minimum: 1 },
+        container_logs_lines: { type: 'number', exclusiveMinimum: 0 },
+        container_migrate: {
+          type: 'object',
+          properties: { service: composeName, command: commandArgs },
+          required: ['service', 'command'],
+          additionalProperties: false,
+        },
         container_project: { type: 'string', pattern: '^[a-z0-9][a-z0-9_-]*$' },
+        container_services: {
+          type: 'object',
+          minProperties: 1,
+          propertyNames: composeName,
+          additionalProperties: containerService,
+        },
         container_source: nonEmptyString,
+        container_stop_timeout: { type: 'number', exclusiveMinimum: 0 },
         container_transfer: { enum: ['ssh'] },
+        container_wait_timeout: { type: 'number', exclusiveMinimum: 0 },
         directus_path: stringValue,
         directus_snapshot_path: nonEmptyString,
         nextjs_path: stringValue,

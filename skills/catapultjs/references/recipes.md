@@ -28,6 +28,7 @@ Full docs: https://catapultjs.com/guide/recipes
 | `recipes/systemd` | No | systemd service management (add when the host uses systemd) |
 | `recipes/tanstack` | No (pair with `git` or `rsync`) | TanStack Start, build on the server |
 | `recipes/compose` | Not used (own pipeline) | Compose stack on Docker or Podman, image built locally and streamed over SSH |
+| `recipes/container` | Not used (own pipeline) | A few containers from one image on Docker or Podman, without Compose |
 
 ---
 
@@ -728,6 +729,28 @@ Flow: validate config on the server, build `localhost/<container_image>:<release
 | `compose_logs_lines` | `number` | `100` | Lines for `compose:logs` |
 
 Manual tasks: `compose:stop`, `compose:restart`, `compose:down` (keeps volumes), `compose:logs`, `compose:status`. Use `shared_files: ['.env']` and named volumes or `shared_dirs` for data. Add a `.containerignore` excluding `.env`. Server requirements (checked, never installed): Docker Compose plugin; or Podman with a compose provider, `podman.socket` active for the docker-compose provider, `podman-restart.service` enabled for reboots, linger for rootless.
+
+---
+
+## `recipes/container`
+
+```typescript
+import '@catapultjs/deploy/recipes/container'
+```
+
+Runs containers from one image with Docker or Podman, without Compose. Owns its whole pipeline: never combine with `git`, `rsync` or an application recipe. Same image keys and flow as `recipes/compose` (local build once, SSH stream, `release.json`, cleanup). Full guide: https://catapultjs.com/guide/recipes/container
+
+`container_services` maps names to options: `command` (string[]), `entrypoint` (string), `user`, `env` (non-secret, written to `container/<service>.env` in the release, 0600), `env_file` (paths relative to the release, e.g. shared `.env`), `ports`, `volumes` (`./dir` resolves in the release: point to `shared_dirs` or use named volumes), `restart` (default `always`), `labels` (no `com.catapultjs.` prefix; not applied to the migration container). Containers are named `<container_project>-<service>` on a network named `<container_project>`; they are stopped, removed and recreated on each deploy (short interruption), removed services are removed, readiness is awaited (running/healthy). The manifest records the start options but never env values; rollback recreates the target release's containers.
+
+| Key | Type | Default | Description |
+| --- | --- | --- | --- |
+| `container_services` | `Record<string, ServiceOptions>` | required | Services started from the release image |
+| `container_migrate` | `{ service, command: string[] }` | none | One-off container before publication |
+| `container_wait_timeout` | `number` | `60` | Seconds to wait for readiness |
+| `container_stop_timeout` | `number` | `10` | Graceful stop delay |
+| `container_logs_lines` | `number` | `100` | Lines per container for `container:logs` |
+
+Manual tasks: `container:start`, `container:stop`, `container:restart`, `container:remove` (keeps volumes and network), `container:logs`, `container:status`. Podman reboots need `podman-restart.service` enabled (checked, warning only); rootless needs linger.
 
 ---
 

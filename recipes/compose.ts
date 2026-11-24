@@ -24,7 +24,7 @@ import {
 import type { Host } from '../src/types.ts'
 import type { CatapultLogger } from '../src/logger.ts'
 import { Verbose } from '../src/enums.ts'
-import { getPaths, q, sleep, ssh } from '../src/utils.ts'
+import { getPaths, q, ssh } from '../src/utils.ts'
 import './deploy/lock.ts'
 import './deploy/release.ts'
 import './deploy/shared.ts'
@@ -34,7 +34,8 @@ import './deploy/healthcheck.ts'
 import './deploy/cleanup.ts'
 import './oci/index.ts'
 import { imageName, project, releaseRef, sourceImage } from './oci/config.ts'
-import { type RemoteFacts, hostFacts } from './oci/engine.ts'
+import { type RemoteFacts, checkPodmanRestart, hostFacts } from './oci/engine.ts'
+import { listContainers, waitReady } from './oci/readiness.ts'
 import { readManifest, setManifestExtra } from './oci/manifest.ts'
 
 declare module '../src/types.ts' {
@@ -269,7 +270,6 @@ case "$out" in
 esac
 if [ ${q(facts.engine)} = podman ] && command -v systemctl >/dev/null 2>&1; then
   echo "socket=$(${systemctl} is-active podman.socket 2>/dev/null)"
-  echo "restart=$(${systemctl} is-enabled podman-restart.service 2>/dev/null)"
 fi`
   )
   const values = Object.fromEntries(
@@ -295,14 +295,9 @@ fi`
         { prefix: host.name }
       )
     }
-    if (values.restart && values.restart !== 'enabled') {
-      logger.warning(
-        `podman-restart.service is not enabled: containers will not restart after a reboot. Run \`systemctl${user} enable podman-restart.service\` on the server`,
-        { prefix: host.name }
-      )
-    }
   }
 
+  await checkPodmanRestart(host, facts, logger)
   return values.version || 'compose'
 }
 
@@ -348,83 +343,26 @@ function overrideYaml(services: string[], ref: string): string {
 // Readiness
 // ---------------------------------------------------------------------------
 
-type ContainerState = 'ok' | 'pending' | 'failed'
-
-export function containerState(state: string, status: string): ContainerState {
-  const lowered = `${state} ${status}`.toLowerCase()
-  if (lowered.includes('unhealthy')) return 'failed'
-  if (state === 'running') return /\((health: )?starting\)/i.test(status) ? 'pending' : 'ok'
-  if (state === 'exited') return /exited \(0\)/i.test(status) ? 'ok' : 'failed'
-  if (state === 'created' || state === 'restarting' || state === 'configured') return 'pending'
-  return 'failed'
-}
-
-async function containers(host: Host, facts: RemoteFacts, services: string[]) {
-  const filters = services.length ? services : ['']
-  const script = filters
-    .map((service) => {
-      const serviceFilter = service ? ` --filter ${q(`label=${SERVICE_LABEL}=${service}`)}` : ''
-      return `${q(facts.bin)} ps -a --filter ${q(`label=${PROJECT_LABEL}=${project()}`)}${serviceFilter} --format '{{.Names}}\t{{.State}}\t{{.Status}}'`
-    })
-    .join('\n')
-  const { stdout } = await ssh(host, `set -e\n${script}`)
-  return stdout
-    .split('\n')
-    .filter(Boolean)
-    .map((line) => {
-      const [name = '', state = '', status = ''] = line.split('\t')
-      return { name, state: state.trim().toLowerCase(), status: status.trim() }
-    })
-}
-
 /** Services to start and check: compose_services, else every service of the release. */
 async function checkedServices(target: Stack): Promise<string[]> {
   const targets = targetServices()
   return targets.length ? targets : lines(await composeOutput(target, 'config --services'))
 }
 
-/**
- * Waits until every container of the checked services runs (and is healthy when
- * it declares a healthcheck), then checks again after a short delay to catch
- * containers crashing right after start. Containers of services removed from the
- * configuration are ignored.
- */
-async function waitReady(target: Stack, logger: CatapultLogger, verbose: number) {
-  const { host, facts } = target
-  const services = await checkedServices(target)
-  const deadline = Date.now() + waitTimeout() * 1000
-  let confirmed = false
+function serviceFilters(services: string[]): string[][] {
+  return services.map((service) => [`${PROJECT_LABEL}=${project()}`, `${SERVICE_LABEL}=${service}`])
+}
 
-  while (true) {
-    const list = await containers(host, facts, services)
-    if (!list.length) throw new Error(`[${host.name}] no container found for project ${project()}`)
-
-    const failed = list.filter((c) => containerState(c.state, c.status) === 'failed')
-    if (failed.length) {
-      const details = failed.map((c) => `${c.name} (${c.status || c.state})`).join(', ')
-      throw new Error(
-        `[${host.name}] containers failed: ${details}. See \`cata task compose:logs\``
-      )
-    }
-
-    const pending = list.filter((c) => containerState(c.state, c.status) === 'pending')
-    if (!pending.length) {
-      if (confirmed) {
-        if (verbose >= Verbose.NORMAL) logger.step(host.name, `${list.length} container(s) ready`)
-        return
-      }
-      confirmed = true
-      await sleep(2_000)
-      continue
-    }
-
-    confirmed = false
-    if (Date.now() >= deadline) {
-      const details = pending.map((c) => `${c.name} (${c.status || c.state})`).join(', ')
-      throw new Error(`[${host.name}] containers not ready after ${waitTimeout()}s: ${details}`)
-    }
-    await sleep(2_000)
-  }
+async function waitStack(target: Stack, logger: CatapultLogger, verbose: number) {
+  await waitReady({
+    host: target.host,
+    facts: target.facts,
+    filterSets: serviceFilters(await checkedServices(target)),
+    timeoutSeconds: waitTimeout(),
+    logger,
+    verbose,
+    logsTask: 'compose:logs',
+  })
 }
 
 async function up(target: Stack, logger: CatapultLogger, verbose: number) {
@@ -434,7 +372,7 @@ async function up(target: Stack, logger: CatapultLogger, verbose: number) {
     `up ${flags.join(' ')} ${serviceArgs(targetServices())}`
   )
   if (verbose >= Verbose.DEBUG && output.trim()) logger.log(output.trim())
-  await waitReady(target, logger, verbose)
+  await waitStack(target, logger, verbose)
 }
 
 // ---------------------------------------------------------------------------
@@ -449,7 +387,8 @@ onStatus(async (_ctx, host, logger) => {
   try {
     const facts = await hostFacts(host, logger)
     const data: Record<string, string> = {}
-    for (const container of await containers(host, facts, [])) {
+    const list = await listContainers(host, facts, [[`${PROJECT_LABEL}=${project()}`]])
+    for (const container of list) {
       data[`compose:${container.name}`] = container.status || container.state
     }
     return data
@@ -590,7 +529,7 @@ desc('Restarts the stack and waits until its containers are ready')
 task('compose:restart', async (ctx: TaskContext) => {
   const target = await stack(ctx.host, ctx.logger, ctx.release, ctx.paths.release)
   await composeOutput(target, `restart ${serviceArgs(targetServices())}`)
-  await waitReady(target, ctx.logger, verbosity(ctx))
+  await waitStack(target, ctx.logger, verbosity(ctx))
 })
 
 desc('Removes the containers and networks of the stack (volumes are kept)')

@@ -79,7 +79,7 @@ if (cmd === 'compose') {
 }
 fs.appendFileSync(process.env.OCI_LOG, JSON.stringify(entry) + '\\n')
 const fail = (message) => { process.stderr.write(message + '\\n'); process.exit(1) }
-const key = cmd === 'compose' ? 'compose-' + sub : cmd
+const key = cmd === 'compose' ? 'compose-' + sub : cmd === 'run' && rest.includes('--rm') ? 'run-rm' : cmd
 if ((process.env.OCI_FAIL || '').split(',').includes(side + ':' + key)) fail(key + ' failed')
 const config = JSON.parse(process.env.OCI_COMPOSE_CONFIG || '{"services":{}}')
 const statuses = JSON.parse(process.env.OCI_CONTAINER_STATUS || '{}')
@@ -100,7 +100,9 @@ if (cmd === 'compose') {
       const targets = subArgs.filter((arg) => !arg.startsWith('-'))
       for (const service of targets.length ? targets : Object.keys(config.services)) {
         state.containers[entry.compose.project + '-' + service + '-1'] = {
-          project: entry.compose.project, service, release: path.basename(process.cwd()), polls: 0,
+          labels: { 'com.docker.compose.project': entry.compose.project, 'com.docker.compose.service': service },
+          release: path.basename(process.cwd()),
+          polls: 0,
         }
       }
       save()
@@ -127,16 +129,45 @@ switch (cmd) {
     const filters = []
     for (let i = 0; i < rest.length; i++) if (rest[i] === '--filter') filters.push(rest[i + 1].replace(/^label=/, ''))
     for (const [container, c] of Object.entries(state.containers)) {
-      const labels = { 'com.docker.compose.project': c.project, 'com.docker.compose.service': c.service }
-      if (!filters.every((filter) => { const [k, v] = filter.split('='); return labels[k] === v })) continue
-      const spec = (statuses[c.service + '@' + c.release] || statuses[c.service] || 'running|Up 1 second').split(';')
+      if (!filters.every((filter) => { const [k, v] = filter.split('='); return c.labels[k] === v })) continue
+      const service = c.labels['com.docker.compose.service'] || c.labels['com.catapultjs.service']
+      const spec = (statuses[service + '@' + c.release] || statuses[service] || 'running|Up 1 second').split(';')
       const [st, status] = spec[Math.min(c.polls, spec.length - 1)].split('|')
       c.polls++
-      console.log(container + '\\t' + st + '\\t' + status)
+      console.log(rest.join(' ').includes('.State') ? container + '\\t' + st + '\\t' + status : container)
     }
     save()
     break
   }
+  case 'run': {
+    const opts = { labels: {}, envFiles: [] }
+    const valued = ['--name', '--network', '--restart', '--label', '--user', '--entrypoint', '--env-file', '-p', '-v']
+    let i = 0
+    while (i < rest.length && rest[i].startsWith('-')) {
+      if (!valued.includes(rest[i])) { opts[rest[i]] = true; i++; continue }
+      const value = rest[i + 1]
+      if (rest[i] === '--label') opts.labels[value.slice(0, value.indexOf('='))] = value.slice(value.indexOf('=') + 1)
+      else if (rest[i] === '--env-file') opts.envFiles.push(value)
+      else opts[rest[i]] = value
+      i += 2
+    }
+    if (!state.images[rest[i]]) fail('no such image ' + rest[i])
+    for (const envFile of opts.envFiles) if (!fs.existsSync(envFile)) fail('env file not found ' + envFile)
+    if (opts['--rm']) break
+    if (state.containers[opts['--name']]) fail('name already in use ' + opts['--name'])
+    state.containers[opts['--name']] = { labels: opts.labels, release: opts.labels['com.catapultjs.release'] || '', polls: 0 }
+    save()
+    break
+  }
+  case 'network': {
+    state.networks = state.networks || {}
+    if (rest[0] === 'inspect' && !state.networks[rest.at(-1)]) fail('no such network')
+    if (rest[0] === 'create') { state.networks[rest.at(-1)] = true; save() }
+    break
+  }
+  case 'stop': case 'start': case 'restart': if (!state.containers[rest.at(-1)]) fail('no such container ' + rest.at(-1)); break
+  case 'rm': if (!state.containers[rest.at(-1)]) fail('no such container'); delete state.containers[rest.at(-1)]; save(); break
+  case 'logs': console.log('log line'); break
   default: fail('unknown command ' + cmd)
 }
 `
@@ -171,8 +202,11 @@ export interface Remote {
   engines?: string[]
   arch?: string
   images?: Record<string, string>
-  /** Existing containers of the "app" project, by name. */
-  containers?: Record<string, { service: string; release?: string }>
+  /** Existing containers by name: Compose labels of the "app" project unless labels are given. */
+  containers?: Record<
+    string,
+    { service: string; release?: string; labels?: Record<string, string> }
+  >
 }
 
 export interface OciEnv {
@@ -282,7 +316,14 @@ async function runOci(options: Scenario) {
         const containers = Object.fromEntries(
           Object.entries(remote.containers ?? {}).map(([name, container]) => [
             name,
-            { project: 'app', release: 'old', polls: 0, ...container },
+            {
+              labels: container.labels ?? {
+                'com.docker.compose.project': 'app',
+                'com.docker.compose.service': container.service,
+              },
+              release: container.release ?? 'old',
+              polls: 0,
+            },
           ])
         )
         await writeFile(
