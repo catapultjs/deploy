@@ -93,6 +93,27 @@ onStatus(async (_ctx, host) => {
 })
 ```
 
+`onBeforeRollback()` runs before a rollback switches `current` (manual and automatic). `ctx.release` is the target: throw to refuse it, nothing has changed yet. Keep it read-only. `onRollback()` runs after the switch, after the built-in PM2/systemd restarts and before the healthcheck: restart the services of the restored release there.
+
+```typescript
+import { onBeforeRollback, onRollback } from '@catapultjs/deploy'
+import { ssh, q, getPaths } from '@catapultjs/deploy/utils'
+
+onBeforeRollback(async (ctx, host) => {
+  const paths = getPaths(host.deployPath, ctx.release)
+  await ssh(host, `set -e\n[ -x ${q(paths.release + '/bin/start')} ]`)
+})
+
+onRollback(async (ctx, host) => {
+  const paths = getPaths(host.deployPath, ctx.release)
+  await ssh(host, `set -e\n${q(paths.release + '/bin/start')}`)
+})
+```
+
+## Streaming to the server
+
+`sshPipe(host, command, source)` from `@catapultjs/deploy/utils` streams a `Readable` or async iterable into the stdin of a remote command, without buffering. Source errors stop the transfer and are rethrown; remote errors keep their exit code and stderr. Use `set -o pipefail` for chained commands and verify the result remotely: an interrupted transfer looks like end of input to the remote side.
+
 ## Configurable options
 
 ```typescript

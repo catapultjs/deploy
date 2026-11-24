@@ -18,6 +18,8 @@ export type StatusHook = (
 export class PipelineHookStore {
   #setupHooks: LifecycleHook[] = []
   #statusHooks: StatusHook[] = []
+  #beforeRollbackHooks: LifecycleHook[] = []
+  #rollbackHooks: LifecycleHook[] = []
 
   addSetup(fn: LifecycleHook): void {
     this.#setupHooks.push(fn)
@@ -33,6 +35,22 @@ export class PipelineHookStore {
 
   getStatus(): StatusHook[] {
     return [...this.#statusHooks]
+  }
+
+  addBeforeRollback(fn: LifecycleHook): void {
+    this.#beforeRollbackHooks.push(fn)
+  }
+
+  getBeforeRollback(): LifecycleHook[] {
+    return [...this.#beforeRollbackHooks]
+  }
+
+  addRollback(fn: LifecycleHook): void {
+    this.#rollbackHooks.push(fn)
+  }
+
+  getRollback(): LifecycleHook[] {
+    return [...this.#rollbackHooks]
   }
 }
 

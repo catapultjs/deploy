@@ -29,14 +29,14 @@ You can also place it in `~/.claude/skills/` to make it available across all you
 
 The skill uses progressive disclosure: a small `SKILL.md` carries the universal rules (notably that core SCP provides `deploy:update_code` by default and transfer recipes replace it) and routes the agent to a reference file matching the task. References are only read when needed, keeping the agent's context small.
 
-| Reference | Covers |
-| --- | --- |
-| `references/config.md` | Creating and evolving TypeScript, JavaScript or JSON configs: format selection, config and host options, recipe selection, healthchecks, store values, tasks and pipeline tuning |
-| `references/recipe.md` | Writing recipes: conventions, task DSL, `TaskContext`, pipeline insertion, `onSetup`/`onStatus` hooks, `TaskRegistry` augmentation, pre-publication checklist |
-| `references/recipes.md` | Using official recipes (git, rsync, astro, vitepress, adonisjs, nuxt, directus, pm2, redis, caddy, systemd): tasks added, store keys, monorepo patterns |
-| `references/api.md` | Scripting with the [programmatic API](/guide/programmatic): the `Catapult` class, methods with return shapes and CLI equivalents, events, output capture, silent mode |
-| `references/github-actions.md` | Setting up a GitHub Actions workflow with `catapultjs/deploy-action`: inputs, SSH secrets, env vars |
-| `references/cli.md` | The `cata` CLI: all commands, flags, global options and config loading |
+| Reference                      | Covers                                                                                                                                                                            |
+| ------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `references/config.md`         | Creating and evolving TypeScript, JavaScript or JSON configs: format selection, config and host options, recipe selection, healthchecks, store values, tasks and pipeline tuning  |
+| `references/recipe.md`         | Writing recipes: conventions, task DSL, `TaskContext`, pipeline insertion, `onSetup`/`onStatus`/rollback hooks, `sshPipe`, `TaskRegistry` augmentation, pre-publication checklist |
+| `references/recipes.md`        | Using official recipes (git, rsync, astro, vitepress, adonisjs, nuxt, directus, pm2, redis, caddy, systemd): tasks added, store keys, monorepo patterns                           |
+| `references/api.md`            | Scripting with the [programmatic API](/guide/programmatic): the `Catapult` class, methods with return shapes and CLI equivalents, events, output capture, silent mode             |
+| `references/github-actions.md` | Setting up a GitHub Actions workflow with `catapultjs/deploy-action`: inputs, SSH secrets, env vars                                                                               |
+| `references/cli.md`            | The `cata` CLI: all commands, flags, global options and config loading                                                                                                            |
 
 See [Getting Started](/guide/getting-started), [JSON configuration](/guide/json-configuration), [Creating a Recipe](/guide/creating-recipes), [Programmatic usage](/guide/programmatic) and [CI/CD](/guide/ci-cd) for the underlying guides.
 
@@ -60,7 +60,7 @@ The skill declares its own version in the frontmatter of `skills/catapultjs/SKIL
 
 ```yaml
 metadata:
-  version: "2026-11-06.1"
+  version: '2026-11-06.1'
 ```
 
 The format is `YYYY-MM-DD.N`: the UTC date of the update, followed by a revision number starting at `1`. A new change set on the same day increments the revision; a later date starts again at `1`. This version covers `SKILL.md` and all bundled references, independently of the npm package version.

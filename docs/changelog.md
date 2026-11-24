@@ -4,6 +4,11 @@ description: Catapult changelog — release history and notable changes.
 
 # Changelog
 
+## Unreleased
+
+- Added `onBeforeRollback()` and `onRollback()` hooks so recipes can refuse an unusable rollback target before `current` is switched, and restart their own services after it. Both run for manual and automatic rollbacks, before the healthcheck
+- Added `sshPipe()` to `@catapultjs/deploy/utils` to stream local data into the stdin of a remote command without buffering, with source and remote errors propagated
+
 ## 0.17.0
 
 - Fixed automatic rollback to restore the release active before publication, instead of selecting a potentially incomplete release directory. SSH errors while reading the current release now stop deployment before publication

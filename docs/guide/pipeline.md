@@ -26,6 +26,8 @@ Cleanup retains the newest `keepReleases` directories and always protects the ta
 
 Publication records the replaced release in `previous`. Rollback consumes this reference; a later rollback requires an explicit target until another publication creates it. Existing installations without `previous` must select a release with `cata rollback --interactive`.
 
+A rollback runs in this order: [`onBeforeRollback`](/guide/api#onbeforerollback-fn) hooks, switch of `current`, PM2 and systemd restarts when their tasks are in the pipeline, [`onRollback`](/guide/api#onrollback-fn) hooks, then `deploy:healthcheck` when it is in the pipeline.
+
 `deploy:healthcheck` is automatically removed if no host defines a `healthcheck`.
 
 `deploy:update_code` uploads `source_path` via SCP, defaulting to `./.`. Import `git` or `rsync` to replace that transfer, or define your own task. Application recipes that build remotely can use the default SCP transfer.

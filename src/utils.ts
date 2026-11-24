@@ -1,6 +1,8 @@
 import type { Host, Paths } from './types.ts'
 import { PackageManager } from './enums.ts'
-import { $ } from 'execa'
+import { $, execa } from 'execa'
+import type { Readable } from 'node:stream'
+import { pipeline } from 'node:stream/promises'
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 import { createHash } from 'node:crypto'
@@ -154,6 +156,54 @@ export function ssh(
   const args = [...sshControlArgs(host), ...resolveSshArgs(host)]
 
   return $`ssh ${args} ${"bash -lc 'echo " + b64 + "|base64 -d|bash'"}`
+}
+
+/**
+ * Runs a remote command and streams `source` into its stdin (e.g. an image archive
+ * piped into `podman load`), without buffering the whole payload in memory.
+ *
+ * Unlike `ssh()`, the script is decoded with `eval` so the remote stdin stays free
+ * for the data. Add `set -o pipefail` to the command when it chains several programs.
+ *
+ * A source failure kills the transfer and is rethrown as is. Otherwise a remote
+ * failure is thrown with its exit code and stderr, even when it closed the pipe
+ * early. The remote side cannot tell an aborted transfer from the end of input:
+ * verify the result (checksum, image inspect, ...) before relying on it.
+ */
+export async function sshPipe(
+  host: Host,
+  command: string,
+  source: Readable | AsyncIterable<string | Uint8Array>,
+  opts?: { verbose?: boolean; signal?: AbortSignal }
+): Promise<{ stdout: string; stderr: string }> {
+  if (opts?.verbose) logger.cmd(command)
+  const b64 = Buffer.from(command).toString('base64')
+  const args = [...sshControlArgs(host), ...resolveSshArgs(host)]
+  const subprocess = execa('ssh', [...args, `bash -lc 'eval "$(echo ${b64}|base64 -d)"'`], {
+    stdin: 'pipe',
+    cancelSignal: opts?.signal,
+  })
+
+  let sourceError: unknown
+  async function* read() {
+    try {
+      for await (const chunk of source) yield chunk
+    } catch (error) {
+      sourceError = error
+      throw error
+    }
+  }
+
+  const feeding = pipeline(read(), subprocess.stdin!, { signal: opts?.signal }).catch(() => {
+    // Destination errors (EPIPE when the remote exits early) surface through the
+    // subprocess result; a source error must stop the remote side.
+    if (sourceError) subprocess.kill()
+  })
+
+  const [result] = await Promise.allSettled([subprocess, feeding])
+  if (sourceError) throw sourceError
+  if (result.status === 'rejected') throw result.reason
+  return { stdout: result.value.stdout, stderr: result.value.stderr }
 }
 
 /**

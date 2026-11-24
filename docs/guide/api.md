@@ -413,6 +413,44 @@ The callback still receives a `logger` as third argument for free-form output, b
 
 ---
 
+### `onBeforeRollback(fn)`
+
+Registers a callback to run before a rollback switches the `current` symlink, for manual (`cata rollback`, `catapult.rollback()`) and automatic rollbacks. `ctx.release` is the target release. Throw to refuse the rollback: nothing has changed on the server yet. Keep the callback read-only.
+
+```typescript
+import { onBeforeRollback } from '@catapultjs/deploy'
+import { ssh, q, getPaths, isSshConnectionError } from '@catapultjs/deploy/utils'
+
+onBeforeRollback(async (ctx, host) => {
+  const paths = getPaths(host.deployPath, ctx.release)
+  try {
+    await ssh(host, `set -e\n[ -f ${q(paths.release + '/release.json')} ]`)
+  } catch (error) {
+    if (isSshConnectionError(error)) throw error
+    throw new Error(`[${host.name}] release ${ctx.release} has no manifest`)
+  }
+})
+```
+
+---
+
+### `onRollback(fn)`
+
+Registers a callback to run after a rollback switched the `current` symlink, before the healthcheck. `ctx.release` is the restored release. Use it to restart the services of that release. It runs after the built-in PM2 and systemd restarts.
+
+```typescript
+import { onRollback } from '@catapultjs/deploy'
+import { ssh, q, getPaths } from '@catapultjs/deploy/utils'
+
+onRollback(async (ctx, host, logger) => {
+  const paths = getPaths(host.deployPath, ctx.release)
+  await ssh(host, `set -e\ncd ${q(paths.release)}\n./bin/restart`)
+  logger.step(host.name, `restarted ${ctx.release}`)
+})
+```
+
+---
+
 ## Store
 
 Key/value store for sharing configuration between `deploy.ts` and recipes.

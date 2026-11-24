@@ -90,6 +90,43 @@ onStatus(async (_ctx, host, logger) => {
 })
 ```
 
+## Rollback hooks
+
+A recipe that manages its own processes must restart them on rollback. Use `onBeforeRollback()` to refuse an unusable target before anything changes, and `onRollback()` to restart the restored release. Both run for manual and automatic rollbacks, and receive the target release in `ctx.release`:
+
+```typescript
+import { onBeforeRollback, onRollback } from '@catapultjs/deploy'
+import { ssh, q, getPaths } from '@catapultjs/deploy/utils'
+
+onBeforeRollback(async (ctx, host) => {
+  const paths = getPaths(host.deployPath, ctx.release)
+  await ssh(host, `set -e\n[ -x ${q(paths.release + '/bin/start')} ]`)
+})
+
+onRollback(async (ctx, host) => {
+  const paths = getPaths(host.deployPath, ctx.release)
+  await ssh(host, `set -e\n${q(paths.release + '/bin/start')}`)
+})
+```
+
+## Streaming data to the server
+
+`sshPipe(host, command, source)` runs a remote command and streams a Node.js `Readable` or async iterable into its stdin, without buffering the payload in memory. A source failure stops the transfer and is rethrown; a remote failure is thrown with its exit code and stderr. Add `set -o pipefail` when the command chains several programs, and verify the result on the server: the remote side cannot tell an interrupted transfer from the end of input.
+
+```typescript
+import { createReadStream } from 'node:fs'
+import { task } from '@catapultjs/deploy'
+import { sshPipe, q } from '@catapultjs/deploy/utils'
+
+task('assets:upload', async ({ host, paths }) => {
+  await sshPipe(
+    host,
+    `set -eo pipefail\ngzip -d | tar -x -C ${q(paths.release)}`,
+    createReadStream('./assets.tar.gz')
+  )
+})
+```
+
 ## Configuration: `set()` / `get()`
 
 Expose configurable options via `set()` / `get()` so users can customize the recipe without modifying it:

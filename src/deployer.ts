@@ -159,6 +159,10 @@ export async function rollbackHost(ctx: DeployContext, host: Host, target?: stri
   if (!/^[a-zA-Z0-9_-]+$/.test(previous)) throw new Error('Invalid rollback release')
   const rollbackCtx = { ...ctx, release: previous }
 
+  for (const hook of hooks.getBeforeRollback()) {
+    await hook(rollbackCtx, host, logger)
+  }
+
   await ssh(
     host,
     `set -e
@@ -179,6 +183,10 @@ rm -f ${q(paths.base + '/previous')}`
 
   if (getPipeline().includes('systemd:restart')) {
     await runTask('systemd:restart', rollbackCtx, host)
+  }
+
+  for (const hook of hooks.getRollback()) {
+    await hook(rollbackCtx, host, logger)
   }
 
   if (getPipeline().includes('deploy:healthcheck')) {

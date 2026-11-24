@@ -271,7 +271,7 @@ Three details differ from the initial proposal:
 
 Use `deploy.ts` or `deploy.config.js` when the deployment needs executable behavior, including:
 
-- lifecycle callbacks or `onSetup`/`onStatus` hooks
+- lifecycle callbacks or `onSetup`/`onStatus`/`onBeforeRollback`/`onRollback` hooks
 - external or project-local recipes
 - custom tasks that need dynamic binary resolution through `bin()`
 - conditional pipeline changes such as `inPipeline()` checks

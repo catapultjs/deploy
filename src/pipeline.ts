@@ -57,3 +57,21 @@ export function onSetup(fn: LifecycleHook): void {
 export function onStatus(fn: StatusHook): void {
   hooks.addStatus(fn)
 }
+
+/**
+ * Registers a function to run before a rollback switches the `current` symlink.
+ * `ctx.release` is the target release. Throw to refuse the rollback: nothing has
+ * been changed on the server yet. Keep it read-only (validation only).
+ */
+export function onBeforeRollback(fn: LifecycleHook): void {
+  hooks.addBeforeRollback(fn)
+}
+
+/**
+ * Registers a function to run after a rollback switched the `current` symlink,
+ * before the healthcheck. `ctx.release` is the target release. Use it to restart
+ * the services of the restored release. Runs for manual and automatic rollbacks.
+ */
+export function onRollback(fn: LifecycleHook): void {
+  hooks.addRollback(fn)
+}

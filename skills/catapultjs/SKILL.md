@@ -2,7 +2,7 @@
 name: catapultjs
 description: Work with Catapult (@catapultjs/deploy), the SSH deployment tool for Node.js. Use when creating or updating TypeScript, JavaScript or JSON deploy configs, writing recipes or deployment tasks, customizing the deploy pipeline, or scripting deployments with the programmatic API (Catapult class).
 metadata:
-  version: "2026-11-06.1"
+  version: '2026-11-25.1'
 ---
 
 # Catapult (@catapultjs/deploy)
@@ -20,7 +20,7 @@ Read the file matching the task before writing code:
 | Task                                                                                                                                                                              | Read                                                         |
 | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------ |
 | Create or update a deploy config: choose TS/JS or JSON, configure hosts and recipes, add tasks, store values, healthchecks or pipeline controls                                   | [references/config.md](references/config.md)                 |
-| Write or modify a recipe or deployment task: task DSL, `onSetup`/`onStatus` hooks, store options, `TaskRegistry`                                                                  | [references/recipe.md](references/recipe.md)                 |
+| Write or modify a recipe or deployment task: task DSL, `onSetup`/`onStatus`/rollback hooks, `sshPipe`, store options, `TaskRegistry`                                              | [references/recipe.md](references/recipe.md)                 |
 | Use an official recipe (git, rsync, nextjs, nuxt, astro, tanstack, nestjs, adonisjs, vitepress, directus, pm2, redis, caddy, systemd): tasks added, store keys, monorepo patterns | [references/recipes.md](references/recipes.md)               |
 | Script deployments from Node.js (scripts, CI, bots, dashboards) with the `Catapult` class                                                                                         | [references/api.md](references/api.md)                       |
 | Set up a GitHub Actions workflow with `catapultjs/deploy-action`: inputs, SSH secrets, env vars                                                                                   | [references/github-actions.md](references/github-actions.md) |
