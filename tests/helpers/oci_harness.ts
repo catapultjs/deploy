@@ -45,6 +45,7 @@ const TOOLS = [
   'ln',
   'touch',
   'mktemp',
+  'tee',
   'find',
   'cmp',
   'chmod',
@@ -279,6 +280,23 @@ fs.appendFileSync(process.env.OCI_LOG, JSON.stringify({ side: process.env.OCI_SI
 fs.cpSync(args.at(-2), args.at(-1).replace(/^[^:]+:/, ''), { recursive: true })
 `
 
+// Caddy: validates and reloads; FAKE_CADDY_INVALID makes the configuration invalid.
+const CADDY = `#!${process.execPath}
+const fs = require('node:fs')
+const args = process.argv.slice(2)
+fs.appendFileSync(process.env.OCI_LOG, JSON.stringify({ side: process.env.OCI_SIDE || 'local', bin: 'caddy', args, cwd: process.cwd() }) + '\\n')
+if (args[0] === 'validate' && process.env.FAKE_CADDY_INVALID) { process.stderr.write('Error: adapting config: unknown directive\\n'); process.exit(1) }
+`
+
+// curl: fails for URLs containing FAKE_CURL_FAIL.
+const CURL = `#!${process.execPath}
+const fs = require('node:fs')
+const args = process.argv.slice(2)
+const url = args.find((arg) => arg.startsWith('http'))
+fs.appendFileSync(process.env.OCI_LOG, JSON.stringify({ side: process.env.OCI_SIDE || 'local', bin: 'curl', args: [url], cwd: process.cwd() }) + '\\n')
+if (process.env.FAKE_CURL_FAIL && url.includes(process.env.FAKE_CURL_FAIL)) { process.stderr.write('curl: (22) The requested URL returned error: 503\\n'); process.exit(22) }
+`
+
 const SCP = `#!${process.execPath}
 const args = process.argv.slice(2)
 require('node:fs').cpSync(args.at(-2), args.at(-1).replace(/^[^:]+:/, ''), { recursive: true })
@@ -483,6 +501,9 @@ async function runOci(options: Scenario) {
       uname: '#!/bin/sh\necho "${FAKE_ARCH:-x86_64}"\n',
       loginctl: '#!/bin/sh\necho "${FAKE_LINGER:-yes}"\n',
       quadlet: QUADLET,
+      caddy: CADDY,
+      curl: CURL,
+      sudo: '#!/bin/sh\nexec "$@"\n',
       journalctl: '#!/bin/sh\necho "journal: $*"\n',
       stat: '#!/bin/sh\necho "${FAKE_CGROUP:-cgroup2fs}"\n',
     }
@@ -566,7 +587,10 @@ async function runOci(options: Scenario) {
     const input = {
       recipe: options.recipe,
       deploy: options.deploy,
-      store: { container_project: 'app', ...options.store },
+      // "$ROOT" in store values stands for the scenario directory.
+      store: JSON.parse(
+        JSON.stringify({ container_project: 'app', ...options.store }).replaceAll('$ROOT', root)
+      ),
       release: options.release ?? R1,
       hosts: remotes.map((remote) => ({
         name: remote.name,

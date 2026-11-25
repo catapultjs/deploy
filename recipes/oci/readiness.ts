@@ -21,7 +21,7 @@ export function containerState(state: string, status: string): ContainerState {
   if (lowered.includes('unhealthy')) return 'failed'
   if (state === 'running') return /\((health: )?starting\)/i.test(status) ? 'pending' : 'ok'
   if (state === 'exited') return /exited \(0\)/i.test(status) ? 'ok' : 'failed'
-  if (state === 'created' || state === 'restarting' || state === 'configured') return 'pending'
+  if (['created', 'initialized', 'restarting', 'configured'].includes(state)) return 'pending'
   return 'failed'
 }
 

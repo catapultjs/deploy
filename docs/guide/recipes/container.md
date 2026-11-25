@@ -63,16 +63,16 @@ Add a `.containerignore` (or `.dockerignore`) that excludes at least `.env` and 
 1. The image is built locally once per deployment as `localhost/<container_image>:<release>`, and streamed to each server over SSH. When it did not change since the current release, the server only adds the new tag.
 2. `shared_dirs` / `shared_files` are linked into the release. The `env` values of each service are written to `container/<service>.env` in the release, readable by the deploy user only.
 3. The optional migration runs in a one-off container of the new image, on the project network, with the service's env files, user and volumes. A failure stops the deployment before publication.
-4. After publication, each service container (`<container_project>-<service>`) is stopped, removed and started again from the new image. Containers of services removed from `container_services` are stopped and removed.
+4. After publication, each service container (`<container_project>-<service>`) is stopped, removed and started again from the new image, except services deployed [without downtime](#zero-downtime-with-caddy). Containers of services removed from `container_services` are stopped and removed.
 5. Catapult waits until every container runs, and is healthy when the image declares a healthcheck, then checks again 3 seconds later. A container that exits, becomes unhealthy, restarts in between, or restarts repeatedly while waiting (a crash loop hidden by the restart policy) fails the deployment and triggers the automatic rollback.
 
-All services share a network named after `container_project`, so they reach each other by container name. Ports are released between stop and start: expect a short interruption on each deployment.
+All services share a network named after `container_project`, so they reach each other by container name. Ports are released between stop and start: expect a short interruption on each deployment, unless the service uses `blue_green`.
 
 The release manifest records how each service is started: command, ports, volumes, labels and env file paths, but never the values of environment variables.
 
 **Pipeline**
 
-`deploy:lock` → `oci:check` → `container:check` → `deploy:release` → `deploy:shared` → `container:prepare` → `oci:build` → `oci:transfer` → `container:migrate` → `deploy:publish` → `container:up` → `deploy:log_revision` → `deploy:healthcheck` → `deploy:cleanup` → `oci:cleanup` → `deploy:unlock`
+`deploy:lock` → `oci:check` → `container:check` → `deploy:release` → `deploy:shared` → `container:prepare` → `oci:build` → `oci:transfer` → `container:migrate` → `deploy:publish` → `container:up` → `deploy:log_revision` → `deploy:healthcheck` → `container:retire` → `deploy:cleanup` → `oci:cleanup` → `deploy:unlock`
 
 **Tasks**
 
@@ -85,6 +85,7 @@ The release manifest records how each service is started: command, ports, volume
 | `oci:transfer`      | yes      | Streams the image to the server and writes `release.json`        |
 | `container:migrate` | yes      | Runs `container_migrate` when set                                |
 | `container:up`      | yes      | Replaces the containers and waits until they are ready           |
+| `container:retire`  | yes      | Stops the `blue_green` containers no longer receiving traffic    |
 | `oci:cleanup`       | yes      | Removes images of deleted releases, keeps a few local builds     |
 | `container:start`   | manual   | Starts the existing containers                                   |
 | `container:stop`    | manual   | Stops the containers                                             |
@@ -120,6 +121,7 @@ Manual tasks run against the current release: `npx cata task container:logs`. Fo
 | `cpus`        | `number \| string`       | none       | CPU limit, e.g. `1.5`                                              |
 | `networks`    | `string[]`               | `[]`       | Existing networks joined in addition to the project network        |
 | `options`     | `string[]`               | `[]`       | Raw engine options, e.g. `--cap-drop=ALL`                          |
+| `blue_green`  | `object`                 | none       | Deploys without downtime behind Caddy, see below                   |
 
 Keep secrets in `env_file` (typically a shared `.env`), never in `env`: values are passed as env files, never on the command line. Relative volume sources resolve inside the release directory: point them to `shared_dirs` entries to keep data across releases, or use named volumes.
 
@@ -153,16 +155,60 @@ Labels apply to service containers only, not to the one-off migration container,
 
 **Other keys**
 
-| Key                      | Type                                     | Default | Description                                     |
-| ------------------------ | ---------------------------------------- | ------- | ----------------------------------------------- |
-| `container_migrate`      | `{ service: string, command: string[] }` | none    | One-off command run before publication          |
-| `container_wait_timeout` | `number`                                 | `60`    | Seconds to wait for containers to be ready      |
-| `container_stop_timeout` | `number`                                 | `10`    | Seconds given to a container to stop gracefully |
-| `container_logs_lines`   | `number`                                 | `100`   | Lines shown per container by `container:logs`   |
+| Key                         | Type                                     | Default                 | Description                                              |
+| --------------------------- | ---------------------------------------- | ----------------------- | -------------------------------------------------------- |
+| `container_migrate`         | `{ service: string, command: string[] }` | none                    | One-off command run before publication                   |
+| `container_wait_timeout`    | `number`                                 | `60`                    | Seconds to wait for containers to be ready               |
+| `container_stop_timeout`    | `number`                                 | `10`                    | Seconds given to a container to stop gracefully          |
+| `container_logs_lines`      | `number`                                 | `100`                   | Lines shown per container by `container:logs`            |
+| `container_caddy_upstreams` | `string`                                 | `'/etc/caddy/catapult'` | Directory of the upstream files of `blue_green` services |
 
 The image options (`container_engine`, `container_build_engine`, `container_project`, `container_image`, `container_build`, `container_source`, `container_compression`, `container_keep_local`) are the same as for [`compose`](./compose#configuration), as are the [build on the servers](./compose#build-on-the-servers) and the [transfer through a registry](./compose#transfer-through-a-registry).
 
 All keys are available in [JSON configurations](/guide/json-configuration) with `"recipes": ["container"]`.
+
+## Zero downtime with Caddy
+
+A web service with `blue_green` alternates between two host ports instead of being replaced in place. [Caddy](https://caddyserver.com) proxies the traffic, and Catapult switches it to the new release once checked:
+
+```typescript
+set('container_services', {
+  web: {
+    command: ['node', 'bin/server.js'],
+    init: true,
+    env_file: ['.env'],
+    blue_green: { ports: [3001, 3002], container_port: 3333, health_path: '/health' },
+  },
+  worker: { command: ['node', 'ace', 'queue:work'], init: true, env_file: ['.env'] },
+})
+```
+
+```
+# /etc/caddy/Caddyfile, written once
+example.com {
+	reverse_proxy {
+		import /etc/caddy/catapult/myapp-web.caddy
+	}
+}
+```
+
+1. `container:up` starts the new release in the idle slot (`<project>-<service>-a` or `-b`, published on `127.0.0.1` on its port), waits until it is ready and requests `health_path` on it directly.
+2. Catapult writes the upstream file (`to 127.0.0.1:<port>`), validates the Caddy configuration and reloads Caddy. Requests in flight finish on the previous release; new requests reach the new one.
+3. `deploy:healthcheck` runs, through Caddy when `healthcheck.url` points to it.
+4. `container:retire` waits `drain` seconds, then stops the previous container.
+
+| Option           | Type               | Default  | Description                                             |
+| ---------------- | ------------------ | -------- | ------------------------------------------------------- |
+| `ports`          | `[number, number]` | required | Host ports used alternately, published on `127.0.0.1`   |
+| `container_port` | `number`           | required | Port the application listens on in the container        |
+| `health_path`    | `string`           | none     | Path requested on the new container before switching    |
+| `drain`          | `number`           | `10`     | Seconds the previous container keeps to finish requests |
+
+When a deployment fails before `container:retire`, the previous container is still running: the rollback points Caddy back to it and removes the new one, without restarting anything. A later rollback starts the restored release in the idle slot and switches, as a deployment does. An invalid Caddy configuration or a failed reload restores the previous upstream files.
+
+Other services (workers) are still replaced in place, so two versions never consume the same queue. `blue_green` services cannot set `ports`, and their ports must differ across services. Enabling `blue_green` on a running service removes its single container first: that deployment has a short interruption.
+
+Catapult writes the upstream files with `sudo` and reloads Caddy with `sudo caddy reload --config /etc/caddy/Caddyfile`, using the [`caddy`](./caddy) keys `caddy_config_path` and `caddy_use_sudo` (set it to `false` when deploying as root). The deploy user needs passwordless `sudo` for `tee`, `cp`, `mv`, `rm`, `mkdir` and `caddy`. When `caddy reload` cannot reach the admin endpoint, for example under SELinux, declare an admin socket in the global options: `admin unix//run/caddy/admin.sock`.
 
 ## Server requirements
 
@@ -180,6 +226,6 @@ A rollback does not restore data or reverse migrations. Write migrations that th
 
 ## Limitations
 
-- Containers are replaced in place: a short interruption happens on fixed ports.
+- Containers are replaced in place: a short interruption happens on fixed ports. Use `blue_green` for web services behind Caddy.
 - One image per project. Use `compose` for stacks combining several images.
 - Podman ignores the image `HEALTHCHECK` for OCI images, the format produced by Docker with the containerd image store: Catapult warns when it is lost. Declare `healthcheck` in the service, or build with Podman locally.

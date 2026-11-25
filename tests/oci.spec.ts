@@ -6,6 +6,7 @@ import { set } from '../src/store.ts'
 import { imageName, platformFromArch, project, releaseRef } from '../recipes/oci/config.ts'
 import { releaseTags } from '../recipes/oci/cleanup.ts'
 import { contentKey } from '../recipes/oci/build.ts'
+import { containerState } from '../recipes/oci/readiness.ts'
 import { type OciEnv, R1, R2, calls, scenario } from './helpers/oci_harness.ts'
 
 test.group('oci — configuration', () => {
@@ -433,4 +434,25 @@ test.group('oci — cleanup and rollback', () => {
       (run) => assert.equal(run.exitCode, 0, run.stderr)
     )
   }).timeout(30_000)
+})
+
+test.group('oci — readiness', () => {
+  test('classifies container states of Docker and Podman', ({ assert }) => {
+    const cases: [string, string, string][] = [
+      ['running', 'Up 3 seconds', 'ok'],
+      ['running', 'Up 3 seconds (healthy)', 'ok'],
+      ['running', 'Up 1 second (health: starting)', 'pending'],
+      ['running', 'Up 2 seconds (unhealthy)', 'failed'],
+      ['created', 'Created', 'pending'],
+      // Podman, between two starts of a container with a restart policy.
+      ['initialized', 'Initialized (starting)', 'pending'],
+      ['restarting', 'Restarting (1) 1 second ago', 'pending'],
+      ['exited', 'Exited (0) 1 second ago', 'ok'],
+      ['exited', 'Exited (1) 1 second ago', 'failed'],
+      ['dead', 'Dead', 'failed'],
+    ]
+    for (const [state, status, expected] of cases) {
+      assert.equal(containerState(state, status), expected, `${state} ${status}`)
+    }
+  })
 })

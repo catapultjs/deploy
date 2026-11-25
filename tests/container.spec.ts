@@ -267,12 +267,13 @@ test.group('container — deploy', () => {
       (run) => {
         assert.equal(run.exitCode, 0, run.stderr)
         const removed = calls(run, 'remote-deploy@web', 'rm').map((call) => call.args.at(-1))
-        assert.deepEqual(removed, ['app-web', 'app-legacy'])
+        // Containers no longer configured go first: they may hold a port.
+        assert.deepEqual(removed, ['app-legacy', 'app-web'])
         assert.deepEqual(
           calls(run, 'remote-deploy@web', 'stop').map((call) => call.args),
           [
-            ['stop', '-t', '10', 'app-web'],
             ['stop', '-t', '10', 'app-legacy'],
+            ['stop', '-t', '10', 'app-web'],
           ]
         )
         assert.include(run.stdout, 'remove app-legacy')

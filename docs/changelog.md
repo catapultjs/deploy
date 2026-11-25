@@ -13,6 +13,8 @@ description: Catapult changelog — release history and notable changes.
 - Added `container_transfer: 'registry'` to the container recipes: the release image is pushed once and pulled by digest on each server, with credentials read from local environment variables and a temporary auth file on the servers. A rollback pulls the image again when it is gone
 - Added `container_build.location: 'remote'` to the container recipes: the build context is synchronized with rsync and each server builds the release image natively, without transfer
 - Added a warning when Podman would keep a stale build argument value from its layer cache (an `ENV` or `LABEL` using the argument before any `RUN`)
+- Added `blue_green` to the services of `recipes/container`: zero downtime deployments behind Caddy. The new release starts on the idle port, is checked, then Caddy switches to it and the previous container is drained and stopped after the healthcheck. A failed deployment points Caddy back to the previous container without restarting it
+- Fixed the readiness of Podman containers in the `initialized` state, reported between two starts, which failed the deployment
 - Changed every command to report failures with the error message only, as `cata deploy` does, instead of a stack trace. Set `CATAPULT_DEBUG=1` or use `-vvv` to print the stack
 - Changed the `deploy failed` and `auto rollback failed` messages to show the error output of a failed remote command instead of the command itself
 - Fixed `cata deploy` reporting task failures (healthcheck, readiness) as SSH connection failures, and repeating the host name in error messages

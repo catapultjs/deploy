@@ -170,6 +170,7 @@
           "additionalProperties": false
         },
         "container_build_engine": { "enum": ["docker", "podman"] },
+        "container_caddy_upstreams": { "type": "string", "minLength": 1 },
         "container_compression": { "enum": ["none", "gzip", "zstd"] },
         "container_engine": { "enum": ["docker", "podman"] },
         "container_image": { "type": "string", "pattern": "^[a-z0-9]+(?:[._-][a-z0-9]+)*$" },
@@ -258,7 +259,24 @@
                 "uniqueItems": true,
                 "items": { "type": "string", "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_.-]*$" }
               },
-              "options": { "type": "array", "items": { "type": "string", "minLength": 1 } }
+              "options": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+              "blue_green": {
+                "type": "object",
+                "properties": {
+                  "ports": {
+                    "type": "array",
+                    "minItems": 2,
+                    "maxItems": 2,
+                    "uniqueItems": true,
+                    "items": { "type": "integer", "minimum": 1, "maximum": 65535 }
+                  },
+                  "container_port": { "type": "integer", "minimum": 1, "maximum": 65535 },
+                  "health_path": { "type": "string", "pattern": "^/\\S*$" },
+                  "drain": { "type": "number", "minimum": 0 }
+                },
+                "required": ["ports", "container_port"],
+                "additionalProperties": false
+              }
             },
             "additionalProperties": false
           }

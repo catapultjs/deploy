@@ -21,7 +21,7 @@ import {
 import type { Host } from '../src/types.ts'
 import type { CatapultLogger } from '../src/logger.ts'
 import { Verbose } from '../src/enums.ts'
-import { getPaths, q, ssh } from '../src/utils.ts'
+import { getPaths, q, sleep, ssh } from '../src/utils.ts'
 import './deploy/lock.ts'
 import './deploy/release.ts'
 import './deploy/shared.ts'
@@ -42,6 +42,7 @@ declare module '../src/types.ts' {
     'container:prepare': true
     'container:migrate': true
     'container:up': true
+    'container:retire': true
     'container:start': true
     'container:stop': true
     'container:restart': true
@@ -56,6 +57,9 @@ set('oci_recipe', 'container')
 const LABEL_PROJECT = 'com.catapultjs.project'
 const LABEL_SERVICE = 'com.catapultjs.service'
 const LABEL_RELEASE = 'com.catapultjs.release'
+const LABEL_SLOT = 'com.catapultjs.slot'
+const SLOTS = ['a', 'b'] as const
+type Slot = (typeof SLOTS)[number]
 const NAME_PATTERN = /^[a-zA-Z0-9][a-zA-Z0-9_.-]*$/
 const ENV_KEY_PATTERN = /^[A-Za-z_][A-Za-z0-9_]*$/
 const RESTART_PATTERN = /^(no|always|unless-stopped|on-failure(:\d+)?)$/
@@ -92,6 +96,19 @@ export interface ServiceConfig {
   networks?: string[]
   /** Raw engine options, e.g. `--cap-add=NET_ADMIN`. */
   options?: string[]
+  /** Zero downtime deployment behind Caddy, alternating between two host ports. */
+  blue_green?: BlueGreenConfig
+}
+
+export interface BlueGreenConfig {
+  /** Host ports used alternately, published on 127.0.0.1. */
+  ports: [number, number]
+  /** Port the application listens on inside the container. */
+  container_port: number
+  /** Path requested on the new container before switching, e.g. `/health`. */
+  health_path?: string
+  /** Seconds left to the previous container to finish its requests (default 10). */
+  drain?: number
 }
 
 /** Healthcheck run inside the container: `cmd` is a shell command. */
@@ -124,6 +141,14 @@ interface ServiceSpec {
   cpus?: string | null
   networks?: string[]
   options?: string[]
+  blueGreen?: BlueGreenSpec | null
+}
+
+interface BlueGreenSpec {
+  ports: [number, number]
+  containerPort: number
+  healthPath: string | null
+  drain: number
 }
 
 interface ContainerData {
@@ -252,6 +277,41 @@ function engineOptions(key: string, value: unknown): string[] {
   return options
 }
 
+function portNumber(key: string, value: unknown): number {
+  if (!Number.isInteger(value) || (value as number) < 1 || (value as number) > 65535) {
+    fail(`${key} must be a port number`)
+  }
+  return value as number
+}
+
+function blueGreen(key: string, value: unknown): BlueGreenSpec | null {
+  if (value === undefined) return null
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    fail(`${key} must be { ports, container_port, health_path?, drain? }`)
+  }
+  const config = value as Record<string, unknown>
+  if (!Array.isArray(config.ports) || config.ports.length !== 2) {
+    fail(`${key}.ports must list two host ports`)
+  }
+  const ports = config.ports.map((item, index) => portNumber(`${key}.ports[${index}]`, item))
+  if (ports[0] === ports[1]) fail(`${key}.ports must be two different ports`)
+  let healthPath: string | null = null
+  if (config.health_path !== undefined) {
+    healthPath = plain(`${key}.health_path`, config.health_path)
+    if (!healthPath.startsWith('/') || /\s/.test(healthPath)) {
+      fail(`${key}.health_path must be a path starting with /`)
+    }
+  }
+  const drain = config.drain === undefined ? 10 : Number(config.drain)
+  if (!Number.isFinite(drain) || drain < 0) fail(`${key}.drain must be a number of seconds`)
+  return {
+    ports: [ports[0], ports[1]],
+    containerPort: portNumber(`${key}.container_port`, config.container_port),
+    healthPath,
+    drain,
+  }
+}
+
 export function serviceConfigs(): Record<string, ServiceConfig> {
   const value = get<unknown>('container_services')
   if (!value || typeof value !== 'object' || Array.isArray(value) || !Object.keys(value).length) {
@@ -304,7 +364,12 @@ function specs(releaseDir: string): { data: ContainerData; envFiles: Record<stri
       if (!NAME_PATTERN.test(network)) fail(`${key}.networks has an invalid name: ${network}`)
       if (network === project()) fail(`${key}.networks must not list the project network`)
     }
+    const switching = blueGreen(`${key}.blue_green`, config.blue_green)
+    if (switching && config.ports?.length) {
+      fail(`${key}.ports cannot be used with blue_green, which publishes its own ports`)
+    }
     services[name] = {
+      blueGreen: switching,
       init: config.init ?? false,
       healthcheck: healthcheck(`${key}.healthcheck`, config.healthcheck),
       command:
@@ -326,6 +391,11 @@ function specs(releaseDir: string): { data: ContainerData; envFiles: Record<stri
       options: engineOptions(`${key}.options`, config.options),
     }
     if (services[name].command?.length === 0) fail(`${key}.command must not be empty`)
+  }
+
+  const used = Object.values(services).flatMap((spec) => spec.blueGreen?.ports ?? [])
+  if (new Set(used).size !== used.length) {
+    fail('container_services: blue_green ports must be unique across services')
   }
 
   return { data: { network: project(), services }, envFiles }
@@ -365,11 +435,28 @@ export function containerName(service: string): string {
   return `${project()}-${service}`
 }
 
-function runArgs(stack: Stack, service: string, oneOff?: string[]): string[] {
+export function slotName(service: string, slot: Slot): string {
+  return `${containerName(service)}-${slot}`
+}
+
+function slotPort(spec: ServiceSpec, slot: Slot): number {
+  return spec.blueGreen!.ports[SLOTS.indexOf(slot)]
+}
+
+function runArgs(stack: Stack, service: string, oneOff?: string[], slot?: Slot): string[] {
   const spec = stack.data.services[service]
+  const name = slot ? slotName(service, slot) : containerName(service)
   const args = oneOff
     ? ['--rm', '--network', stack.data.network, '--label', 'com.catapultjs.oneoff=true']
-    : ['-d', '--name', containerName(service), '--network', stack.data.network]
+    : ['-d', '--name', name, '--network', stack.data.network]
+  if (slot && spec.blueGreen) {
+    args.push(
+      '--label',
+      `${LABEL_SLOT}=${slot}`,
+      '-p',
+      `127.0.0.1:${slotPort(spec, slot)}:${spec.blueGreen.containerPort}`
+    )
+  }
   // Extra networks, resources and raw options also apply to the one-off container:
   // a migration may need a database reachable on an external network.
   for (const network of spec.networks ?? []) args.push('--network', network)
@@ -484,37 +571,220 @@ async function wait(stack: Stack, logger: CatapultLogger, verbose: number, withR
   })
 }
 
-/**
- * Replaces the containers of every service with the ones of the release, removes
- * containers of services no longer configured, then waits until they are ready.
- * Ports are released between stop and start: expect a short interruption.
- */
-async function up(stack: Stack, logger: CatapultLogger, verbose: number) {
-  const expected = new Set(Object.keys(stack.data.services).map(containerName))
-  const existing = await listContainers(stack.host, stack.facts, [
-    [`${LABEL_PROJECT}=${project()}`],
-  ])
-  const removed = existing.map((c) => c.name).filter((name) => !expected.has(name))
+function blueGreenServices(stack: Stack): string[] {
+  return Object.keys(stack.data.services).filter(
+    (service) => stack.data.services[service].blueGreen
+  )
+}
 
+/** Name of every container of the project on the server. */
+async function projectContainers(stack: Stack): Promise<string[]> {
+  const list = await listContainers(stack.host, stack.facts, [[`${LABEL_PROJECT}=${project()}`]])
+  return list.map((container) => container.name)
+}
+
+// Caddy settings are shared with recipes/caddy.
+function caddySudo(): string {
+  return get<boolean>('caddy_use_sudo', true) ? 'sudo ' : ''
+}
+
+function caddyConfig(): string {
+  return get<string>('caddy_config_path', '/etc/caddy/Caddyfile')
+}
+
+/** File imported by the Caddyfile in the reverse_proxy block of a service. */
+export function upstreamFile(service: string): string {
+  const dir = get<string>('container_caddy_upstreams', '/etc/caddy/catapult')
+  return `${dir}/${project()}-${service}.caddy`
+}
+
+/** Slot each blue/green service currently receives traffic on, from its upstream file. */
+async function liveSlots(stack: Stack): Promise<Record<string, Slot | null>> {
+  const services = blueGreenServices(stack)
+  const { stdout } = await ssh(
+    stack.host,
+    services
+      .map((service) => `echo ${q(`${service}=`)}"$(cat ${q(upstreamFile(service))} 2>/dev/null)"`)
+      .join('\n')
+  )
+  const live: Record<string, Slot | null> = {}
+  for (const service of services) {
+    const line = stdout.split('\n').find((item) => item.startsWith(`${service}=`)) ?? ''
+    const port = Number(/127\.0\.0\.1:(\d+)/.exec(line)?.[1])
+    const index = stack.data.services[service].blueGreen!.ports.indexOf(port)
+    live[service] = index === -1 ? null : SLOTS[index]
+  }
+  return live
+}
+
+/**
+ * Points Caddy to the given slots: writes the upstream files, validates the whole
+ * configuration and reloads Caddy, which lets requests in flight finish. The previous
+ * files are restored when the configuration is invalid or the reload fails.
+ */
+async function switchUpstreams(
+  stack: Stack,
+  targets: Record<string, Slot>,
+  logger: CatapultLogger,
+  verbose: number
+) {
+  const sudo = caddySudo()
+  const caddy = `${sudo}${q(stack.host.bin?.caddy ?? 'caddy')}`
+  const config = q(caddyConfig())
+  const files = Object.entries(targets).map(([service, slot]) => ({
+    file: upstreamFile(service),
+    port: slotPort(stack.data.services[service], slot),
+  }))
+  const restore = files
+    .map(
+      ({ file }) =>
+        `if [ -f ${q(`${file}.prev`)} ]; then ${sudo}mv ${q(`${file}.prev`)} ${q(file)}; else ${sudo}rm -f ${q(file)}; fi`
+    )
+    .join('\n  ')
+  const script = [
+    'set -e',
+    `restore() {\n  ${restore}\n}`,
+    ...files.flatMap(({ file, port: slotValue }) => [
+      `${sudo}mkdir -p ${q(file.slice(0, file.lastIndexOf('/')))}`,
+      `${sudo}cp -p ${q(file)} ${q(`${file}.prev`)} 2>/dev/null || ${sudo}rm -f ${q(`${file}.prev`)}`,
+      `printf 'to 127.0.0.1:%s\\n' ${slotValue} | ${sudo}tee ${q(file)} >/dev/null`,
+    ]),
+    `if ! out=$(${caddy} validate --config ${config} 2>&1); then restore; echo "$out" | tail -n 5 >&2; exit 1; fi`,
+    `if ! out=$(${caddy} reload --config ${config} 2>&1); then restore; ${caddy} reload --config ${config} >/dev/null 2>&1 || true; echo "$out" | tail -n 5 >&2; exit 1; fi`,
+    ...files.map(({ file }) => `${sudo}rm -f ${q(`${file}.prev`)}`),
+  ]
+  if (verbose >= Verbose.NORMAL) {
+    const summary = files.map(({ file, port: slotValue }) => `${file} -> 127.0.0.1:${slotValue}`)
+    logger.step(stack.host.name, `switch Caddy: ${summary.join(', ')}`)
+  }
+  await ssh(stack.host, script.join('\n')).catch((error: unknown) => {
+    throw new Error(
+      `[${stack.host.name}] Caddy switch failed, previous upstreams restored: ${failureOutput(error) || (error as Error).message}`,
+      { cause: error }
+    )
+  })
+}
+
+/** Requests `health_path` on the new container until it answers or the timeout expires. */
+async function checkSlot(
+  stack: Stack,
+  service: string,
+  slot: Slot,
+  logger: CatapultLogger,
+  verbose: number
+) {
+  const spec = stack.data.services[service].blueGreen!
+  if (!spec.healthPath) return
+  const url = `http://127.0.0.1:${slotPort(stack.data.services[service], slot)}${spec.healthPath}`
+  const timeout = seconds('container_wait_timeout', 60)
+  const deadline = Date.now() + timeout * 1000
+  let lastError = ''
+  while (true) {
+    try {
+      await ssh(
+        stack.host,
+        `set -e\ncurl --fail --silent --show-error --max-time 5 ${q(url)} >/dev/null`
+      )
+      if (verbose >= Verbose.NORMAL) logger.step(stack.host.name, `${url} OK`)
+      return
+    } catch (error) {
+      lastError = failureOutput(error) || (error as Error).message
+    }
+    if (Date.now() >= deadline) {
+      throw new Error(
+        `[${stack.host.name}] ${service} did not answer ${url} within ${timeout}s: ${lastError}`
+      )
+    }
+    await sleep(2_000)
+  }
+}
+
+/**
+ * Replaces the containers with the ones of the release, then waits until they are
+ * ready. Blue/green services start in the slot not receiving traffic, are checked,
+ * then Caddy switches to them; the previous slot keeps running until `retire`. Other
+ * services are replaced in place: expect a short interruption on their ports.
+ * `reuse` points blue/green services to running containers of the release instead
+ * of starting new ones (a rollback before the previous slot was retired).
+ */
+async function up(
+  stack: Stack,
+  logger: CatapultLogger,
+  verbose: number,
+  reuse: Record<string, Slot> = {}
+) {
+  const switching = blueGreenServices(stack)
+  const live = switching.length ? await liveSlots(stack) : {}
+  const next: Record<string, Slot> = {}
+  for (const service of switching) {
+    next[service] = reuse[service] ?? (live[service] === 'a' ? 'b' : 'a')
+  }
+
+  const expected = new Set(
+    Object.keys(stack.data.services).flatMap((service) =>
+      stack.data.services[service].blueGreen
+        ? SLOTS.map((slot) => slotName(service, slot))
+        : [containerName(service)]
+    )
+  )
+  const existing = await projectContainers(stack)
+  const removed = existing.filter((name) => !expected.has(name))
+
+  // Containers no longer expected go first: a container started before blue/green was
+  // enabled may hold one of its ports.
   const script = ['set -e', ensureNetwork(stack)]
+  for (const name of removed) script.push(...stopAndRemove(stack, name))
+  const started: string[] = []
   for (const service of Object.keys(stack.data.services)) {
+    const slot = next[service]
+    if (slot && reuse[service]) continue
+    const name = slot ? slotName(service, slot) : containerName(service)
+    started.push(name)
     script.push(
-      ...stopAndRemove(stack, containerName(service)),
-      `${engine(stack, ['run', ...runArgs(stack, service)])} >/dev/null`
+      ...stopAndRemove(stack, name),
+      `${engine(stack, ['run', ...runArgs(stack, service, undefined, slot)])} >/dev/null`
     )
   }
-  for (const name of removed) script.push(...stopAndRemove(stack, name))
 
   if (verbose >= Verbose.NORMAL) {
-    logger.step(stack.host.name, `start ${[...expected].join(', ')}`)
     if (removed.length) logger.step(stack.host.name, `remove ${removed.join(', ')}`)
+    if (started.length) logger.step(stack.host.name, `start ${started.join(', ')}`)
   }
   await ssh(stack.host, script.join('\n'))
   await wait(stack, logger, verbose, true)
+
+  if (!switching.length) return
+  for (const service of switching) await checkSlot(stack, service, next[service], logger, verbose)
+  await switchUpstreams(stack, next, logger, verbose)
 }
 
-function names(stack: Stack): string[] {
-  return Object.keys(stack.data.services).map(containerName)
+/**
+ * Stops the blue/green containers that no longer receive traffic, after leaving them
+ * `drain` seconds to finish their requests.
+ */
+async function retire(stack: Stack, logger: CatapultLogger, verbose: number) {
+  const switching = blueGreenServices(stack)
+  if (!switching.length) return
+  const live = await liveSlots(stack)
+  const existing = new Set(await projectContainers(stack))
+  const idle = switching.flatMap((service) =>
+    live[service]
+      ? SLOTS.filter((slot) => slot !== live[service])
+          .map((slot) => slotName(service, slot))
+          .filter((name) => existing.has(name))
+      : []
+  )
+  if (!idle.length) return
+  const drain = Math.max(
+    ...switching.map((service) => stack.data.services[service].blueGreen!.drain)
+  )
+  if (verbose >= Verbose.NORMAL)
+    logger.step(stack.host.name, `drain ${drain}s, then stop ${idle.join(', ')}`)
+  if (drain) await sleep(drain * 1000)
+  await ssh(
+    stack.host,
+    ['set -e', ...idle.flatMap((name) => stopAndRemove(stack, name))].join('\n')
+  )
 }
 
 // ---------------------------------------------------------------------------
@@ -563,7 +833,30 @@ onBeforeRollback(async (ctx, host, logger) => {
 onRollback(async (ctx, host, logger) => {
   const paths = getPaths(host.deployPath, ctx.release)
   const target = await loadStack(host, logger, ctx.release, paths.release)
-  await up(target, logger, ctx.config.verbose ?? Verbose.SILENT)
+  const verbose = ctx.config.verbose ?? Verbose.SILENT
+  // Blue/green services still running the target release (the deployment failed
+  // before `retire`) switch back to it without restarting anything.
+  const reuse: Record<string, Slot> = {}
+  const switching = blueGreenServices(target)
+  if (switching.length) {
+    const running = await listContainers(
+      host,
+      target.facts,
+      switching.map((service) => [
+        `${LABEL_PROJECT}=${project()}`,
+        `${LABEL_SERVICE}=${service}`,
+        `${LABEL_RELEASE}=${target.release}`,
+      ])
+    )
+    for (const service of switching) {
+      const slot = SLOTS.find((item) =>
+        running.some((c) => c.name === slotName(service, item) && c.state === 'running')
+      )
+      if (slot) reuse[service] = slot
+    }
+  }
+  await up(target, logger, verbose, reuse)
+  await retire(target, logger, verbose)
 })
 
 // ---------------------------------------------------------------------------
@@ -644,10 +937,17 @@ task('container:up', async (ctx: TaskContext) => {
   await up(target, ctx.logger, verbosity(ctx))
 })
 
+desc('Stops the blue/green containers that no longer receive traffic, after draining them')
+task('container:retire', async (ctx: TaskContext) => {
+  const target = await loadStack(ctx.host, ctx.logger, ctx.release, ctx.paths.release)
+  await retire(target, ctx.logger, verbosity(ctx))
+})
+
 desc('Starts the existing containers')
 task('container:start', async (ctx: TaskContext) => {
   const target = await loadStack(ctx.host, ctx.logger, ctx.release, ctx.paths.release)
-  await ssh(ctx.host, `set -e\n${engine(target, ['start', ...names(target)])} >/dev/null`)
+  const names = await projectContainers(target)
+  await ssh(ctx.host, `set -e\n${engine(target, ['start', ...names])} >/dev/null`)
   await wait(target, ctx.logger, verbosity(ctx))
 })
 
@@ -655,33 +955,31 @@ desc('Stops the containers')
 task('container:stop', async ({ host, logger, release, paths }: TaskContext) => {
   const target = await loadStack(host, logger, release, paths.release)
   const timeout = String(seconds('container_stop_timeout', 10))
-  await ssh(host, `set -e\n${engine(target, ['stop', '-t', timeout, ...names(target)])} >/dev/null`)
+  const names = await projectContainers(target)
+  await ssh(host, `set -e\n${engine(target, ['stop', '-t', timeout, ...names])} >/dev/null`)
 })
 
 desc('Restarts the containers and waits until they are ready')
 task('container:restart', async (ctx: TaskContext) => {
   const target = await loadStack(ctx.host, ctx.logger, ctx.release, ctx.paths.release)
   const timeout = String(seconds('container_stop_timeout', 10))
-  await ssh(
-    ctx.host,
-    `set -e\n${engine(target, ['restart', '-t', timeout, ...names(target)])} >/dev/null`
-  )
+  const names = await projectContainers(target)
+  await ssh(ctx.host, `set -e\n${engine(target, ['restart', '-t', timeout, ...names])} >/dev/null`)
   await wait(target, ctx.logger, verbosity(ctx))
 })
 
 desc('Stops and removes the containers (volumes and network are kept)')
 task('container:remove', async ({ host, logger, release, paths }: TaskContext) => {
   const target = await loadStack(host, logger, release, paths.release)
-  await ssh(
-    host,
-    ['set -e', ...names(target).flatMap((name) => stopAndRemove(target, name))].join('\n')
-  )
+  const names = await projectContainers(target)
+  await ssh(host, ['set -e', ...names.flatMap((name) => stopAndRemove(target, name))].join('\n'))
 })
 
 desc('Displays the logs of the containers')
 task('container:logs', async ({ host, logger, release, paths }: TaskContext) => {
   const target = await loadStack(host, logger, release, paths.release)
-  const script = names(target).map(
+  const containers = await projectContainers(target)
+  const script = containers.map(
     (name) =>
       `echo ${q(`== ${name}`)}\n${engine(target, ['logs', '--tail', String(logLines()), name])} 2>&1 || true`
   )
@@ -713,6 +1011,7 @@ initPipeline([
   'container:up',
   'deploy:log_revision',
   'deploy:healthcheck',
+  'container:retire',
   'deploy:cleanup',
   'oci:cleanup',
   'deploy:unlock',

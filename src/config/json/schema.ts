@@ -107,6 +107,23 @@ const containerService: AnySchemaObject = {
     },
     networks: { type: 'array', uniqueItems: true, items: composeName },
     options: { type: 'array', items: nonEmptyString },
+    blue_green: {
+      type: 'object',
+      properties: {
+        ports: {
+          type: 'array',
+          minItems: 2,
+          maxItems: 2,
+          uniqueItems: true,
+          items: { type: 'integer', minimum: 1, maximum: 65535 },
+        },
+        container_port: { type: 'integer', minimum: 1, maximum: 65535 },
+        health_path: { type: 'string', pattern: '^/\\S*$' },
+        drain: { type: 'number', minimum: 0 },
+      },
+      required: ['ports', 'container_port'],
+      additionalProperties: false,
+    },
   },
   additionalProperties: false,
 }
@@ -261,6 +278,7 @@ export const deployJsonSchema: AnySchemaObject = {
           []
         ),
         container_build_engine: containerEngine,
+        container_caddy_upstreams: nonEmptyString,
         container_compression: { enum: ['none', 'gzip', 'zstd'] },
         container_engine: containerEngine,
         container_image: { type: 'string', pattern: '^[a-z0-9]+(?:[._-][a-z0-9]+)*$' },
