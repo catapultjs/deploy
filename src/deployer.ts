@@ -1,6 +1,6 @@
 import type { Host, DeployContext, Hooks, HookContext } from './types.ts'
 import { Verbose } from './enums.ts'
-import { q, getPaths, ssh, elapsed, isSshConnectionError } from './utils.ts'
+import { q, getPaths, ssh, elapsed, isSshConnectionError, sshErrorMessage } from './utils.ts'
 import { runTask } from './task.ts'
 import { get } from './store.ts'
 import { getPipeline } from './pipeline.ts'
@@ -234,7 +234,7 @@ export async function deployHost(
     logger.ok(host.name, `deploy OK -> ${ctx.release}`, elapsed(Date.now() - deployStart))
   } catch (error) {
     observer?.taskError?.(host, currentTask, error as Error)
-    logger.fail(host.name, `deploy failed: ${(error as Error).message}`)
+    logger.fail(host.name, `deploy failed: ${sshErrorMessage(error)}`)
 
     if (published) {
       try {
@@ -242,7 +242,7 @@ export async function deployHost(
         await rollbackHost(ctx, host, previousRelease)
         logger.rollback(host.name, 'auto rollback OK')
       } catch (rollbackError) {
-        logger.boom(host.name, `auto rollback failed: ${(rollbackError as Error).message}`)
+        logger.boom(host.name, `auto rollback failed: ${sshErrorMessage(rollbackError)}`)
       }
     }
 
