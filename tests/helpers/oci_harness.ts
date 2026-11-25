@@ -44,6 +44,7 @@ const TOOLS = [
   'readlink',
   'ln',
   'touch',
+  'mktemp',
   'find',
   'cmp',
   'chmod',
@@ -58,13 +59,19 @@ const fs = require('node:fs')
 const path = require('node:path')
 const name = path.basename(process.argv[1])
 const side = process.env.OCI_SIDE || 'local'
-const [cmd, ...rest] = process.argv.slice(2)
+// Docker global option used for registry logins: --config <dir> <command> ...
+const argv = process.argv.slice(2)
+const configDir = argv[0] === '--config' ? argv[1] : null
+const [cmd, ...rest] = configDir ? argv.slice(2) : argv
 const file = path.join(process.env.OCI_STATE, side + '.json')
 const state = fs.existsSync(file) ? JSON.parse(fs.readFileSync(file, 'utf8')) : {}
 state.images = state.images || {}
 state.containers = state.containers || {}
 const save = () => fs.writeFileSync(file, JSON.stringify(state))
-const entry = { side, bin: name, args: [cmd, ...rest], cwd: process.cwd() }
+// Images pushed to the fake registry, by repository@digest, shared by every side.
+const registryFile = path.join(process.env.OCI_STATE, 'registry.json')
+const readRegistry = () => (fs.existsSync(registryFile) ? JSON.parse(fs.readFileSync(registryFile, 'utf8')) : {})
+const entry = { side, bin: name, args: [cmd, ...rest], cwd: process.cwd(), ...(configDir ? { config: configDir } : {}) }
 let sub = ''
 let subArgs = []
 if (cmd === 'compose') {
@@ -142,7 +149,8 @@ switch (cmd) {
     if (!state.images[ref]) fail('no such image ' + ref)
     const format = rest[rest.indexOf('--format') + 1] || ''
     const config = process.env.OCI_IMAGE_CONFIG || '{"Cmd":["node"]}'
-    if (format.includes('RootFS')) console.log(JSON.stringify([process.env.OCI_BUILD_CONTENT || 'layer-' + state.images[ref]]) + '\\n' + config)
+    if (format.includes('RepoDigests')) console.log(JSON.stringify((state.repoDigests || {})[ref] || []))
+    else if (format.includes('RootFS')) console.log(JSON.stringify([process.env.OCI_BUILD_CONTENT || 'layer-' + state.images[ref]]) + '\\n' + config)
     else if (format.includes('Healthcheck')) console.log(side !== 'local' && process.env.OCI_DROP_HEALTHCHECK ? 'null' : JSON.stringify(JSON.parse(config).Healthcheck || null))
     else console.log(state.images[ref])
     break
@@ -150,7 +158,39 @@ switch (cmd) {
   case 'save': { const ref = rest.at(-1); if (!state.images[ref]) fail('no such image'); process.stdout.write('ARCHIVE ' + ref + ' ' + state.images[ref] + '\\n' + 'x'.repeat(64 * 1024)); break }
   case 'load': { const data = fs.readFileSync(0, 'utf8'); const m = data.match(/^ARCHIVE (\\S+) (\\S+)\\n/); if (!m) fail('invalid archive'); state.images[m[1]] = m[2]; save(); console.log('Loaded image: ' + m[1]); break }
   case 'tag': if (!state.images[rest[0]]) fail('no such image'); state.images[rest[1]] = state.images[rest[0]]; save(); break
-  case 'pull': state.images[rest[0]] = 'sha256:pulled'; save(); break
+  case 'push': {
+    if (process.env.OCI_PUSH_FAIL) fail('denied: requested access to the resource is denied')
+    const ref = rest.at(-1)
+    if (!state.images[ref]) fail('no such image ' + ref)
+    const repository = ref.slice(0, ref.lastIndexOf(':'))
+    const digest = 'sha256:' + require('node:crypto').createHash('sha256').update(ref).digest('hex')
+    const registry = readRegistry()
+    registry[repository + '@' + digest] = state.images[ref]
+    fs.writeFileSync(registryFile, JSON.stringify(registry))
+    state.repoDigests = state.repoDigests || {}
+    state.repoDigests[ref] = [repository + '@' + digest]
+    save()
+    console.log(ref.slice(ref.lastIndexOf(':') + 1) + ': digest: ' + digest + ' size: 1234')
+    break
+  }
+  case 'login': {
+    const password = fs.readFileSync(0, 'utf8')
+    if (process.env.OCI_REGISTRY_PASSWORD && password !== process.env.OCI_REGISTRY_PASSWORD) fail('unauthorized: incorrect username or password')
+    const authfile = configDir ? path.join(configDir, 'config.json') : rest[rest.indexOf('--authfile') + 1]
+    fs.writeFileSync(authfile, JSON.stringify({ auths: { [rest.at(-1)]: {} } }))
+    break
+  }
+  case 'pull': {
+    const ref = rest.at(-1)
+    if (!ref.includes('@sha256:')) { state.images[ref] = 'sha256:pulled'; save(); break }
+    const authfile = configDir ? path.join(configDir, 'config.json') : rest.includes('--authfile') ? rest[rest.indexOf('--authfile') + 1] : null
+    if (process.env.OCI_REGISTRY_PASSWORD && !(authfile && fs.existsSync(authfile))) fail('unauthorized: authentication required')
+    const id = readRegistry()[ref]
+    if (!id) fail('manifest unknown: ' + ref)
+    state.images[ref] = id
+    save()
+    break
+  }
   case 'rmi': if ((process.env.OCI_IN_USE || '').split(',').includes(rest[0])) fail('image is in use'); delete state.images[rest[0]]; save(); break
   case 'images': {
     const label = rest.includes('--filter') ? rest[rest.indexOf('--filter') + 1].replace(/^label=/, '') : ''
@@ -350,6 +390,8 @@ export interface OciEnv {
   releasePath: (host: string, release: string) => string
   /** Rootless Quadlet directory of the fake servers (they share HOME). */
   quadletDir: string
+  /** TMPDIR of the fake servers: temporary files must not be left there. */
+  tmpDir: string
 }
 
 export interface Scenario {
@@ -364,6 +406,8 @@ export interface Scenario {
   otherProjectImages?: string[]
   /** Refs recorded in the server registry (.catapult/images) of each host before running. */
   registry?: string[]
+  /** Images already in the fake container registry, by repository@digest. */
+  registryImages?: Record<string, string>
   tasks?: string[]
   rollback?: { host: string; target: string }
   env?: Record<string, string>
@@ -408,11 +452,16 @@ async function runOci(options: Scenario) {
     deployPath: (host) => join(root, 'srv', host),
     releasePath: (host, release) => join(root, 'srv', host, 'releases', release),
     quadletDir: join(root, '.config', 'containers', 'systemd'),
+    tmpDir: join(root, 'tmp'),
   }
 
   try {
     await mkdir(projectDir)
     await mkdir(state)
+    await mkdir(env.tmpDir)
+    if (options.registryImages) {
+      await writeFile(join(state, 'registry.json'), JSON.stringify(options.registryImages))
+    }
     await writeFile(log, '')
     await linkTools(tools)
     await binDir(shared, [])
@@ -522,6 +571,7 @@ async function runOci(options: Scenario) {
       env: {
         PATH: [join(root, 'local-bin'), shared, tools].join(delimiter),
         HOME: root,
+        TMPDIR: env.tmpDir,
         OCI_STATE: state,
         OCI_LOG: log,
         OCI_REMOTES: JSON.stringify(remoteEnv),

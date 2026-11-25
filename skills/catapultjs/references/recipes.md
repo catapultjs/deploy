@@ -718,6 +718,8 @@ Flow: validate config on the server, build `localhost/<container_image>:<release
 | `container_build` | `{ file, context, target, args, platform }` | `{}` | Build options; no secrets in `args` |
 | `container_source` | `string` | none | Existing image pulled on the server instead of building |
 | `container_compression` | `'gzip' \| 'zstd' \| 'none'` | `'gzip'` | Transfer compression |
+| `container_transfer` | `'ssh' \| 'registry'` | `'ssh'` | `registry`: push once (build machine must be logged in), servers pull by digest and retag; digest in `release.json`, rollback re-pulls a missing image |
+| `container_registry` | `{ repository, auth?: { username_env, password_env } }` | none | Required with `registry`. `auth` names local env vars; password sent via stdin to a temporary auth file removed after the pull; no auth = servers already logged in or public registry. Registry images are never deleted |
 | `container_keep_local` | `number` | `2` | Local release images kept |
 | `compose_files` | `string[]` | first of `compose.yaml`, `compose.yml`, `docker-compose.yaml`, `docker-compose.yml` | Relative paths |
 | `compose_upload` | `string[]` | `[]` | Extra files/directories referenced by the stack |

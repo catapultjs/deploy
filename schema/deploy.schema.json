@@ -183,6 +183,26 @@
           "required": ["service", "command"],
           "additionalProperties": false
         },
+        "container_registry": {
+          "type": "object",
+          "properties": {
+            "repository": {
+              "type": "string",
+              "pattern": "^[a-z0-9]+(?:[.-][a-z0-9]+)*(?::\\d+)?(?:/[a-z0-9]+(?:(?:[._]|__|-+)[a-z0-9]+)*)+$"
+            },
+            "auth": {
+              "type": "object",
+              "properties": {
+                "username_env": { "type": "string", "pattern": "^[A-Za-z_][A-Za-z0-9_]*$" },
+                "password_env": { "type": "string", "pattern": "^[A-Za-z_][A-Za-z0-9_]*$" }
+              },
+              "required": ["username_env", "password_env"],
+              "additionalProperties": false
+            }
+          },
+          "required": ["repository"],
+          "additionalProperties": false
+        },
         "container_project": { "type": "string", "pattern": "^[a-z0-9][a-z0-9_-]*$" },
         "container_services": {
           "type": "object",
@@ -244,7 +264,7 @@
         },
         "container_source": { "type": "string", "minLength": 1 },
         "container_stop_timeout": { "type": "number", "exclusiveMinimum": 0 },
-        "container_transfer": { "enum": ["ssh"] },
+        "container_transfer": { "enum": ["ssh", "registry"] },
         "container_wait_timeout": { "type": "number", "exclusiveMinimum": 0 },
         "directus_path": { "type": "string" },
         "directus_snapshot_path": { "type": "string", "minLength": 1 },

@@ -62,6 +62,7 @@ const composeName: AnySchemaObject = { type: 'string', pattern: '^[a-zA-Z0-9][a-
 const composeNames: AnySchemaObject = { type: 'array', uniqueItems: true, items: composeName }
 const containerEngine: AnySchemaObject = { enum: ['docker', 'podman'] }
 const commandArgs: AnySchemaObject = { type: 'array', minItems: 1, items: { type: 'string' } }
+const envName: AnySchemaObject = { type: 'string', pattern: '^[A-Za-z_][A-Za-z0-9_]*$' }
 const duration: AnySchemaObject = { type: 'string', pattern: '^(\\d+(ns|us|ms|s|m|h))+$' }
 const containerService: AnySchemaObject = {
   type: 'object',
@@ -270,6 +271,20 @@ export const deployJsonSchema: AnySchemaObject = {
           required: ['service', 'command'],
           additionalProperties: false,
         },
+        container_registry: exactObject(
+          {
+            repository: {
+              type: 'string',
+              pattern:
+                '^[a-z0-9]+(?:[.-][a-z0-9]+)*(?::\\d+)?(?:/[a-z0-9]+(?:(?:[._]|__|-+)[a-z0-9]+)*)+$',
+            },
+            auth: exactObject({ username_env: envName, password_env: envName }, [
+              'username_env',
+              'password_env',
+            ]),
+          },
+          ['repository']
+        ),
         container_project: { type: 'string', pattern: '^[a-z0-9][a-z0-9_-]*$' },
         container_services: {
           type: 'object',
@@ -279,7 +294,7 @@ export const deployJsonSchema: AnySchemaObject = {
         },
         container_source: nonEmptyString,
         container_stop_timeout: { type: 'number', exclusiveMinimum: 0 },
-        container_transfer: { enum: ['ssh'] },
+        container_transfer: { enum: ['ssh', 'registry'] },
         container_wait_timeout: { type: 'number', exclusiveMinimum: 0 },
         directus_path: stringValue,
         directus_snapshot_path: nonEmptyString,

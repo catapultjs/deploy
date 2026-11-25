@@ -160,7 +160,7 @@ Manual tasks run against the current release: `npx cata task quadlet:logs`. `cat
 
 `quadlet_path` holds `.container`, `.network`, `.volume` and `.pod` files, without subdirectories. Hidden files are ignored.
 
-The image options (`container_build_engine`, `container_project`, `container_image`, `container_build`, `container_source`, `container_compression`, `container_keep_local`) are the same as for [`compose`](./compose#configuration). `container_engine` is set to `podman`.
+The image options (`container_build_engine`, `container_project`, `container_image`, `container_build`, `container_source`, `container_compression`, `container_keep_local`) are the same as for [`compose`](./compose#configuration), as is the [transfer through a registry](./compose#transfer-through-a-registry) (`container_transfer`, `container_registry`). `container_engine` is set to `podman`.
 
 All keys are available in [JSON configurations](/guide/json-configuration) with `"recipes": ["quadlet"]`.
 

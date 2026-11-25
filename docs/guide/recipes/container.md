@@ -160,7 +160,7 @@ Labels apply to service containers only, not to the one-off migration container,
 | `container_stop_timeout` | `number`                                 | `10`    | Seconds given to a container to stop gracefully |
 | `container_logs_lines`   | `number`                                 | `100`   | Lines shown per container by `container:logs`   |
 
-The image options (`container_engine`, `container_build_engine`, `container_project`, `container_image`, `container_build`, `container_source`, `container_compression`, `container_keep_local`) are the same as for [`compose`](./compose#configuration).
+The image options (`container_engine`, `container_build_engine`, `container_project`, `container_image`, `container_build`, `container_source`, `container_compression`, `container_keep_local`) are the same as for [`compose`](./compose#configuration), as is the [transfer through a registry](./compose#transfer-through-a-registry) (`container_transfer`, `container_registry`).
 
 All keys are available in [JSON configurations](/guide/json-configuration) with `"recipes": ["container"]`.
 

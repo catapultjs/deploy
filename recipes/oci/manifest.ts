@@ -20,6 +20,8 @@ export interface ManifestImage {
   platform: string
   /** Image the release was tagged from, when `container_source` is used. */
   source?: string
+  /** Immutable registry reference (repository@digest) with `container_transfer: registry`. */
+  registryRef?: string
 }
 
 export interface Manifest {

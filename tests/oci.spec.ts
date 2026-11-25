@@ -326,9 +326,9 @@ test.group('oci — failures', () => {
   }).timeout(30_000)
 
   test('rejects unsupported transfer modes and a transfer without build', async ({ assert }) => {
-    await scenario({ store: { container_transfer: 'registry' }, tasks: ['oci:check'] }, (run) => {
+    await scenario({ store: { container_transfer: 'ftp' }, tasks: ['oci:check'] }, (run) => {
       assert.equal(run.exitCode, 1)
-      assert.include(run.stderr, 'container_transfer "registry" is not supported yet')
+      assert.include(run.stderr, 'container_transfer must be one of: ssh, registry')
     })
     await scenario({ tasks: ['deploy:release', 'oci:transfer'] }, (run) => {
       assert.equal(run.exitCode, 1)

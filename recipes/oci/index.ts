@@ -21,6 +21,8 @@ import {
   imageName,
   keepLocal,
   project,
+  registryConfig,
+  registryCredentials,
   releaseRef,
   sourceImage,
   transferMode,
@@ -36,6 +38,7 @@ import {
   writeManifest,
 } from './manifest.ts'
 import { cleanupLocal, cleanupRemote, registerImage } from './cleanup.ts'
+import { pullImage, pushOnce } from './registry.ts'
 
 declare module '../../src/types.ts' {
   interface TaskRegistry {
@@ -75,12 +78,17 @@ onBeforeRollback(async (ctx, host, logger) => {
     )
   }
   const facts = await hostFacts(host, logger)
+  const pull = { host, facts, logger, verbose: ctx.config.verbose ?? Verbose.SILENT }
   for (const image of manifest.images) {
-    if (!(await remoteImageId({ host, facts, logger, verbose: 0 }, image.ref))) {
+    if (await remoteImageId(pull, image.ref)) continue
+    if (!image.registryRef) {
       throw new Error(
         `[${host.name}] image ${image.ref} of release ${ctx.release} is missing on the server`
       )
     }
+    // Pulled again by digest: the exact image of the release, before current switches.
+    const credentials = transferMode() === 'registry' ? registryCredentials() : null
+    await pullImage(pull, image.registryRef, image.ref, credentials)
   }
 })
 
@@ -88,7 +96,10 @@ desc('Checks the container engine and configuration on the server')
 task('oci:check', async ({ host, config, logger }: TaskContext) => {
   project()
   imageName()
-  transferMode()
+  if (transferMode() === 'registry' && !sourceImage()) {
+    registryConfig()
+    registryCredentials()
+  }
   compression()
   buildOptions()
   sourceImage()
@@ -142,6 +153,13 @@ task('oci:transfer', async ({ host, config, logger, release, paths }: TaskContex
     const built = await pending
     let remoteId = await remoteImageId(ctx, ref)
 
+    // With a registry, the image is pushed once for all hosts, even when a host only
+    // retags it: the manifest records its digest so a rollback can pull it again.
+    const registry = transferMode() === 'registry' ? registryConfig() : null
+    const pushed = registry
+      ? await pushOnce(built.engine, ref, registry.repository, release, logger, verbose, host.name)
+      : null
+
     if (remoteId) {
       if (verbose >= Verbose.NORMAL) logger.step(host.name, `${ref} already on the server`)
     } else {
@@ -158,6 +176,8 @@ task('oci:transfer', async ({ host, config, logger, release, paths }: TaskContex
           logger.step(host.name, `image unchanged since ${previous.ref}, tagging without transfer`)
         }
         await remoteTag(ctx, previous.ref, ref)
+      } else if (pushed) {
+        await pullImage(ctx, pushed.registryRef, ref, registryCredentials())
       } else {
         await streamImage(ctx, built.engine, ref, compression())
       }
@@ -178,6 +198,7 @@ task('oci:transfer', async ({ host, config, logger, release, paths }: TaskContex
       contentKey: built.contentKey,
       remoteId,
       platform: built.platform,
+      ...(pushed ? { registryRef: pushed.registryRef } : {}),
     }
     revision = built.revision
     dirty = built.dirty

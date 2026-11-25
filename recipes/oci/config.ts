@@ -120,12 +120,86 @@ export function buildOptions(): BuildOptions {
   return value
 }
 
-export function transferMode(): 'ssh' {
+export type TransferMode = 'ssh' | 'registry'
+
+export function transferMode(): TransferMode {
   const value = get<string>('container_transfer', 'ssh')
-  if (value !== 'ssh') {
-    throw new Error(`container_transfer "${value}" is not supported yet (supported: ssh)`)
+  if (value !== 'ssh' && value !== 'registry') {
+    throw new Error(`container_transfer must be one of: ssh, registry (got "${value}")`)
   }
   return value
+}
+
+export interface RegistryAuth {
+  /** Name of the local environment variable holding the user name. */
+  username_env: string
+  /** Name of the local environment variable holding the password or token. */
+  password_env: string
+}
+
+export interface RegistryConfig {
+  /** Repository the release images are pushed to, without tag, e.g. ghcr.io/acme/app. */
+  repository: string
+  auth?: RegistryAuth
+}
+
+const REPOSITORY_PATTERN =
+  /^[a-z0-9]+(?:[.-][a-z0-9]+)*(?::\d+)?(?:\/[a-z0-9]+(?:(?:[._]|__|-+)[a-z0-9]+)*)+$/
+const ENV_NAME_PATTERN = /^[A-Za-z_][A-Za-z0-9_]*$/
+
+/** Registry settings, required when `container_transfer` is `registry`. */
+export function registryConfig(): RegistryConfig {
+  const value = get<RegistryConfig | undefined>('container_registry')
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    throw new Error(
+      'container_registry must be { repository, auth? } with container_transfer "registry"'
+    )
+  }
+  if (typeof value.repository !== 'string' || !REPOSITORY_PATTERN.test(value.repository)) {
+    throw new Error(
+      'container_registry.repository must be a repository without tag or digest, e.g. ghcr.io/acme/app'
+    )
+  }
+  if (value.auth !== undefined) {
+    const auth = value.auth as unknown as Record<string, unknown>
+    if (!auth || typeof auth !== 'object') {
+      throw new Error('container_registry.auth must be { username_env, password_env }')
+    }
+    for (const key of ['username_env', 'password_env']) {
+      if (typeof auth[key] !== 'string' || !ENV_NAME_PATTERN.test(auth[key] as string)) {
+        throw new Error(
+          `container_registry.auth.${key} must be the name of an environment variable`
+        )
+      }
+    }
+  }
+  return value
+}
+
+/** Registry host of a repository: its first component when it names a host. */
+export function registryHost(repository: string): string {
+  const first = repository.split('/')[0]
+  return first.includes('.') || first.includes(':') || first === 'localhost' ? first : 'docker.io'
+}
+
+export interface RegistryCredentials {
+  username: string
+  password: string
+}
+
+/** Credentials read from the local environment, or null when no auth is configured. */
+export function registryCredentials(): RegistryCredentials | null {
+  const { auth } = registryConfig()
+  if (!auth) return null
+  const username = process.env[auth.username_env]
+  const password = process.env[auth.password_env]
+  for (const [name, value] of [
+    [auth.username_env, username],
+    [auth.password_env, password],
+  ]) {
+    if (!value) throw new Error(`${name} is not set: it holds the container registry credentials`)
+  }
+  return { username: username!, password: password! }
 }
 
 export function compression(): Compression {

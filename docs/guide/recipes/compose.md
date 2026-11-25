@@ -119,16 +119,18 @@ Manual tasks run against the current release: `npx cata task compose:logs`. For 
 
 **Image**
 
-| Key                      | Type                         | Default                  | Description                                                         |
-| ------------------------ | ---------------------------- | ------------------------ | ------------------------------------------------------------------- |
-| `container_engine`       | `'docker' \| 'podman'`       | detected                 | Engine on the servers. Podman is preferred when both are installed  |
-| `container_build_engine` | `'docker' \| 'podman'`       | server engine if present | Engine used for the local build                                     |
-| `container_project`      | `string`                     | `package.json` name      | Compose project name, stable across releases (networks, volumes)    |
-| `container_image`        | `string`                     | `container_project`      | Repository name of the release image, without registry or tag       |
-| `container_build`        | `object`                     | `{}`                     | `file`, `context`, `target`, `args`, `platform`                     |
-| `container_source`       | `string`                     | none                     | Existing image to deploy instead of building (pulled on the server) |
-| `container_compression`  | `'gzip' \| 'zstd' \| 'none'` | `'gzip'`                 | Transfer compression. `zstd` requires `zstd` on the server          |
-| `container_keep_local`   | `number`                     | `2`                      | Release images kept on the build machine                            |
+| Key                      | Type                         | Default                  | Description                                                                     |
+| ------------------------ | ---------------------------- | ------------------------ | ------------------------------------------------------------------------------- |
+| `container_engine`       | `'docker' \| 'podman'`       | detected                 | Engine on the servers. Podman is preferred when both are installed              |
+| `container_build_engine` | `'docker' \| 'podman'`       | server engine if present | Engine used for the local build                                                 |
+| `container_project`      | `string`                     | `package.json` name      | Compose project name, stable across releases (networks, volumes)                |
+| `container_image`        | `string`                     | `container_project`      | Repository name of the release image, without registry or tag                   |
+| `container_build`        | `object`                     | `{}`                     | `file`, `context`, `target`, `args`, `platform`                                 |
+| `container_source`       | `string`                     | none                     | Existing image to deploy instead of building (pulled on the server)             |
+| `container_compression`  | `'gzip' \| 'zstd' \| 'none'` | `'gzip'`                 | Transfer compression. `zstd` requires `zstd` on the server                      |
+| `container_transfer`     | `'ssh' \| 'registry'`        | `'ssh'`                  | How the image reaches the servers, see [registry](#transfer-through-a-registry) |
+| `container_registry`     | `{ repository, auth? }`      | none                     | Registry settings when `container_transfer` is `'registry'`                     |
+| `container_keep_local`   | `number`                     | `2`                      | Release images kept on the build machine                                        |
 
 `container_build.file` defaults to `Containerfile`, then `Dockerfile`, in `context` (default `.`). `container_build.platform` defaults to the architecture of the servers; a deployment targets one architecture.
 
@@ -149,6 +151,28 @@ Build arguments end up in the image metadata: never pass secrets with `container
 | `compose_logs_lines`     | `number`                                 | `100`    | Lines shown by `compose:logs`                                                                                                               |
 
 All keys are available in [JSON configurations](/guide/json-configuration) with `"recipes": ["compose"]`.
+
+## Transfer through a registry
+
+By default the image is streamed to each server over SSH. With several servers, or when you already push images from CI, push it once to a registry instead: each server pulls it by digest.
+
+```typescript
+set('container_transfer', 'registry')
+set('container_registry', {
+  repository: 'ghcr.io/acme/myapp',
+  auth: { username_env: 'REGISTRY_USER', password_env: 'REGISTRY_TOKEN' },
+})
+```
+
+1. The image built locally is pushed once as `<repository>:<release>`, whatever the number of servers. Log in to the registry on the build machine first, e.g. `docker login ghcr.io`.
+2. Each server pulls it by digest (`<repository>@sha256:...`) and tags it as the release image, so Compose files, containers and Quadlet units are unchanged. When the image did not change since the current release, the server only adds the new tag.
+3. The digest is recorded in `release.json`: a rollback pulls the image again when it is no longer on the server.
+
+`auth` names the local environment variables holding the credentials of the servers. The password goes through the SSH connection input, never on a command line, and the servers log in with a temporary auth file removed after the pull: no credentials stay on them. Without `auth`, the servers must already be logged in, or the registry be public. For GitHub Container Registry, give the servers a token limited to `read:packages`.
+
+Images are never removed from the registry: rely on its retention policy. Servers and the build machine are cleaned up as with the SSH transfer.
+
+The same options apply to [`container`](./container) and [`quadlet`](./quadlet).
 
 ## Server requirements
 
