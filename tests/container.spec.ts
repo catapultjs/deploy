@@ -189,6 +189,62 @@ test.group('container — deploy', () => {
     )
   }).timeout(60_000)
 
+  test('applies healthcheck, resources, extra networks and engine options', async ({ assert }) => {
+    const health = { cmd: 'wget -qO- http://127.0.0.1:3333/health', interval: '10s', retries: 3 }
+    await scenario(
+      {
+        ...CONTAINER,
+        remotes: [{ name: 'web', networks: ['proxy'] }],
+        store: {
+          container_services: {
+            web: {
+              command: ['node', 'bin/server.js'],
+              healthcheck: health,
+              memory: '512m',
+              cpus: 1.5,
+              networks: ['proxy'],
+              options: ['--cap-add=NET_ADMIN'],
+            },
+          },
+          container_migrate: { service: 'web', command: ['node', 'ace', 'migration:run'] },
+        },
+      },
+      async (run) => {
+        assert.equal(run.exitCode, 0, run.stderr)
+        const [migration, web] = runs(run).map((call) => call.args)
+        const image = web.indexOf(`localhost/app:${R1}`)
+        assert.deepEqual(web.slice(image - 1, image + 1), [
+          '--cap-add=NET_ADMIN',
+          `localhost/app:${R1}`,
+        ])
+        for (const [flag, value] of [
+          ['--health-cmd', health.cmd],
+          ['--health-interval', '10s'],
+          ['--health-retries', '3'],
+          ['--memory', '512m'],
+          ['--cpus', '1.5'],
+        ]) {
+          assert.equal(web[web.indexOf(flag) + 1], value, flag)
+        }
+        const networks = web.flatMap((arg, index) => (arg === '--network' ? [web[index + 1]] : []))
+        assert.deepEqual(networks, ['app', 'proxy'])
+
+        // The one-off migration joins the same networks and limits, without healthcheck.
+        assert.includeMembers(migration, ['--rm', 'proxy', '--memory', '--cap-add=NET_ADMIN'])
+        assert.notInclude(migration, '--health-cmd')
+
+        const manifest = await run.manifest()
+        assert.deepInclude(manifest?.container.services.web, {
+          healthcheck: health,
+          memory: '512m',
+          cpus: '1.5',
+          networks: ['proxy'],
+          options: ['--cap-add=NET_ADMIN'],
+        })
+      }
+    )
+  }).timeout(60_000)
+
   test('replaces the running container and removes services no longer configured', async ({
     assert,
   }) => {
@@ -290,6 +346,29 @@ test.group('container — failures', () => {
         'container_migrate.service must be one of: web',
       ],
       [{ container_services: { web: { env_file: ['.env'] } } }, 'env_file not found'],
+      [
+        { container_services: { web: { healthcheck: { interval: '10s' } } } },
+        'healthcheck.cmd must be a single-line string',
+      ],
+      [
+        { container_services: { web: { healthcheck: { cmd: 'true', interval: '10' } } } },
+        'healthcheck.interval must be a duration',
+      ],
+      [
+        { container_services: { web: { healthcheck: { cmd: 'true', every: '1s' } } } },
+        'healthcheck has unknown options: every',
+      ],
+      [{ container_services: { web: { memory: '1 GB' } } }, 'memory must be a size'],
+      [{ container_services: { web: { cpus: 0 } } }, 'cpus must be a positive number'],
+      [
+        { container_services: { web: { networks: ['app'] } } },
+        'networks must not list the project network',
+      ],
+      [{ container_services: { web: { networks: ['proxy'] } } }, 'network not found: proxy'],
+      [
+        { container_services: { web: { options: ['--network=host'] } } },
+        'options must not set --network',
+      ],
     ]
     for (const [store, message] of cases) {
       await scenario({ ...CONTAINER, store }, (run) => {
@@ -312,6 +391,22 @@ test.group('container — checks and rollback', () => {
       (run) => {
         assert.equal(run.exitCode, 0, run.stderr)
         assert.include(run.stdout, 'podman-restart.service is not enabled')
+      }
+    )
+  }).timeout(60_000)
+
+  test('requires Docker 25 for extra networks', async ({ assert }) => {
+    await scenario(
+      {
+        recipe: 'container',
+        tasks: ['oci:check', 'container:check'],
+        remotes: [{ name: 'web', engines: ['docker'] }],
+        store: { container_engine: 'docker', container_services: { web: { networks: ['proxy'] } } },
+        env: { OCI_VERSION: 'Docker version 24.0.7, build afdd53b' },
+      },
+      (run) => {
+        assert.equal(run.exitCode, 1)
+        assert.include(run.stderr, 'extra networks require Docker 25 or later')
       }
     )
   }).timeout(60_000)

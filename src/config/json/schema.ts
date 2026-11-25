@@ -62,12 +62,29 @@ const composeName: AnySchemaObject = { type: 'string', pattern: '^[a-zA-Z0-9][a-
 const composeNames: AnySchemaObject = { type: 'array', uniqueItems: true, items: composeName }
 const containerEngine: AnySchemaObject = { enum: ['docker', 'podman'] }
 const commandArgs: AnySchemaObject = { type: 'array', minItems: 1, items: { type: 'string' } }
+const duration: AnySchemaObject = { type: 'string', pattern: '^(\\d+(ns|us|ms|s|m|h))+$' }
 const containerService: AnySchemaObject = {
   type: 'object',
   properties: {
     command: commandArgs,
     init: { type: 'boolean' },
-    healthcheck: { type: 'boolean' },
+    healthcheck: {
+      oneOf: [
+        { type: 'boolean' },
+        {
+          type: 'object',
+          properties: {
+            cmd: nonEmptyString,
+            interval: duration,
+            timeout: duration,
+            retries: { type: 'integer', minimum: 1 },
+            start_period: duration,
+          },
+          required: ['cmd'],
+          additionalProperties: false,
+        },
+      ],
+    },
     entrypoint: nonEmptyString,
     user: nonEmptyString,
     env: {
@@ -80,6 +97,15 @@ const containerService: AnySchemaObject = {
     volumes: { type: 'array', items: nonEmptyString },
     restart: { type: 'string', pattern: '^(no|always|unless-stopped|on-failure(:\\d+)?)$' },
     labels: { type: 'object', additionalProperties: { type: 'string' } },
+    memory: { type: 'string', pattern: '^\\d+(\\.\\d+)?[bkmgBKMG]?$' },
+    cpus: {
+      oneOf: [
+        { type: 'number', exclusiveMinimum: 0 },
+        { type: 'string', pattern: '^\\d+(\\.\\d+)?$' },
+      ],
+    },
+    networks: { type: 'array', uniqueItems: true, items: composeName },
+    options: { type: 'array', items: nonEmptyString },
   },
   additionalProperties: false,
 }

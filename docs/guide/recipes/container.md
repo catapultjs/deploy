@@ -107,7 +107,7 @@ Manual tasks run against the current release: `npx cata task container:logs`. Fo
 | ------------- | ------------------------ | ---------- | ------------------------------------------------------------------ |
 | `command`     | `string[]`               | image CMD  | Command and arguments, passed without shell                        |
 | `init`        | `boolean`                | `false`    | Runs an init process as PID 1 (signal forwarding, zombie reaping)  |
-| `healthcheck` | `boolean`                | `true`     | `false` disables the image `HEALTHCHECK` for this service          |
+| `healthcheck` | `boolean \| object`      | image      | `false` disables the image `HEALTHCHECK`, an object replaces it    |
 | `entrypoint`  | `string`                 | image      | Executable replacing the image entrypoint                          |
 | `user`        | `string`                 | image      | `user` or `uid:gid`                                                |
 | `env`         | `Record<string, string>` | `{}`       | Non-secret variables, written to an env file of the release        |
@@ -116,12 +116,38 @@ Manual tasks run against the current release: `npx cata task container:logs`. Fo
 | `volumes`     | `string[]`               | `[]`       | `./dir:/path`, `/abs:/path` or `named:/path`, with `:ro` if needed |
 | `restart`     | `string`                 | `'always'` | `no`, `always`, `unless-stopped` or `on-failure[:N]`               |
 | `labels`      | `Record<string, string>` | `{}`       | Extra labels (the `com.catapultjs.` prefix is reserved)            |
+| `memory`      | `string`                 | none       | Memory limit, e.g. `512m` or `2g`                                  |
+| `cpus`        | `number \| string`       | none       | CPU limit, e.g. `1.5`                                              |
+| `networks`    | `string[]`               | `[]`       | Existing networks joined in addition to the project network        |
+| `options`     | `string[]`               | `[]`       | Raw engine options, e.g. `--cap-drop=ALL`                          |
 
 Keep secrets in `env_file` (typically a shared `.env`), never in `env`: values are passed as env files, never on the command line. Relative volume sources resolve inside the release directory: point them to `shared_dirs` entries to keep data across releases, or use named volumes.
 
 Enable `init` for processes that do not handle `SIGTERM`, such as Node.js running as PID 1: without it, each stop waits `container_stop_timeout` seconds before the container is killed.
 
 Set `healthcheck: false` on services the image `HEALTHCHECK` does not apply to, such as a worker sharing the image of an HTTP server: otherwise the worker never becomes healthy and the deployment fails.
+
+An object defines the healthcheck in the configuration instead of the image. It also works where Podman drops the image `HEALTHCHECK` (see [Limitations](#limitations)). `cmd` runs with `/bin/sh -c` inside the container; durations use the `30s` or `1m30s` format:
+
+```typescript
+web: {
+  command: ['node', 'bin/server.js'],
+  healthcheck: {
+    cmd: 'wget -qO- http://127.0.0.1:3333/health || exit 1',
+    interval: '10s',
+    timeout: '3s',
+    retries: 3,
+    start_period: '5s',
+  },
+  memory: '512m',
+  cpus: 1.5,
+  networks: ['proxy'],
+}
+```
+
+`networks` lists networks created outside Catapult, such as the network of a reverse proxy: Catapult checks that they exist and never creates them. Joining several networks requires Docker 25 or later. `options` passes extra flags to `run` for what the recipe does not cover; the options it manages (`--name`, `--network`, `--restart`, `--rm`, `--detach`) are refused.
+
+Extra networks, resource limits and `options` also apply to the one-off migration container, so it reaches the same services.
 
 Labels apply to service containers only, not to the one-off migration container, so reverse-proxy routing labels never target it.
 
@@ -156,5 +182,4 @@ A rollback does not restore data or reverse migrations. Write migrations that th
 
 - Containers are replaced in place: a short interruption happens on fixed ports.
 - One image per project. Use `compose` for stacks combining several images.
-- Healthchecks come from the image (`HEALTHCHECK`). Podman ignores it for OCI images, the format produced by Docker with the containerd image store: Catapult warns when it is lost. Build with Podman locally to keep it.
-- CPU and memory limits, extra networks and engine-specific options are not supported yet.
+- Podman ignores the image `HEALTHCHECK` for OCI images, the format produced by Docker with the containerd image store: Catapult warns when it is lost. Declare `healthcheck` in the service, or build with Podman locally.

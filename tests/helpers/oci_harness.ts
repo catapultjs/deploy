@@ -127,7 +127,7 @@ if (cmd === 'compose') {
 }
 
 switch (cmd) {
-  case '--version': console.log(name + ' version 9.9.9'); break
+  case '--version': console.log(process.env.OCI_VERSION || name + ' version 9.9.9'); break
   case 'info': console.log(process.env.OCI_STATE); break
   case 'build': {
     const ref = rest[rest.indexOf('-t') + 1]
@@ -177,7 +177,7 @@ switch (cmd) {
   }
   case 'run': {
     const opts = { labels: {}, envFiles: [] }
-    const valued = ['--name', '--network', '--restart', '--label', '--user', '--entrypoint', '--env-file', '-p', '-v']
+    const valued = ['--name', '--network', '--restart', '--label', '--user', '--entrypoint', '--env-file', '-p', '-v', '--memory', '--cpus', '--health-cmd', '--health-interval', '--health-timeout', '--health-retries', '--health-start-period']
     let i = 0
     while (i < rest.length && rest[i].startsWith('-')) {
       if (!valued.includes(rest[i])) { opts[rest[i]] = true; i++; continue }
@@ -335,6 +335,8 @@ export interface Remote {
   engines?: string[]
   arch?: string
   images?: Record<string, string>
+  /** Networks existing on the server. */
+  networks?: string[]
   /** Existing containers by name: Compose labels of the "app" project unless labels are given. */
   containers?: Record<
     string,
@@ -473,7 +475,7 @@ async function runOci(options: Scenario) {
           options.registry.map((ref) => `${ref}\n`).join('')
         )
       }
-      if (remote.images || remote.containers) {
+      if (remote.images || remote.containers || remote.networks) {
         const containers = Object.fromEntries(
           Object.entries(remote.containers ?? {}).map(([name, container]) => [
             name,
@@ -489,7 +491,11 @@ async function runOci(options: Scenario) {
         )
         await writeFile(
           join(state, `remote-${target}.json`),
-          JSON.stringify({ images: remote.images ?? {}, containers })
+          JSON.stringify({
+            images: remote.images ?? {},
+            containers,
+            networks: Object.fromEntries((remote.networks ?? []).map((name) => [name, true])),
+          })
         )
       }
     }

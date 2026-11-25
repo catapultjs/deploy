@@ -193,7 +193,23 @@
             "properties": {
               "command": { "type": "array", "minItems": 1, "items": { "type": "string" } },
               "init": { "type": "boolean" },
-              "healthcheck": { "type": "boolean" },
+              "healthcheck": {
+                "oneOf": [
+                  { "type": "boolean" },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "cmd": { "type": "string", "minLength": 1 },
+                      "interval": { "type": "string", "pattern": "^(\\d+(ns|us|ms|s|m|h))+$" },
+                      "timeout": { "type": "string", "pattern": "^(\\d+(ns|us|ms|s|m|h))+$" },
+                      "retries": { "type": "integer", "minimum": 1 },
+                      "start_period": { "type": "string", "pattern": "^(\\d+(ns|us|ms|s|m|h))+$" }
+                    },
+                    "required": ["cmd"],
+                    "additionalProperties": false
+                  }
+                ]
+              },
               "entrypoint": { "type": "string", "minLength": 1 },
               "user": { "type": "string", "minLength": 1 },
               "env": {
@@ -208,7 +224,20 @@
                 "type": "string",
                 "pattern": "^(no|always|unless-stopped|on-failure(:\\d+)?)$"
               },
-              "labels": { "type": "object", "additionalProperties": { "type": "string" } }
+              "labels": { "type": "object", "additionalProperties": { "type": "string" } },
+              "memory": { "type": "string", "pattern": "^\\d+(\\.\\d+)?[bkmgBKMG]?$" },
+              "cpus": {
+                "oneOf": [
+                  { "type": "number", "exclusiveMinimum": 0 },
+                  { "type": "string", "pattern": "^\\d+(\\.\\d+)?$" }
+                ]
+              },
+              "networks": {
+                "type": "array",
+                "uniqueItems": true,
+                "items": { "type": "string", "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_.-]*$" }
+              },
+              "options": { "type": "array", "items": { "type": "string", "minLength": 1 } }
             },
             "additionalProperties": false
           }

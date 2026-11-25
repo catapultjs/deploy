@@ -60,6 +60,10 @@ const NAME_PATTERN = /^[a-zA-Z0-9][a-zA-Z0-9_.-]*$/
 const ENV_KEY_PATTERN = /^[A-Za-z_][A-Za-z0-9_]*$/
 const RESTART_PATTERN = /^(no|always|unless-stopped|on-failure(:\d+)?)$/
 const LABEL_KEY_PATTERN = /^[a-zA-Z0-9][a-zA-Z0-9._/-]*$/
+const DURATION_PATTERN = /^(\d+(ns|us|ms|s|m|h))+$/
+const MEMORY_PATTERN = /^\d+(\.\d+)?[bkmg]?$/i
+/** Options managed by the recipe, refused in `options`. */
+const MANAGED_OPTIONS = ['--name', '--network', '--net', '--restart', '--rm', '-d', '--detach']
 const ENV_DIR = 'container'
 
 /** Options of a service in `container_services`. */
@@ -67,8 +71,11 @@ export interface ServiceConfig {
   command?: string[]
   /** Runs an init process as PID 1 that forwards signals and reaps zombies. */
   init?: boolean
-  /** `false` disables the image HEALTHCHECK, e.g. for a worker sharing the web image. */
-  healthcheck?: boolean
+  /**
+   * `false` disables the image HEALTHCHECK (e.g. a worker sharing the web image); an
+   * object replaces it, which also works where Podman drops the image healthcheck.
+   */
+  healthcheck?: boolean | HealthcheckConfig
   entrypoint?: string
   user?: string
   env?: Record<string, string>
@@ -77,6 +84,23 @@ export interface ServiceConfig {
   volumes?: string[]
   restart?: string
   labels?: Record<string, string>
+  /** Memory limit, e.g. `512m`. */
+  memory?: string
+  /** CPU limit, e.g. `1.5`. */
+  cpus?: number | string
+  /** Existing networks joined in addition to the project network. */
+  networks?: string[]
+  /** Raw engine options, e.g. `--cap-add=NET_ADMIN`. */
+  options?: string[]
+}
+
+/** Healthcheck run inside the container: `cmd` is a shell command. */
+export interface HealthcheckConfig {
+  cmd: string
+  interval?: string
+  timeout?: string
+  retries?: number
+  start_period?: string
 }
 
 /**
@@ -86,7 +110,7 @@ export interface ServiceConfig {
 interface ServiceSpec {
   command: string[] | null
   init?: boolean
-  healthcheck?: boolean
+  healthcheck?: boolean | HealthcheckConfig
   entrypoint: string | null
   user: string | null
   envFiles: string[]
@@ -95,6 +119,11 @@ interface ServiceSpec {
   volumes: string[]
   restart: string
   labels: Record<string, string>
+  // Optional: absent from manifests written before these options existed.
+  memory?: string | null
+  cpus?: string | null
+  networks?: string[]
+  options?: string[]
 }
 
 interface ContainerData {
@@ -175,6 +204,54 @@ function volume(key: string, releaseDir: string, value: string): string {
   return [resolved, ...rest].join(':')
 }
 
+function healthcheck(key: string, value: unknown): boolean | HealthcheckConfig {
+  if (value === undefined) return true
+  if (typeof value === 'boolean') return value
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    fail(`${key} must be a boolean or { cmd, interval?, timeout?, retries?, start_period? }`)
+  }
+  const config = value as Record<string, unknown>
+  const unknown = Object.keys(config).filter(
+    (name) => !['cmd', 'interval', 'timeout', 'retries', 'start_period'].includes(name)
+  )
+  if (unknown.length) fail(`${key} has unknown options: ${unknown.join(', ')}`)
+  const cmd = plain(`${key}.cmd`, config.cmd)
+  if (!cmd.trim()) fail(`${key}.cmd must not be empty`)
+  const result: HealthcheckConfig = { cmd }
+  for (const name of ['interval', 'timeout', 'start_period'] as const) {
+    if (config[name] === undefined) continue
+    const duration = plain(`${key}.${name}`, config[name])
+    if (!DURATION_PATTERN.test(duration))
+      fail(`${key}.${name} must be a duration such as 30s or 1m30s`)
+    result[name] = duration
+  }
+  if (config.retries !== undefined) {
+    if (!Number.isInteger(config.retries) || (config.retries as number) < 1) {
+      fail(`${key}.retries must be a positive integer`)
+    }
+    result.retries = config.retries as number
+  }
+  return result
+}
+
+function cpus(key: string, value: unknown): string | null {
+  if (value === undefined) return null
+  const text = typeof value === 'number' ? String(value) : plain(key, value)
+  if (!/^\d+(\.\d+)?$/.test(text) || Number(text) <= 0) fail(`${key} must be a positive number`)
+  return text
+}
+
+function engineOptions(key: string, value: unknown): string[] {
+  const options = strings(key, value, plain)
+  for (const item of options) {
+    const flag = item.split('=')[0]
+    if (MANAGED_OPTIONS.includes(flag)) {
+      fail(`${key} must not set ${flag}: it is managed by the recipe`)
+    }
+  }
+  return options
+}
+
 export function serviceConfigs(): Record<string, ServiceConfig> {
   const value = get<unknown>('container_services')
   if (!value || typeof value !== 'object' || Array.isArray(value) || !Object.keys(value).length) {
@@ -218,12 +295,18 @@ function specs(releaseDir: string): { data: ContainerData; envFiles: Record<stri
     if (config.init !== undefined && typeof config.init !== 'boolean') {
       fail(`${key}.init must be a boolean`)
     }
-    if (config.healthcheck !== undefined && typeof config.healthcheck !== 'boolean') {
-      fail(`${key}.healthcheck must be a boolean`)
+    const memory = config.memory === undefined ? null : plain(`${key}.memory`, config.memory)
+    if (memory !== null && !MEMORY_PATTERN.test(memory)) {
+      fail(`${key}.memory must be a size such as 512m or 2g`)
+    }
+    const networks = strings(`${key}.networks`, config.networks)
+    for (const network of networks) {
+      if (!NAME_PATTERN.test(network)) fail(`${key}.networks has an invalid name: ${network}`)
+      if (network === project()) fail(`${key}.networks must not list the project network`)
     }
     services[name] = {
       init: config.init ?? false,
-      healthcheck: config.healthcheck ?? true,
+      healthcheck: healthcheck(`${key}.healthcheck`, config.healthcheck),
       command:
         config.command === undefined ? null : strings(`${key}.command`, config.command, plain),
       entrypoint:
@@ -237,6 +320,10 @@ function specs(releaseDir: string): { data: ContainerData; envFiles: Record<stri
       ),
       restart,
       labels,
+      memory,
+      cpus: cpus(`${key}.cpus`, config.cpus),
+      networks: [...new Set(networks)],
+      options: engineOptions(`${key}.options`, config.options),
     }
     if (services[name].command?.length === 0) fail(`${key}.command must not be empty`)
   }
@@ -283,6 +370,9 @@ function runArgs(stack: Stack, service: string, oneOff?: string[]): string[] {
   const args = oneOff
     ? ['--rm', '--network', stack.data.network, '--label', 'com.catapultjs.oneoff=true']
     : ['-d', '--name', containerName(service), '--network', stack.data.network]
+  // Extra networks, resources and raw options also apply to the one-off container:
+  // a migration may need a database reachable on an external network.
+  for (const network of spec.networks ?? []) args.push('--network', network)
   if (!oneOff) args.push('--restart', spec.restart, '--label', `${LABEL_SERVICE}=${service}`)
   args.push(
     '--label',
@@ -298,12 +388,25 @@ function runArgs(stack: Stack, service: string, oneOff?: string[]): string[] {
   }
   if (spec.init) args.push('--init')
   if (spec.healthcheck === false) args.push('--no-healthcheck')
+  if (typeof spec.healthcheck === 'object' && !oneOff) args.push(...healthArgs(spec.healthcheck))
+  if (spec.memory) args.push('--memory', spec.memory)
+  if (spec.cpus) args.push('--cpus', spec.cpus)
   if (spec.user) args.push('--user', spec.user)
   if (spec.entrypoint) args.push('--entrypoint', spec.entrypoint)
   for (const file of spec.envFiles) args.push('--env-file', file)
   if (!oneOff) for (const port of spec.ports) args.push('-p', port)
   for (const mount of spec.volumes) args.push('-v', mount)
+  args.push(...(spec.options ?? []))
   args.push(releaseRef(stack.release), ...(oneOff ?? spec.command ?? []))
+  return args
+}
+
+function healthArgs(config: HealthcheckConfig): string[] {
+  const args = ['--health-cmd', config.cmd]
+  if (config.interval) args.push('--health-interval', config.interval)
+  if (config.timeout) args.push('--health-timeout', config.timeout)
+  if (config.retries) args.push('--health-retries', String(config.retries))
+  if (config.start_period) args.push('--health-start-period', config.start_period)
   return args
 }
 
@@ -314,6 +417,18 @@ function engine(stack: Stack, args: string[]): string {
 function ensureNetwork(stack: Stack): string {
   const { network } = stack.data
   return `${engine(stack, ['network', 'inspect', network])} >/dev/null 2>&1 || ${engine(stack, ['network', 'create', '--label', `${LABEL_PROJECT}=${project()}`, network])} >/dev/null`
+}
+
+function extraNetworks(data: ContainerData): string[] {
+  return [...new Set(Object.values(data.services).flatMap((spec) => spec.networks ?? []))]
+}
+
+/** Shell lines failing when an extra network does not exist: Catapult never creates them. */
+function networkChecks(bin: string, networks: string[]): string[] {
+  return networks.map(
+    (network) =>
+      `${q(bin)} network inspect ${q(network)} >/dev/null 2>&1 || { echo ${q(`network not found: ${network}`)} >&2; exit 1; }`
+  )
 }
 
 function stopAndRemove(stack: Stack, name: string): string[] {
@@ -425,11 +540,23 @@ onBeforeRollback(async (ctx, host, logger) => {
   const paths = getPaths(host.deployPath, ctx.release)
   const target = await loadStack(host, logger, ctx.release, paths.release)
   const files = Object.values(target.data.services).flatMap((spec) => spec.envFiles)
-  if (!files.length) return
-  try {
-    await ssh(host, `set -e\n${files.map((file) => `[ -f ${q(file)} ]`).join('\n')}`)
-  } catch {
-    throw new Error(`[${host.name}] release ${ctx.release} is missing env files`)
+  if (files.length) {
+    try {
+      await ssh(host, `set -e\n${files.map((file) => `[ -f ${q(file)} ]`).join('\n')}`)
+    } catch {
+      throw new Error(`[${host.name}] release ${ctx.release} is missing env files`)
+    }
+  }
+  const networks = extraNetworks(target.data)
+  if (networks.length) {
+    await ssh(host, ['set -e', ...networkChecks(target.facts.bin, networks)].join('\n')).catch(
+      (error: unknown) => {
+        throw new Error(
+          `[${host.name}] release ${ctx.release} cannot be restored: ${failureOutput(error)}`,
+          { cause: error }
+        )
+      }
+    )
   }
 })
 
@@ -445,14 +572,28 @@ onRollback(async (ctx, host, logger) => {
 
 desc('Checks the container configuration and the restart service')
 task('container:check', async ({ host, logger }: TaskContext) => {
-  serviceConfigs()
+  const configs = serviceConfigs()
   migration()
-  await checkPodmanRestart(host, await hostFacts(host, logger), logger)
+  const facts = await hostFacts(host, logger)
+  // `docker run` accepts several --network flags since Docker 25.
+  const major = Number(/Docker version (\d+)\./.exec(facts.version)?.[1] ?? 0)
+  if (facts.engine === 'docker' && major && major < 25) {
+    const withNetworks = Object.entries(configs)
+      .filter(([, config]) => Array.isArray(config?.networks) && config.networks.length)
+      .map(([name]) => name)
+    if (withNetworks.length) {
+      fail(
+        `[${host.name}] extra networks require Docker 25 or later (found ${facts.version}): ${withNetworks.join(', ')}`
+      )
+    }
+  }
+  await checkPodmanRestart(host, facts, logger)
 })
 
 desc('Writes the env files of the release and records how its containers start')
-task('container:prepare', async ({ host, release, paths }: TaskContext) => {
+task('container:prepare', async ({ host, logger, release, paths }: TaskContext) => {
   const { data, envFiles } = specs(paths.release)
+  const facts = await hostFacts(host, logger)
   const job = migration()
   if (job && !data.services[job.service]) {
     fail(`container_migrate.service must be one of: ${Object.keys(data.services).join(', ')}`)
@@ -468,6 +609,7 @@ task('container:prepare', async ({ host, release, paths }: TaskContext) => {
   for (const file of new Set(userFiles)) {
     script.push(`[ -f ${q(file)} ] || { echo ${q(`env_file not found: ${file}`)} >&2; exit 1; }`)
   }
+  script.push(...networkChecks(facts.bin, extraNetworks(data)))
   await ssh(host, script.join('\n'))
 
   stacks.set(`${host.name}|${release}`, data)
