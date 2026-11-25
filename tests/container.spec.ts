@@ -89,6 +89,7 @@ test.group('container — deploy', () => {
               command: ['node', 'ace', 'queue:work'],
               restart: 'unless-stopped',
               init: true,
+              healthcheck: false,
             },
           },
           container_migrate: { service: 'web', command: ['node', 'ace', 'migration:run'] },
@@ -168,8 +169,10 @@ test.group('container — deploy', () => {
           '--restart',
           'unless-stopped',
           '--init',
+          '--no-healthcheck',
         ])
         assert.notInclude(web, '--init')
+        assert.notInclude(web, '--no-healthcheck')
         assert.lengthOf(
           calls(run, 'remote-deploy@web', 'network').filter((c) => c.args[1] === 'create'),
           1
@@ -235,7 +238,11 @@ test.group('container — failures', () => {
       },
       async (run) => {
         assert.equal(run.exitCode, 1)
-        assert.include(run.stderr, 'run-rm failed')
+        // stdout then stderr, without the Compose-like progress line in between.
+        assert.include(
+          run.stderr,
+          'migration failed (exit code 1): error: column already exists\nrun-rm failed'
+        )
         assert.lengthOf(runs(run), 1)
         assert.isNull(await current(run.env))
       }

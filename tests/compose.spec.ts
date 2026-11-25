@@ -215,8 +215,11 @@ test.group('compose — failures', () => {
       },
       async (run) => {
         assert.equal(run.exitCode, 1)
-        assert.include(run.stderr, 'compose run failed: compose-run failed')
-        assert.notInclude(run.stderr, '>>>>')
+        // stdout then stderr, without the progress line and the podman compose banner.
+        assert.include(
+          run.stderr,
+          'compose run failed (exit code 1): error: column already exists\ncompose-run failed'
+        )
         assert.lengthOf(composeCalls(run, 'web', 'up'), 0)
         assert.isNull(await current(run.env))
       }
@@ -248,6 +251,27 @@ test.group('compose — failures', () => {
       (run) => {
         assert.equal(run.exitCode, 1)
         assert.include(run.stderr, 'containers restarted while starting (crash loop): app-web-1')
+      }
+    )
+  }).timeout(60_000)
+
+  test('detects a crash loop alternating restarting and running', async ({ assert }) => {
+    const started = Date.now()
+    await scenario(
+      {
+        ...COMPOSE,
+        compose: { services: { web: { build: {} } } },
+        statuses: {
+          web: Array.from({ length: 30 }, (_, i) =>
+            i % 2 ? 'running|Up Less than a second' : 'restarting|Restarting (1) 1 second ago'
+          ).join(';'),
+        },
+        env: { OCI_RESTARTING: 'web' },
+      },
+      (run) => {
+        assert.equal(run.exitCode, 1)
+        assert.include(run.stderr, 'containers restarted while starting (crash loop): app-web-1')
+        assert.isBelow(Date.now() - started, 30_000)
       }
     )
   }).timeout(60_000)

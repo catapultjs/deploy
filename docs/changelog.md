@@ -9,7 +9,7 @@ description: Catapult changelog — release history and notable changes.
 - Added `onBeforeRollback()` and `onRollback()` hooks so recipes can refuse an unusable rollback target before `current` is switched, and restart their own services after it. Both run for manual and automatic rollbacks, before the healthcheck
 - Added `recipes/compose` to deploy a Compose stack with Docker or Podman. The image is built locally once for all hosts, streamed over SSH without registry, and pinned per release through a generated `compose.catapult.yml` override. Supports migrations before publication, readiness checks after `up` (including crash loops hidden by restart policies), automatic and manual rollback to the exact images of a release, and scoped image cleanup on the server and locally. Available in JSON configurations as `"compose"`
 - Added `recipes/container` to run containers from one image with Docker or Podman, without Compose. Services share a project network, take their secrets from env files, and are recreated on each deployment after an optional migration in a one-off container. The manifest records how containers start, without environment values, so a rollback recreates the exact containers of a release. Available in JSON configurations as `"container"`
-- Fixed `cata deploy` reporting task failures (healthcheck, readiness) as SSH connection failures
+- Fixed `cata deploy` reporting task failures (healthcheck, readiness) as SSH connection failures, and repeating the host name in error messages
 - Added `sshPipe()` to `@catapultjs/deploy/utils` to stream local data into the stdin of a remote command without buffering, with source and remote errors propagated
 
 ## 0.17.0

@@ -81,7 +81,14 @@ if (cmd === 'compose') {
 fs.appendFileSync(process.env.OCI_LOG, JSON.stringify(entry) + '\\n')
 const fail = (message) => { process.stderr.write(message + '\\n'); process.exit(1) }
 const key = cmd === 'compose' ? 'compose-' + sub : cmd === 'run' && rest.includes('--rm') ? 'run-rm' : cmd
-if ((process.env.OCI_FAIL || '').split(',').includes(side + ':' + key)) fail(key + ' failed')
+if ((process.env.OCI_FAIL || '').split(',').includes(side + ':' + key)) {
+  // One-off commands (migrations) often report their error on stdout, after progress lines.
+  if (key === 'compose-run' || key === 'run-rm') {
+    process.stderr.write(' Container app-web-run-1a2b Created\\n')
+    process.stdout.write('error: column already exists\\n')
+  }
+  fail(key + ' failed')
+}
 const config = JSON.parse(process.env.OCI_COMPOSE_CONFIG || '{"services":{}}')
 const statuses = JSON.parse(process.env.OCI_CONTAINER_STATUS || '{}')
 

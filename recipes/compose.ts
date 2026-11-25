@@ -37,6 +37,7 @@ import { imageName, project, releaseRef, sourceImage } from './oci/config.ts'
 import { type RemoteFacts, checkPodmanRestart, hostFacts } from './oci/engine.ts'
 import { listContainers, waitReady } from './oci/readiness.ts'
 import { readManifest, setManifestExtra } from './oci/manifest.ts'
+import { cleanOutput, exitCodeOf, failureOutput } from './oci/output.ts'
 
 declare module '../src/types.ts' {
   interface TaskRegistry {
@@ -232,18 +233,6 @@ function verbosity(ctx: { config: TaskContext['config'] }): number {
   return ctx.config.verbose ?? Verbose.SILENT
 }
 
-const ANSI_CODES = new RegExp(`${String.fromCharCode(27)}\\[[0-9;]*m`, 'g')
-
-/** Removes ANSI codes and the banner `podman compose` prints before running a provider. */
-export function cleanOutput(output: string): string {
-  return output
-    .replaceAll(ANSI_CODES, '')
-    .split('\n')
-    .filter((line) => !line.includes('>>>>'))
-    .join('\n')
-    .trim()
-}
-
 async function composeOutput(target: Stack, subcommand: string, withOverride = true) {
   try {
     const { stdout } = await ssh(
@@ -252,10 +241,11 @@ async function composeOutput(target: Stack, subcommand: string, withOverride = t
     )
     return stdout
   } catch (error) {
-    const stderr = cleanOutput(String((error as { stderr?: unknown }).stderr ?? ''))
+    const output = failureOutput(error)
     const name = subcommand.split(' ')[0]
+    const code = exitCodeOf(error)
     throw new Error(
-      `[${target.host.name}] compose ${name} failed: ${stderr || (error as Error).message}`,
+      `[${target.host.name}] compose ${name} failed${code === undefined ? '' : ` (exit code ${code})`}: ${output || (error as Error).message}`,
       { cause: error }
     )
   }

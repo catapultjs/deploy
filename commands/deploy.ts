@@ -68,10 +68,14 @@ export default class Deploy extends BaseDeployCommand {
         // Only subprocess errors (with a `command`) can be SSH failures: a task
         // throwing a plain Error (healthcheck, readiness...) has no exit code either.
         const fromSubprocess = typeof (error as { command?: unknown })?.command === 'string'
+        const prefix = `[${host.name}] `
+        const message = sshErrorMessage(error)
         this.logger.error(
           fromSubprocess && isSshConnectionError(error)
-            ? `[${host.name}] SSH connection failed: ${sshErrorMessage(error)}`
-            : `[${host.name}] ${sshErrorMessage(error)}`
+            ? `${prefix}SSH connection failed: ${message}`
+            : message.startsWith(prefix)
+              ? message
+              : `${prefix}${message}`
         )
         if (ctx.hooks.afterFailure) await ctx.hooks.afterFailure({ hosts, error: error as Error })
         this.exitCode = 1

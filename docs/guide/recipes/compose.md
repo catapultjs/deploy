@@ -51,6 +51,8 @@ services:
     image: myapp
     init: true
     command: ['node', 'ace', 'queue:work']
+    healthcheck:
+      disable: true
     env_file: .env
     restart: always
   db:
@@ -67,6 +69,8 @@ Add a `.containerignore` (or `.dockerignore`) that excludes at least `.env` and 
 
 Set `init: true` on Node.js services: without an init process, Node.js as PID 1 ignores `SIGTERM` and every container replacement waits 10 seconds before the container is killed.
 
+A service sharing the image of another one inherits its `HEALTHCHECK`: disable it with `healthcheck: { disable: true }` when it does not apply, like an HTTP check on a worker. Otherwise the service never becomes healthy and the deployment fails.
+
 ## How it works
 
 1. The image is built locally once per deployment as `localhost/<container_image>:<release>`, for the architecture of the servers.
@@ -74,7 +78,7 @@ Set `init: true` on Node.js services: without an init process, Node.js as PID 1 
 3. Compose files are uploaded into the release directory, and `shared_dirs` / `shared_files` are linked into it.
 4. A generated override, `compose.catapult.yml`, pins the release image (`pull_policy: never`) for the services that use it: services with a `build` section, and services whose image is `container_image` (any tag). Your Compose files are never modified.
 5. External images are pulled, the optional migration runs in a one-off container, `current` switches to the release, then `up -d --no-build` starts the stack.
-6. Catapult waits until every container runs, and is healthy when it declares a healthcheck, then checks again 3 seconds later. A container that exits, becomes unhealthy, or restarts in between (a crash loop hidden by `restart: always`) fails the deployment and triggers the automatic rollback. Crashes happening later are left to `deploy:healthcheck`.
+6. Catapult waits until every container runs, and is healthy when it declares a healthcheck, then checks again 3 seconds later. A container that exits, becomes unhealthy, restarts in between, or restarts repeatedly while waiting (a crash loop hidden by `restart: always`) fails the deployment and triggers the automatic rollback. Crashes happening later are left to `deploy:healthcheck`.
 
 Each release contains its Compose files, the override and a `release.json` manifest listing the image IDs. No secret is written to the manifest.
 
@@ -88,24 +92,24 @@ The configuration is validated on the server before the image is built, so a Com
 
 **Tasks**
 
-| Task               | Inserted | Description                                                          |
-| ------------------ | -------- | -------------------------------------------------------------------- |
-| `oci:check`        | yes      | Detects the engine, checks access, architecture, disk and linger     |
-| `compose:check`    | yes      | Checks the Compose provider (and Podman services)                    |
-| `compose:upload`   | yes      | Uploads the Compose files and `compose_upload` paths                 |
-| `compose:override` | yes      | Generates `compose.catapult.yml`                                     |
-| `compose:validate` | yes      | Validates the configuration with the override                        |
-| `oci:build`        | yes      | Builds the image locally, once for all hosts                         |
-| `oci:transfer`     | yes      | Streams the image to the server and writes `release.json`            |
-| `compose:pull`     | yes      | Pulls external images                                                |
-| `compose:migrate`  | yes      | Runs `compose_migrate` when set                                      |
-| `compose:up`       | yes      | Starts the stack and waits until containers are ready                |
-| `oci:cleanup`      | yes      | Removes images of deleted releases, keeps a few local builds         |
-| `compose:stop`     | manual   | Stops the containers                                                 |
-| `compose:restart`  | manual   | Restarts the containers and waits until they are ready               |
-| `compose:down`     | manual   | Removes containers and networks; volumes are kept                    |
-| `compose:logs`     | manual   | Shows recent logs                                                    |
-| `compose:status`   | manual   | Shows `compose ps`                                                   |
+| Task               | Inserted | Description                                                      |
+| ------------------ | -------- | ---------------------------------------------------------------- |
+| `oci:check`        | yes      | Detects the engine, checks access, architecture, disk and linger |
+| `compose:check`    | yes      | Checks the Compose provider (and Podman services)                |
+| `compose:upload`   | yes      | Uploads the Compose files and `compose_upload` paths             |
+| `compose:override` | yes      | Generates `compose.catapult.yml`                                 |
+| `compose:validate` | yes      | Validates the configuration with the override                    |
+| `oci:build`        | yes      | Builds the image locally, once for all hosts                     |
+| `oci:transfer`     | yes      | Streams the image to the server and writes `release.json`        |
+| `compose:pull`     | yes      | Pulls external images                                            |
+| `compose:migrate`  | yes      | Runs `compose_migrate` when set                                  |
+| `compose:up`       | yes      | Starts the stack and waits until containers are ready            |
+| `oci:cleanup`      | yes      | Removes images of deleted releases, keeps a few local builds     |
+| `compose:stop`     | manual   | Stops the containers                                             |
+| `compose:restart`  | manual   | Restarts the containers and waits until they are ready           |
+| `compose:down`     | manual   | Removes containers and networks; volumes are kept                |
+| `compose:logs`     | manual   | Shows recent logs                                                |
+| `compose:status`   | manual   | Shows `compose ps`                                               |
 
 Manual tasks run against the current release: `npx cata task compose:logs`. For an interactive shell, use `npx cata ssh`, then `cd current` and run `docker compose exec` or `podman compose exec`.
 
@@ -115,16 +119,16 @@ Manual tasks run against the current release: `npx cata task compose:logs`. For 
 
 **Image**
 
-| Key                      | Type                     | Default                  | Description                                                          |
-| ------------------------ | ------------------------ | ------------------------ | -------------------------------------------------------------------- |
-| `container_engine`       | `'docker' \| 'podman'`   | detected                 | Engine on the servers. Podman is preferred when both are installed   |
-| `container_build_engine` | `'docker' \| 'podman'`   | server engine if present | Engine used for the local build                                      |
-| `container_project`      | `string`                 | `package.json` name      | Compose project name, stable across releases (networks, volumes)     |
-| `container_image`        | `string`                 | `container_project`      | Repository name of the release image, without registry or tag        |
-| `container_build`        | `object`                 | `{}`                     | `file`, `context`, `target`, `args`, `platform`                      |
-| `container_source`       | `string`                 | none                     | Existing image to deploy instead of building (pulled on the server)  |
-| `container_compression`  | `'gzip' \| 'zstd' \| 'none'` | `'gzip'`             | Transfer compression. `zstd` requires `zstd` on the server           |
-| `container_keep_local`   | `number`                 | `2`                      | Release images kept on the build machine                             |
+| Key                      | Type                         | Default                  | Description                                                         |
+| ------------------------ | ---------------------------- | ------------------------ | ------------------------------------------------------------------- |
+| `container_engine`       | `'docker' \| 'podman'`       | detected                 | Engine on the servers. Podman is preferred when both are installed  |
+| `container_build_engine` | `'docker' \| 'podman'`       | server engine if present | Engine used for the local build                                     |
+| `container_project`      | `string`                     | `package.json` name      | Compose project name, stable across releases (networks, volumes)    |
+| `container_image`        | `string`                     | `container_project`      | Repository name of the release image, without registry or tag       |
+| `container_build`        | `object`                     | `{}`                     | `file`, `context`, `target`, `args`, `platform`                     |
+| `container_source`       | `string`                     | none                     | Existing image to deploy instead of building (pulled on the server) |
+| `container_compression`  | `'gzip' \| 'zstd' \| 'none'` | `'gzip'`                 | Transfer compression. `zstd` requires `zstd` on the server          |
+| `container_keep_local`   | `number`                     | `2`                      | Release images kept on the build machine                            |
 
 `container_build.file` defaults to `Containerfile`, then `Dockerfile`, in `context` (default `.`). `container_build.platform` defaults to the architecture of the servers; a deployment targets one architecture.
 
@@ -132,17 +136,17 @@ Build arguments end up in the image metadata: never pass secrets with `container
 
 **Compose**
 
-| Key                      | Type                                   | Default        | Description                                                         |
-| ------------------------ | -------------------------------------- | -------------- | ------------------------------------------------------------------- |
-| `compose_files`          | `string[]`                             | detected       | Compose files, relative to the project. Defaults to the first of `compose.yaml`, `compose.yml`, `docker-compose.yaml`, `docker-compose.yml` |
-| `compose_upload`         | `string[]`                             | `[]`           | Extra files or directories referenced by the stack (configs, scripts) |
-| `compose_profiles`       | `string[]`                             | `[]`           | Profiles to enable                                                  |
-| `compose_services`       | `string[]`                             | all            | Services started and checked                                        |
-| `compose_image_services` | `string[]`                             | detected       | Services pinned to the release image                                |
-| `compose_migrate`        | `{ service: string, command: string[] }` | none         | Command run with `compose run --rm` before publication              |
-| `compose_remove_orphans` | `boolean`                              | `false`        | Adds `--remove-orphans` to `up`, also on rollback                   |
-| `compose_wait_timeout`   | `number`                               | `60`           | Seconds to wait for containers to be ready                          |
-| `compose_logs_lines`     | `number`                               | `100`          | Lines shown by `compose:logs`                                       |
+| Key                      | Type                                     | Default  | Description                                                                                                                                 |
+| ------------------------ | ---------------------------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| `compose_files`          | `string[]`                               | detected | Compose files, relative to the project. Defaults to the first of `compose.yaml`, `compose.yml`, `docker-compose.yaml`, `docker-compose.yml` |
+| `compose_upload`         | `string[]`                               | `[]`     | Extra files or directories referenced by the stack (configs, scripts)                                                                       |
+| `compose_profiles`       | `string[]`                               | `[]`     | Profiles to enable                                                                                                                          |
+| `compose_services`       | `string[]`                               | all      | Services started and checked                                                                                                                |
+| `compose_image_services` | `string[]`                               | detected | Services pinned to the release image                                                                                                        |
+| `compose_migrate`        | `{ service: string, command: string[] }` | none     | Command run with `compose run --rm` before publication                                                                                      |
+| `compose_remove_orphans` | `boolean`                                | `false`  | Adds `--remove-orphans` to `up`, also on rollback                                                                                           |
+| `compose_wait_timeout`   | `number`                                 | `60`     | Seconds to wait for containers to be ready                                                                                                  |
+| `compose_logs_lines`     | `number`                                 | `100`    | Lines shown by `compose:logs`                                                                                                               |
 
 All keys are available in [JSON configurations](/guide/json-configuration) with `"recipes": ["compose"]`.
 

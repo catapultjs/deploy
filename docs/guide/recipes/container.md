@@ -36,6 +36,7 @@ set('container_services', {
   worker: {
     command: ['node', 'ace', 'queue:work'],
     init: true,
+    healthcheck: false,
     env_file: ['.env'],
   },
 })
@@ -63,7 +64,7 @@ Add a `.containerignore` (or `.dockerignore`) that excludes at least `.env` and 
 2. `shared_dirs` / `shared_files` are linked into the release. The `env` values of each service are written to `container/<service>.env` in the release, readable by the deploy user only.
 3. The optional migration runs in a one-off container of the new image, on the project network, with the service's env files, user and volumes. A failure stops the deployment before publication.
 4. After publication, each service container (`<container_project>-<service>`) is stopped, removed and started again from the new image. Containers of services removed from `container_services` are stopped and removed.
-5. Catapult waits until every container runs, and is healthy when the image declares a healthcheck, then checks again 3 seconds later. A container that exits, becomes unhealthy, or restarts in between (a crash loop hidden by the restart policy) fails the deployment and triggers the automatic rollback.
+5. Catapult waits until every container runs, and is healthy when the image declares a healthcheck, then checks again 3 seconds later. A container that exits, becomes unhealthy, restarts in between, or restarts repeatedly while waiting (a crash loop hidden by the restart policy) fails the deployment and triggers the automatic rollback.
 
 All services share a network named after `container_project`, so they reach each other by container name. Ports are released between stop and start: expect a short interruption on each deployment.
 
@@ -75,22 +76,22 @@ The release manifest records how each service is started: command, ports, volume
 
 **Tasks**
 
-| Task                | Inserted | Description                                                        |
-| ------------------- | -------- | ------------------------------------------------------------------ |
-| `oci:check`         | yes      | Detects the engine, checks access, architecture, disk and linger   |
-| `container:check`   | yes      | Validates `container_services`, checks `podman-restart.service`     |
-| `container:prepare` | yes      | Writes env files and records the services of the release           |
-| `oci:build`         | yes      | Builds the image locally, once for all hosts                       |
-| `oci:transfer`      | yes      | Streams the image to the server and writes `release.json`          |
-| `container:migrate` | yes      | Runs `container_migrate` when set                                  |
-| `container:up`      | yes      | Replaces the containers and waits until they are ready             |
-| `oci:cleanup`       | yes      | Removes images of deleted releases, keeps a few local builds       |
-| `container:start`   | manual   | Starts the existing containers                                     |
-| `container:stop`    | manual   | Stops the containers                                               |
-| `container:restart` | manual   | Restarts the containers and waits until they are ready             |
-| `container:remove`  | manual   | Stops and removes the containers; volumes and network are kept     |
-| `container:logs`    | manual   | Shows recent logs of each container                                |
-| `container:status`  | manual   | Lists the containers of the project                                |
+| Task                | Inserted | Description                                                      |
+| ------------------- | -------- | ---------------------------------------------------------------- |
+| `oci:check`         | yes      | Detects the engine, checks access, architecture, disk and linger |
+| `container:check`   | yes      | Validates `container_services`, checks `podman-restart.service`  |
+| `container:prepare` | yes      | Writes env files and records the services of the release         |
+| `oci:build`         | yes      | Builds the image locally, once for all hosts                     |
+| `oci:transfer`      | yes      | Streams the image to the server and writes `release.json`        |
+| `container:migrate` | yes      | Runs `container_migrate` when set                                |
+| `container:up`      | yes      | Replaces the containers and waits until they are ready           |
+| `oci:cleanup`       | yes      | Removes images of deleted releases, keeps a few local builds     |
+| `container:start`   | manual   | Starts the existing containers                                   |
+| `container:stop`    | manual   | Stops the containers                                             |
+| `container:restart` | manual   | Restarts the containers and waits until they are ready           |
+| `container:remove`  | manual   | Stops and removes the containers; volumes and network are kept   |
+| `container:logs`    | manual   | Shows recent logs of each container                              |
+| `container:status`  | manual   | Lists the containers of the project                              |
 
 Manual tasks run against the current release: `npx cata task container:logs`. For an interactive shell, use `npx cata ssh`, then `podman exec -it <project>-web sh`.
 
@@ -102,33 +103,36 @@ Manual tasks run against the current release: `npx cata task container:logs`. Fo
 
 `container_services` maps service names to their options. Every option is optional.
 
-| Option       | Type                     | Default    | Description                                                      |
-| ------------ | ------------------------ | ---------- | ---------------------------------------------------------------- |
-| `command`    | `string[]`               | image CMD  | Command and arguments, passed without shell                      |
-| `init`       | `boolean`                | `false`    | Runs an init process as PID 1 (signal forwarding, zombie reaping) |
-| `entrypoint` | `string`                 | image      | Executable replacing the image entrypoint                        |
-| `user`       | `string`                 | image      | `user` or `uid:gid`                                              |
-| `env`        | `Record<string, string>` | `{}`       | Non-secret variables, written to an env file of the release      |
-| `env_file`   | `string[]`               | `[]`       | Env files, relative to the release (e.g. a shared `.env`)        |
-| `ports`      | `string[]`               | `[]`       | Published ports, e.g. `127.0.0.1:3333:3333`                      |
-| `volumes`    | `string[]`               | `[]`       | `./dir:/path`, `/abs:/path` or `named:/path`, with `:ro` if needed |
-| `restart`    | `string`                 | `'always'` | `no`, `always`, `unless-stopped` or `on-failure[:N]`             |
-| `labels`     | `Record<string, string>` | `{}`       | Extra labels (the `com.catapultjs.` prefix is reserved)          |
+| Option        | Type                     | Default    | Description                                                        |
+| ------------- | ------------------------ | ---------- | ------------------------------------------------------------------ |
+| `command`     | `string[]`               | image CMD  | Command and arguments, passed without shell                        |
+| `init`        | `boolean`                | `false`    | Runs an init process as PID 1 (signal forwarding, zombie reaping)  |
+| `healthcheck` | `boolean`                | `true`     | `false` disables the image `HEALTHCHECK` for this service          |
+| `entrypoint`  | `string`                 | image      | Executable replacing the image entrypoint                          |
+| `user`        | `string`                 | image      | `user` or `uid:gid`                                                |
+| `env`         | `Record<string, string>` | `{}`       | Non-secret variables, written to an env file of the release        |
+| `env_file`    | `string[]`               | `[]`       | Env files, relative to the release (e.g. a shared `.env`)          |
+| `ports`       | `string[]`               | `[]`       | Published ports, e.g. `127.0.0.1:3333:3333`                        |
+| `volumes`     | `string[]`               | `[]`       | `./dir:/path`, `/abs:/path` or `named:/path`, with `:ro` if needed |
+| `restart`     | `string`                 | `'always'` | `no`, `always`, `unless-stopped` or `on-failure[:N]`               |
+| `labels`      | `Record<string, string>` | `{}`       | Extra labels (the `com.catapultjs.` prefix is reserved)            |
 
 Keep secrets in `env_file` (typically a shared `.env`), never in `env`: values are passed as env files, never on the command line. Relative volume sources resolve inside the release directory: point them to `shared_dirs` entries to keep data across releases, or use named volumes.
 
 Enable `init` for processes that do not handle `SIGTERM`, such as Node.js running as PID 1: without it, each stop waits `container_stop_timeout` seconds before the container is killed.
 
+Set `healthcheck: false` on services the image `HEALTHCHECK` does not apply to, such as a worker sharing the image of an HTTP server: otherwise the worker never becomes healthy and the deployment fails.
+
 Labels apply to service containers only, not to the one-off migration container, so reverse-proxy routing labels never target it.
 
 **Other keys**
 
-| Key                      | Type                                     | Default             | Description                                          |
-| ------------------------ | ---------------------------------------- | ------------------- | ---------------------------------------------------- |
-| `container_migrate`      | `{ service: string, command: string[] }` | none                | One-off command run before publication               |
-| `container_wait_timeout` | `number`                                 | `60`                | Seconds to wait for containers to be ready           |
-| `container_stop_timeout` | `number`                                 | `10`                | Seconds given to a container to stop gracefully      |
-| `container_logs_lines`   | `number`                                 | `100`               | Lines shown per container by `container:logs`        |
+| Key                      | Type                                     | Default | Description                                     |
+| ------------------------ | ---------------------------------------- | ------- | ----------------------------------------------- |
+| `container_migrate`      | `{ service: string, command: string[] }` | none    | One-off command run before publication          |
+| `container_wait_timeout` | `number`                                 | `60`    | Seconds to wait for containers to be ready      |
+| `container_stop_timeout` | `number`                                 | `10`    | Seconds given to a container to stop gracefully |
+| `container_logs_lines`   | `number`                                 | `100`   | Lines shown per container by `container:logs`   |
 
 The image options (`container_engine`, `container_build_engine`, `container_project`, `container_image`, `container_build`, `container_source`, `container_compression`, `container_keep_local`) are the same as for [`compose`](./compose#configuration).
 

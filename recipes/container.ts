@@ -33,6 +33,7 @@ import './oci/index.ts'
 import { project, releaseRef } from './oci/config.ts'
 import { type RemoteFacts, checkPodmanRestart, hostFacts } from './oci/engine.ts'
 import { readManifest, setManifestExtra } from './oci/manifest.ts'
+import { exitCodeOf, failureOutput } from './oci/output.ts'
 import { listContainers, waitReady } from './oci/readiness.ts'
 
 declare module '../src/types.ts' {
@@ -66,6 +67,8 @@ export interface ServiceConfig {
   command?: string[]
   /** Runs an init process as PID 1 that forwards signals and reaps zombies. */
   init?: boolean
+  /** `false` disables the image HEALTHCHECK, e.g. for a worker sharing the web image. */
+  healthcheck?: boolean
   entrypoint?: string
   user?: string
   env?: Record<string, string>
@@ -83,6 +86,7 @@ export interface ServiceConfig {
 interface ServiceSpec {
   command: string[] | null
   init?: boolean
+  healthcheck?: boolean
   entrypoint: string | null
   user: string | null
   envFiles: string[]
@@ -214,8 +218,12 @@ function specs(releaseDir: string): { data: ContainerData; envFiles: Record<stri
     if (config.init !== undefined && typeof config.init !== 'boolean') {
       fail(`${key}.init must be a boolean`)
     }
+    if (config.healthcheck !== undefined && typeof config.healthcheck !== 'boolean') {
+      fail(`${key}.healthcheck must be a boolean`)
+    }
     services[name] = {
       init: config.init ?? false,
+      healthcheck: config.healthcheck ?? true,
       command:
         config.command === undefined ? null : strings(`${key}.command`, config.command, plain),
       entrypoint:
@@ -289,6 +297,7 @@ function runArgs(stack: Stack, service: string, oneOff?: string[]): string[] {
     }
   }
   if (spec.init) args.push('--init')
+  if (spec.healthcheck === false) args.push('--no-healthcheck')
   if (spec.user) args.push('--user', spec.user)
   if (spec.entrypoint) args.push('--entrypoint', spec.entrypoint)
   for (const file of spec.envFiles) args.push('--env-file', file)
@@ -477,7 +486,13 @@ task('container:migrate', async (ctx: TaskContext) => {
   const { stdout } = await ssh(
     host,
     `set -e\n${ensureNetwork(target)}\n${engine(target, ['run', ...runArgs(target, job.service, job.command)])}`
-  )
+  ).catch((error: unknown) => {
+    const code = exitCodeOf(error)
+    throw new Error(
+      `[${host.name}] migration failed${code === undefined ? '' : ` (exit code ${code})`}: ${failureOutput(error) || (error as Error).message}`,
+      { cause: error }
+    )
+  })
   if (verbosity(ctx) >= Verbose.NORMAL && stdout.trim()) logger.log(stdout.trim())
 })
 

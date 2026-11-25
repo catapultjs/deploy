@@ -62,6 +62,12 @@ async function restartMarks(host: Host, facts: RemoteFacts, names: string[]) {
 }
 
 const SETTLE_MS = 3_000
+/** Restarts tolerated while waiting, e.g. a service retrying until its database is up. */
+const CRASH_RESTARTS = 2
+
+function restartCount(mark: string | undefined): number {
+  return Number.parseInt(mark ?? '', 10) || 0
+}
 
 export interface WaitOptions {
   host: Host
@@ -77,13 +83,19 @@ export interface WaitOptions {
 /**
  * Waits until every matching container runs (and is healthy when it declares a
  * healthcheck), then checks again after a short delay. A container restarted in
- * between is in a crash loop: with a restart policy it shows as running at every
- * poll. Fails fast on exited or unhealthy containers.
+ * between, or restarted repeatedly while waiting, is in a crash loop: with a
+ * restart policy it shows as running (Podman) or alternates between restarting
+ * and running (Docker backoff). Fails fast on exited or unhealthy containers.
  */
 export async function waitReady(options: WaitOptions): Promise<void> {
   const { host, facts, filterSets, timeoutSeconds, logger, verbose, logsTask } = options
   const deadline = Date.now() + timeoutSeconds * 1000
-  let marks: Map<string, string> | null = null
+  const crashLoop = (names: string[]) =>
+    new Error(
+      `[${host.name}] containers restarted while starting (crash loop): ${names.join(', ')}. See \`cata task ${logsTask}\``
+    )
+  const firstCounts = new Map<string, number>()
+  let settled: Map<string, string> | null = null
 
   while (true) {
     const list = await listContainers(host, facts, filterSets)
@@ -95,34 +107,33 @@ export async function waitReady(options: WaitOptions): Promise<void> {
       throw new Error(`[${host.name}] containers failed: ${details}. See \`cata task ${logsTask}\``)
     }
 
+    const marks = await restartMarks(
+      host,
+      facts,
+      list.map((c) => c.name)
+    )
+    const looping = list.filter((c) => {
+      const count = restartCount(marks.get(c.name))
+      if (!firstCounts.has(c.name)) firstCounts.set(c.name, count)
+      return count - (firstCounts.get(c.name) ?? count) >= CRASH_RESTARTS
+    })
+    if (looping.length) throw crashLoop(looping.map((c) => c.name))
+
     const pending = list.filter((c) => containerState(c.state, c.status) === 'pending')
     if (!pending.length) {
-      const current = await restartMarks(
-        host,
-        facts,
-        list.map((c) => c.name)
-      )
-      if (marks) {
-        const previous = marks
-        const restarted = list.filter(
-          (c) => previous.has(c.name) && previous.get(c.name) !== current.get(c.name)
-        )
-        if (restarted.length) {
-          throw new Error(
-            `[${host.name}] containers restarted while starting (crash loop): ${restarted.map((c) => c.name).join(', ')}. See \`cata task ${logsTask}\``
-          )
-        }
-        if (list.every((c) => previous.has(c.name))) {
-          if (verbose >= Verbose.NORMAL) logger.step(host.name, `${list.length} container(s) ready`)
-          return
-        }
+      const previous = settled
+      if (previous && list.every((c) => previous.has(c.name))) {
+        const restarted = list.filter((c) => previous.get(c.name) !== marks.get(c.name))
+        if (restarted.length) throw crashLoop(restarted.map((c) => c.name))
+        if (verbose >= Verbose.NORMAL) logger.step(host.name, `${list.length} container(s) ready`)
+        return
       }
-      marks = current
+      settled = marks
       await sleep(SETTLE_MS)
       continue
     }
 
-    marks = null
+    settled = null
     if (Date.now() >= deadline) {
       const details = pending.map((c) => `${c.name} (${c.status || c.state})`).join(', ')
       throw new Error(`[${host.name}] containers not ready after ${timeoutSeconds}s: ${details}`)
