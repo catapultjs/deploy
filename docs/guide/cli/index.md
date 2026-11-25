@@ -30,6 +30,14 @@ JSON configs are validated before command execution. Use [`config:validate`](./c
 | `--help`                       | Show the help for the current command |
 | `--config <path>`, `-c <path>` | Load a specific deploy config file    |
 
+## Errors
+
+A failing command prints the error message and exits with code `1`. To see the stack trace, set `CATAPULT_DEBUG=1`, or use `-vvv` with the commands that accept it (`deploy`, `task`):
+
+```bash
+CATAPULT_DEBUG=1 npx cata rollback
+```
+
 ## Host-aware commands
 
 These commands support `--host <name>` / `-H <name>`:

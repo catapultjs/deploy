@@ -29,6 +29,7 @@ Full docs: https://catapultjs.com/guide/recipes
 | `recipes/tanstack` | No (pair with `git` or `rsync`) | TanStack Start, build on the server |
 | `recipes/compose` | Not used (own pipeline) | Compose stack on Docker or Podman, image built locally and streamed over SSH |
 | `recipes/container` | Not used (own pipeline) | A few containers from one image on Docker or Podman, without Compose |
+| `recipes/quadlet` | Not used (own pipeline) | systemd services with Podman Quadlet, image built locally and streamed over SSH |
 
 ---
 

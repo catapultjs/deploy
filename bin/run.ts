@@ -20,6 +20,7 @@ import Ssh from '../commands/ssh.ts'
 import Run from '../commands/run.ts'
 import ConfigValidate from '../commands/config_validate.ts'
 import { resolveDeployConfigFile } from '../src/config/resolve.ts'
+import { CatapultErrorHandler } from '../src/error_handler.ts'
 
 const cliArgs = process.argv.slice(2)
 
@@ -32,6 +33,7 @@ function parseVerboseLevel(argv: string[]): Verbose {
   return Math.min(count, Verbose.DEBUG) as Verbose
 }
 
+const verboseLevel = parseVerboseLevel(cliArgs)
 const skipDeployFile = ['init', 'version', 'config:validate'].includes(cliArgs[0])
 
 if (!skipDeployFile) {
@@ -44,13 +46,13 @@ if (!skipDeployFile) {
     process.exit(1)
   }
 
-  const verboseLevel = parseVerboseLevel(cliArgs)
   if (verboseLevel > Verbose.SILENT) Context.get().config.verbose = verboseLevel
 }
 
 //
 
 const kernel = Kernel.create()
+kernel.errorHandler = new CatapultErrorHandler(verboseLevel)
 
 kernel.defineFlag('help', {
   type: 'boolean',
