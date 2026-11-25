@@ -16,6 +16,7 @@ import {
 import { getPaths } from '../../src/utils.ts'
 import { Verbose } from '../../src/enums.ts'
 import {
+  buildLocation,
   buildOptions,
   compression,
   imageName,
@@ -39,6 +40,7 @@ import {
 } from './manifest.ts'
 import { cleanupLocal, cleanupRemote, registerImage } from './cleanup.ts'
 import { pullImage, pushOnce } from './registry.ts'
+import { buildRemoteOnce, checkRemoteBuild, remoteBuilt } from './remote_build.ts'
 
 declare module '../../src/types.ts' {
   interface TaskRegistry {
@@ -104,15 +106,27 @@ task('oci:check', async ({ host, config, logger }: TaskContext) => {
   buildOptions()
   sourceImage()
   const facts = await checkHost(host, logger)
+  if (buildLocation() === 'remote' && !sourceImage()) await checkRemoteBuild(host)
   if (verbosity(config) >= Verbose.NORMAL) {
     logger.step(host.name, `${facts.version} (${facts.platform})`)
   }
 })
 
 desc('Builds the release image locally, once for all hosts')
-task('oci:build', async ({ host, config, logger, release }: TaskContext) => {
+task('oci:build', async ({ host, config, logger, release, paths }: TaskContext) => {
   if (sourceImage()) return
   const facts = await hostFacts(host, logger)
+  if (buildLocation() === 'remote') {
+    await buildRemoteOnce({
+      host,
+      facts,
+      release,
+      cataConfig: paths.cataConfig,
+      logger,
+      verbose: verbosity(config),
+    })
+    return
+  }
   const options = buildOptions()
   if (options.platform && options.platform !== facts.platform) {
     throw new Error(
@@ -141,7 +155,19 @@ task('oci:transfer', async ({ host, config, logger, release, paths }: TaskContex
   let revision: string | null
   let dirty: boolean
 
-  if (source) {
+  const remote = source ? undefined : remoteBuilt(host, release)
+  if (remote) {
+    // Built on the server under the release reference: nothing to transfer.
+    const built = await remote
+    image = {
+      ref,
+      localId: null,
+      contentKey: built.contentKey,
+      remoteId: built.remoteId,
+      platform: built.platform,
+    }
+    ;({ revision, dirty } = built)
+  } else if (source) {
     await pullSource(ctx, source, ref)
     const remoteId = await remoteImageId(ctx, ref)
     if (!remoteId) throw new Error(`[${host.name}] ${ref} not found after pulling ${source}`)

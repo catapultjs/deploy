@@ -125,7 +125,7 @@ Manual tasks run against the current release: `npx cata task compose:logs`. For 
 | `container_build_engine` | `'docker' \| 'podman'`       | server engine if present | Engine used for the local build                                                 |
 | `container_project`      | `string`                     | `package.json` name      | Compose project name, stable across releases (networks, volumes)                |
 | `container_image`        | `string`                     | `container_project`      | Repository name of the release image, without registry or tag                   |
-| `container_build`        | `object`                     | `{}`                     | `file`, `context`, `target`, `args`, `platform`                                 |
+| `container_build`        | `object`                     | `{}`                     | `location`, `file`, `context`, `target`, `args`, `platform`                     |
 | `container_source`       | `string`                     | none                     | Existing image to deploy instead of building (pulled on the server)             |
 | `container_compression`  | `'gzip' \| 'zstd' \| 'none'` | `'gzip'`                 | Transfer compression. `zstd` requires `zstd` on the server                      |
 | `container_transfer`     | `'ssh' \| 'registry'`        | `'ssh'`                  | How the image reaches the servers, see [registry](#transfer-through-a-registry) |
@@ -135,6 +135,8 @@ Manual tasks run against the current release: `npx cata task compose:logs`. For 
 `container_build.file` defaults to `Containerfile`, then `Dockerfile`, in `context` (default `.`). `container_build.platform` defaults to the architecture of the servers; a deployment targets one architecture.
 
 Build arguments end up in the image metadata: never pass secrets with `container_build.args`.
+
+With Podman, a build argument only invalidates the layer cache of `RUN` instructions: an `ENV` or `LABEL` using an argument before any `RUN` keeps its previous value when only the argument changes. Catapult warns about it; add a `RUN` instruction between the `ARG` and the instructions using it. Docker is not affected.
 
 **Compose**
 
@@ -151,6 +153,21 @@ Build arguments end up in the image metadata: never pass secrets with `container
 | `compose_logs_lines`     | `number`                                 | `100`    | Lines shown by `compose:logs`                                                                                                               |
 
 All keys are available in [JSON configurations](/guide/json-configuration) with `"recipes": ["compose"]`.
+
+## Build on the servers
+
+By default the image is built on your machine. Set `container_build.location` to `'remote'` to build it on each server instead, natively for its architecture and with its own layer cache:
+
+```typescript
+set('container_build', { location: 'remote', args: { APP_VERSION: '1.4.0' } })
+```
+
+1. The build context is synchronized with rsync to `.catapult/build/` on each server. The directory is kept between deployments, so only changes are sent.
+2. Each server builds the release image under its release reference: nothing is transferred afterwards, and Compose files, containers and Quadlet units are unchanged.
+
+Paths ignored by the ignore file the server engine reads (`.dockerignore` for Docker, `.containerignore` then `.dockerignore` for Podman) are not sent, `.git` neither. When the ignore file re-includes paths (`!pattern`), the whole context is sent and the engine applies the file. The Containerfile must be inside the context.
+
+Every server builds its own image: prefer a local build or a registry for many servers. rsync is required on your machine and on the servers. This mode cannot be combined with `container_build.platform` or `container_transfer: 'registry'`. Catapult never prunes the build cache of the servers: clean it with `docker builder prune` or `podman image prune` when needed.
 
 ## Transfer through a registry
 

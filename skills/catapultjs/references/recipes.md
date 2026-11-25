@@ -715,7 +715,7 @@ Flow: validate config on the server, build `localhost/<container_image>:<release
 | `container_build_engine` | `'docker' \| 'podman'` | server engine if installed locally | Local build engine |
 | `container_project` | `string` | `package.json` name | Compose project name (stable volumes/networks) |
 | `container_image` | `string` | `container_project` | Release image repository, no registry/tag |
-| `container_build` | `{ file, context, target, args, platform }` | `{}` | Build options; no secrets in `args` |
+| `container_build` | `{ location, file, context, target, args, platform }` | `{}` | Build options; no secrets in `args`. `location: 'remote'`: rsync the context to `.catapult/build/` (ignore file of the server engine applied, `!` negations send everything) and build on each server natively; no transfer; incompatible with `platform` and registry transfer; rsync required on both sides. Podman: an `ENV`/`LABEL` using an ARG before any `RUN` keeps a cached stale value (Catapult warns) |
 | `container_source` | `string` | none | Existing image pulled on the server instead of building |
 | `container_compression` | `'gzip' \| 'zstd' \| 'none'` | `'gzip'` | Transfer compression |
 | `container_transfer` | `'ssh' \| 'registry'` | `'ssh'` | `registry`: push once (build machine must be logged in), servers pull by digest and retag; digest in `release.json`, rollback re-pulls a missing image |

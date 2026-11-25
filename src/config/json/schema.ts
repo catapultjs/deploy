@@ -247,6 +247,7 @@ export const deployJsonSchema: AnySchemaObject = {
         compose_wait_timeout: { type: 'number', exclusiveMinimum: 0 },
         container_build: exactObject(
           {
+            location: { enum: ['local', 'remote'] },
             file: nonEmptyString,
             context: nonEmptyString,
             target: nonEmptyString,

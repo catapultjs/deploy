@@ -9,6 +9,8 @@ export type Engine = 'docker' | 'podman'
 export type Compression = 'none' | 'gzip' | 'zstd'
 
 export interface BuildOptions {
+  /** `local` (default) builds on this machine; `remote` builds on each server. */
+  location?: 'local' | 'remote'
   file?: string
   context?: string
   target?: string
@@ -102,6 +104,9 @@ export function buildOptions(): BuildOptions {
   if (!value || typeof value !== 'object' || Array.isArray(value)) {
     throw new Error('container_build must be an object')
   }
+  if (value.location !== undefined && value.location !== 'local' && value.location !== 'remote') {
+    throw new Error('container_build.location must be one of: local, remote')
+  }
   for (const key of ['file', 'context', 'target', 'platform'] as const) {
     if (value[key] !== undefined && (typeof value[key] !== 'string' || !value[key])) {
       throw new Error(`container_build.${key} must be a non-empty string`)
@@ -118,6 +123,23 @@ export function buildOptions(): BuildOptions {
     }
   }
   return value
+}
+
+/** Where the release image is built. */
+export function buildLocation(): 'local' | 'remote' {
+  const options = buildOptions()
+  if (options.location !== 'remote') return 'local'
+  if (options.platform) {
+    throw new Error(
+      'container_build.platform cannot be used with location "remote": servers build for their own architecture'
+    )
+  }
+  if (get<string>('container_transfer', 'ssh') === 'registry') {
+    throw new Error(
+      'container_transfer "registry" pushes a local build: it cannot be used with container_build.location "remote"'
+    )
+  }
+  return 'remote'
 }
 
 export type TransferMode = 'ssh' | 'registry'

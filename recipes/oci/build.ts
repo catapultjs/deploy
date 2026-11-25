@@ -90,12 +90,87 @@ function ignoresEnv(context: string): boolean {
   return false
 }
 
-function containerfile(context: string, file?: string): string {
+export function containerfile(context: string, file?: string): string {
   if (file) return file
   for (const name of ['Containerfile', 'Dockerfile']) {
     if (existsSync(join(context, name))) return join(context, name)
   }
   throw new Error(`no Containerfile or Dockerfile found in ${context}. Set container_build.file`)
+}
+
+/**
+ * Build arguments used by instructions that Podman (Buildah) caches without their
+ * value: only RUN instructions account for build arguments in its layer cache. An
+ * ENV or LABEL using an argument before any RUN keeps the previous value when only
+ * the argument changes. Docker invalidates the cache as expected.
+ */
+export function cachedArgUses(containerfileContent: string, argNames: string[]): string[] {
+  const instructions: string[] = []
+  let current = ''
+  for (const raw of containerfileContent.split('\n')) {
+    const line = raw.trim()
+    if (!line || line.startsWith('#')) continue
+    current = current ? `${current} ${line}` : line
+    if (current.endsWith('\\')) {
+      current = current.slice(0, -1)
+      continue
+    }
+    instructions.push(current)
+    current = ''
+  }
+  if (current) instructions.push(current)
+
+  const stale = new Set<string>()
+  const declared = new Set<string>()
+  for (const instruction of instructions) {
+    const keyword = instruction.split(/\s+/)[0].toUpperCase()
+    if (keyword === 'FROM' || keyword === 'RUN') {
+      declared.clear()
+    } else if (keyword === 'ARG') {
+      for (const token of instruction.slice(3).trim().split(/\s+/)) {
+        const name = token.split('=')[0]
+        if (argNames.includes(name)) declared.add(name)
+      }
+    } else {
+      for (const name of declared) {
+        if (new RegExp(`\\$\\{?${name}\\b`).test(instruction)) stale.add(name)
+      }
+    }
+  }
+  return [...stale]
+}
+
+/** Warns when Podman would keep stale build argument values from its layer cache. */
+export function warnCachedArgUses(file: string, logger: CatapultLogger, host: Host): void {
+  const names = Object.keys(buildOptions().args ?? {})
+  if (!names.length) return
+  const stale = cachedArgUses(readFileSync(file, 'utf8'), names)
+  if (stale.length) {
+    logger.warning(
+      `Podman caches instructions using ${stale.join(', ')} without the argument value: the image keeps the previous value when only the argument changes. Add a RUN instruction between the ARG and the instructions using it`,
+      { prefix: host.name }
+    )
+  }
+}
+
+/** Warns about what the build context would include unintentionally. */
+export function contextWarnings(
+  context: string,
+  dirty: boolean,
+  logger: CatapultLogger,
+  host: Host
+): void {
+  if (dirty) {
+    logger.warning('uncommitted changes are included in the image build context', {
+      prefix: host.name,
+    })
+  }
+  if (existsSync(join(context, '.env')) && !ignoresEnv(context)) {
+    logger.warning(
+      '.env is not excluded by .containerignore or .dockerignore: it would be copied into the build context',
+      { prefix: host.name }
+    )
+  }
 }
 
 async function run(engine: Engine, args: string[], request: BuildRequest) {
@@ -116,17 +191,7 @@ async function build(request: BuildRequest): Promise<BuildResult> {
   const ref = releaseRef(request.release)
 
   const { revision, dirty } = await revisionInfo()
-  if (dirty) {
-    request.logger.warning('uncommitted changes are included in the image build context', {
-      prefix: request.host.name,
-    })
-  }
-  if (existsSync(join(context, '.env')) && !ignoresEnv(context)) {
-    request.logger.warning(
-      '.env is not excluded by .containerignore or .dockerignore: it would be copied into the build context',
-      { prefix: request.host.name }
-    )
-  }
+  contextWarnings(context, dirty, request.logger, request.host)
   const localPlatform = platformFromArch(process.arch)
   if (localPlatform !== request.platform) {
     request.logger.warning(
@@ -137,7 +202,10 @@ async function build(request: BuildRequest): Promise<BuildResult> {
 
   const args = ['build', '-f', file, '-t', ref, '--platform', request.platform]
   // Podman builds OCI images by default, which drop HEALTHCHECK.
-  if (engine === 'podman') args.push('--format', 'docker')
+  if (engine === 'podman') {
+    args.push('--format', 'docker')
+    warnCachedArgUses(file, request.logger, request.host)
+  }
   if (options.target) args.push('--target', options.target)
   for (const [name, value] of Object.entries(options.args ?? {})) {
     args.push('--build-arg', `${name}=${value}`)

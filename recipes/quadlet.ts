@@ -59,7 +59,7 @@ set('container_engine', 'podman')
 const KINDS = ['container', 'network', 'volume', 'pod'] as const
 type Kind = (typeof KINDS)[number]
 const UNSUPPORTED: Record<string, string> = {
-  build: 'images are built locally by Catapult',
+  build: 'Catapult builds the image, locally or on the servers',
   image: 'images are transferred by Catapult',
   kube: 'Kubernetes YAML is not supported',
 }

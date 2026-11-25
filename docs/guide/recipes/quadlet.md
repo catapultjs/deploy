@@ -160,7 +160,7 @@ Manual tasks run against the current release: `npx cata task quadlet:logs`. `cat
 
 `quadlet_path` holds `.container`, `.network`, `.volume` and `.pod` files, without subdirectories. Hidden files are ignored.
 
-The image options (`container_build_engine`, `container_project`, `container_image`, `container_build`, `container_source`, `container_compression`, `container_keep_local`) are the same as for [`compose`](./compose#configuration), as is the [transfer through a registry](./compose#transfer-through-a-registry) (`container_transfer`, `container_registry`). `container_engine` is set to `podman`.
+The image options (`container_build_engine`, `container_project`, `container_image`, `container_build`, `container_source`, `container_compression`, `container_keep_local`) are the same as for [`compose`](./compose#configuration), as are the [build on the servers](./compose#build-on-the-servers) and the [transfer through a registry](./compose#transfer-through-a-registry). `container_engine` is set to `podman`.
 
 All keys are available in [JSON configurations](/guide/json-configuration) with `"recipes": ["quadlet"]`.
 
@@ -207,7 +207,7 @@ A rollback does not restore data or reverse migrations. Write migrations that th
 
 ## Limitations
 
-- `.build`, `.image` and `.kube` files are not supported, nor `ServiceName=`: Catapult derives unit names from file names.
+- `.build`, `.image` and `.kube` files are not supported, nor `ServiceName=`: Catapult builds or transfers the image itself, and derives unit names from file names.
 - Units are restarted in place: a short interruption happens on fixed ports.
 - One image per project.
 - Healthchecks come from the image (`HEALTHCHECK`) or from `HealthCmd=`. Podman ignores the image `HEALTHCHECK` for OCI images, the format produced by Docker with the containerd image store: Catapult warns when it is lost. Declare `HealthCmd=` in the `.container` file, or build with Podman locally.

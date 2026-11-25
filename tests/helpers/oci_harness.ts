@@ -270,6 +270,15 @@ const result = spawnSync('bash', ['-c', command], {
 process.exit(result.status ?? 1)
 `
 
+// rsync: logs its arguments and copies the source directory (excludes are not applied).
+const RSYNC = `#!${process.execPath}
+const fs = require('node:fs')
+const args = process.argv.slice(2)
+if (args[0] === '--version') { console.log('rsync  version 3.4.1'); process.exit(0) }
+fs.appendFileSync(process.env.OCI_LOG, JSON.stringify({ side: process.env.OCI_SIDE || 'local', bin: 'rsync', args, cwd: process.cwd() }) + '\\n')
+fs.cpSync(args.at(-2), args.at(-1).replace(/^[^:]+:/, ''), { recursive: true })
+`
+
 const SCP = `#!${process.execPath}
 const args = process.argv.slice(2)
 require('node:fs').cpSync(args.at(-2), args.at(-1).replace(/^[^:]+:/, ''), { recursive: true })
@@ -375,6 +384,8 @@ export interface Remote {
   engines?: string[]
   arch?: string
   images?: Record<string, string>
+  /** `false` when rsync is not installed on the server. */
+  rsync?: boolean
   /** Networks existing on the server. */
   networks?: string[]
   /** Existing containers by name: Compose labels of the "app" project unless labels are given. */
@@ -479,6 +490,7 @@ async function runOci(options: Scenario) {
       await writeFile(join(shared, name), script, { mode: 0o755 })
     }
     await binDir(join(root, 'local-bin'), options.localEngines ?? ['podman'])
+    await writeFile(join(root, 'local-bin', 'rsync'), RSYNC, { mode: 0o755 })
     await writeFile(join(projectDir, 'Containerfile'), 'FROM scratch\n')
     for (const [file, content] of Object.entries(options.files ?? {})) {
       await mkdir(dirname(join(projectDir, file)), { recursive: true })
@@ -512,6 +524,7 @@ async function runOci(options: Scenario) {
       const target = `deploy@${remote.name}`
       const bin = join(root, `remote-bin-${remote.name}`)
       await binDir(bin, remote.engines ?? ['podman'])
+      if (remote.rsync !== false) await writeFile(join(bin, 'rsync'), RSYNC, { mode: 0o755 })
       remoteEnv[target] = {
         arch: remote.arch ?? 'x86_64',
         path: [bin, shared, tools].join(delimiter),

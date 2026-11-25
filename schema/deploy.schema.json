@@ -155,6 +155,7 @@
         "container_build": {
           "type": "object",
           "properties": {
+            "location": { "enum": ["local", "remote"] },
             "file": { "type": "string", "minLength": 1 },
             "context": { "type": "string", "minLength": 1 },
             "target": { "type": "string", "minLength": 1 },

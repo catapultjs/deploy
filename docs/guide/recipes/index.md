@@ -40,9 +40,9 @@ Recipes are importable modules that register tasks. Application recipes usually 
 | `nextjs_local`                                              | Local                                              | Recipe uploads standalone output with SCP; optional archive | Node.js with a process manager                         |
 | `astro_static`, `nextjs_static`, `nuxt_static`              | Local                                              | Core SCP uploads the generated static directory             | Static web server                                      |
 | `vitepress`                                                 | Local                                              | Recipe uploads generated documentation with SCP             | Static web server                                      |
-| `compose`                                                   | Local image build                                  | Recipe streams the image over SSH, or through a registry    | Docker or Podman with Compose                          |
-| `container`                                                 | Local image build                                  | Recipe streams the image over SSH, or through a registry    | Docker or Podman containers                            |
-| `quadlet`                                                   | Local image build                                  | Recipe streams the image over SSH, or through a registry    | Podman containers run by systemd                       |
+| `compose`                                                   | Local, or on the servers                           | Recipe streams the image over SSH, or through a registry    | Docker or Podman with Compose                          |
+| `container`                                                 | Local, or on the servers                           | Recipe streams the image over SSH, or through a registry    | Docker or Podman containers                            |
+| `quadlet`                                                   | Local, or on the servers                           | Recipe streams the image over SSH, or through a registry    | Podman containers run by systemd                       |
 
 Choose one provider of `deploy:update_code`. Do not combine Git or rsync with a recipe that already owns artifact delivery unless you deliberately replace its pipeline. A Git transfer deploys repository content, not your locally generated output.
 
