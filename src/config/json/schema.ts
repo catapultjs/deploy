@@ -66,6 +66,7 @@ const containerService: AnySchemaObject = {
   type: 'object',
   properties: {
     command: commandArgs,
+    init: { type: 'boolean' },
     entrypoint: nonEmptyString,
     user: nonEmptyString,
     env: {

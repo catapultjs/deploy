@@ -1,6 +1,7 @@
 /**
  * Local image build, run once per release and platform. Internal to the container recipes.
  */
+import { createHash } from 'node:crypto'
 import { existsSync, readFileSync } from 'node:fs'
 import { join, resolve } from 'node:path'
 import { execa } from 'execa'
@@ -21,9 +22,35 @@ export interface BuildResult {
   ref: string
   engine: Engine
   localId: string
+  /** Hash of the layers and runtime config: stable across identical builds. */
+  contentKey: string
+  /** Whether the image declares a HEALTHCHECK. */
+  healthcheck: boolean
   platform: string
   revision: string | null
   dirty: boolean
+}
+
+/** `{{json .RootFS.Layers}}` and `{{json .Config}}` of an image, on one line each. */
+export const CONTENT_FORMAT = '{{json .RootFS.Layers}}\n{{json .Config}}'
+
+/**
+ * Content identity of a local image. Image IDs are not enough: Docker with the
+ * containerd store identifies an image by its index, which embeds a provenance
+ * attestation that changes on every build even when the image is identical.
+ */
+export function contentKey(inspectOutput: string): string {
+  return `sha256:${createHash('sha256').update(inspectOutput.trim()).digest('hex')}`
+}
+
+export function declaresHealthcheck(inspectOutput: string): boolean {
+  try {
+    const config = JSON.parse(inspectOutput.trim().split('\n').at(-1) ?? 'null')
+    const test = config?.Healthcheck?.Test
+    return Array.isArray(test) && test.length > 0 && test[0] !== 'NONE'
+  } catch {
+    return false
+  }
 }
 
 interface BuildRequest {
@@ -109,6 +136,8 @@ async function build(request: BuildRequest): Promise<BuildResult> {
   }
 
   const args = ['build', '-f', file, '-t', ref, '--platform', request.platform]
+  // Podman builds OCI images by default, which drop HEALTHCHECK.
+  if (engine === 'podman') args.push('--format', 'docker')
   if (options.target) args.push('--target', options.target)
   for (const [name, value] of Object.entries(options.args ?? {})) {
     args.push('--build-arg', `${name}=${value}`)
@@ -121,10 +150,13 @@ async function build(request: BuildRequest): Promise<BuildResult> {
   await run(engine, args, request)
 
   const inspect = await execa(engine, ['image', 'inspect', '--format', '{{.Id}}', ref])
+  const content = await execa(engine, ['image', 'inspect', '--format', CONTENT_FORMAT, ref])
   return {
     ref,
     engine,
     localId: inspect.stdout.trim(),
+    contentKey: contentKey(content.stdout),
+    healthcheck: declaresHealthcheck(content.stdout),
     platform: request.platform,
     revision,
     dirty,

@@ -1,10 +1,11 @@
 import { test } from '@japa/runner'
-import { mkdir, stat, symlink, writeFile } from 'node:fs/promises'
+import { mkdir, readFile, stat, symlink, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { execa } from 'execa'
 import { set } from '../src/store.ts'
 import { imageName, platformFromArch, project, releaseRef } from '../recipes/oci/config.ts'
 import { releaseTags } from '../recipes/oci/cleanup.ts'
+import { contentKey } from '../recipes/oci/build.ts'
 import { type OciEnv, R1, R2, calls, scenario } from './helpers/oci_harness.ts'
 
 test.group('oci — configuration', () => {
@@ -59,6 +60,8 @@ test.group('oci — build and transfer', () => {
           `localhost/app:${R1}`,
           '--platform',
           'linux/amd64',
+          '--format',
+          'docker',
           '--target',
           'production',
           '--build-arg',
@@ -161,10 +164,61 @@ test.group('oci — build and transfer', () => {
     )
   }).timeout(30_000)
 
+  test('skips the transfer when the content is unchanged but the image ID changed', async ({
+    assert,
+  }) => {
+    await scenario(
+      {
+        release: R2,
+        remotes: [{ name: 'web', images: { [`localhost/app:${R1}`]: 'sha256:remote' } }],
+        env: { OCI_BUILD_ID: 'sha256:new-index', OCI_BUILD_CONTENT: 'same-layers' },
+        setup: async (env) => {
+          const previous = join(env.deployPath('web'), 'releases', R1)
+          await mkdir(previous, { recursive: true })
+          await writeFile(
+            join(previous, 'release.json'),
+            JSON.stringify({
+              schemaVersion: 1,
+              images: [
+                {
+                  ref: `localhost/app:${R1}`,
+                  localId: 'sha256:old-index',
+                  contentKey: contentKey('["same-layers"]\n{"Cmd":["node"]}'),
+                  remoteId: 'sha256:remote',
+                },
+              ],
+            })
+          )
+          await symlink(previous, join(env.deployPath('web'), 'current'))
+        },
+      },
+      async (run) => {
+        assert.equal(run.exitCode, 0, run.stderr)
+        assert.lengthOf(calls(run, 'remote-deploy@web', 'load'), 0)
+        assert.include(run.stdout, 'image unchanged')
+        const manifest = await run.manifest()
+        assert.equal(manifest.images[0].contentKey, contentKey('["same-layers"]\n{"Cmd":["node"]}'))
+      }
+    )
+  }).timeout(30_000)
+
+  test('warns when the server drops the image healthcheck', async ({ assert }) => {
+    const config = '{"Cmd":["node"],"Healthcheck":{"Test":["CMD","true"]}}'
+    await scenario({ env: { OCI_IMAGE_CONFIG: config, OCI_DROP_HEALTHCHECK: '1' } }, (run) => {
+      assert.equal(run.exitCode, 0, run.stderr)
+      assert.include(run.stdout, 'HEALTHCHECK is ignored by podman')
+    })
+    await scenario({ env: { OCI_IMAGE_CONFIG: config } }, (run) => {
+      assert.equal(run.exitCode, 0, run.stderr)
+      assert.notInclude(run.stdout, 'HEALTHCHECK is ignored')
+    })
+  }).timeout(30_000)
+
   test('builds with the other local engine and uses its save syntax', async ({ assert }) => {
     await scenario({ localEngines: ['docker'] }, async (run) => {
       assert.equal(run.exitCode, 0, run.stderr)
       assert.equal(calls(run, 'local', 'build')[0].bin, 'docker')
+      assert.notInclude(calls(run, 'local', 'build')[0].args, '--format')
       assert.deepEqual(calls(run, 'local', 'save')[0].args, ['save', `localhost/app:${R1}`])
       assert.equal(calls(run, 'remote-deploy@web', 'load')[0].bin, 'podman')
     })
@@ -284,8 +338,13 @@ test.group('oci — failures', () => {
 })
 
 test.group('oci — cleanup and rollback', () => {
-  test('removes only stale release tags, on the server and locally', async ({ assert }) => {
+  test('removes only the stale images of the project, on the server and locally', async ({
+    assert,
+  }) => {
     const R0 = '2026-11-24T09-00-00-000Z'
+    const busy = 'localhost/app:2026-11-23T09-00-00-000Z'
+    const gone = 'localhost/app:2026-11-19T09-00-00-000Z'
+    const otherProject = 'localhost/app:2026-11-18T09-00-00-000Z'
     const old = ['2026-11-20T00-00-00-000Z', '2026-11-21T00-00-00-000Z', '2026-11-22T00-00-00-000Z']
     await scenario(
       {
@@ -296,29 +355,39 @@ test.group('oci — cleanup and rollback', () => {
             name: 'web',
             images: {
               [`localhost/app:${R0}`]: 'sha256:r0',
-              'localhost/app:2026-11-23T09-00-00-000Z': 'sha256:busy',
+              [busy]: 'sha256:busy',
+              [otherProject]: 'sha256:other-project',
               'localhost/app:stable': 'sha256:stable',
               [`localhost/other:${R0}`]: 'sha256:other',
             },
           },
         ],
+        registry: [`localhost/app:${R0}`, busy, gone],
         localImages: Object.fromEntries(
           old.map((tag) => [`localhost/app:${tag}`, `sha256:${tag}`])
         ),
-        env: { OCI_IN_USE: 'localhost/app:2026-11-23T09-00-00-000Z' },
+        otherProjectImages: [`localhost/app:${old[0]}`],
+        env: { OCI_IN_USE: busy },
       },
       async (run) => {
         assert.equal(run.exitCode, 0, run.stderr)
-        assert.include(run.stdout, 'could not remove localhost/app:2026-11-23T09-00-00-000Z')
+        assert.include(run.stdout, `could not remove ${busy}`)
         assert.sameMembers(Object.keys(await run.images('web')), [
           `localhost/app:${R1}`,
-          'localhost/app:2026-11-23T09-00-00-000Z',
+          busy,
+          otherProject,
           'localhost/app:stable',
           `localhost/other:${R0}`,
         ])
+        const registry = await readFile(
+          join(run.env.deployPath('web'), '.catapult', 'images'),
+          'utf8'
+        )
+        assert.sameMembers(registry.trim().split('\n'), [busy, `localhost/app:${R1}`])
         assert.sameMembers(Object.keys(await run.images('local')), [
           `localhost/app:${R1}`,
           `localhost/app:${old[2]}`,
+          `localhost/app:${old[0]}`,
         ])
       }
     )

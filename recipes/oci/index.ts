@@ -27,7 +27,7 @@ import {
 } from './config.ts'
 import { checkHost, hostFacts } from './engine.ts'
 import { buildOnce, builtImage, revisionInfo } from './build.ts'
-import { pullSource, remoteImageId, remoteTag, streamImage } from './transfer.ts'
+import { pullSource, remoteHealthcheck, remoteImageId, remoteTag, streamImage } from './transfer.ts'
 import {
   MANIFEST_FILE,
   type ManifestImage,
@@ -35,7 +35,7 @@ import {
   readManifest,
   writeManifest,
 } from './manifest.ts'
-import { cleanupLocal, cleanupRemote } from './cleanup.ts'
+import { cleanupLocal, cleanupRemote, registerImage } from './cleanup.ts'
 
 declare module '../../src/types.ts' {
   interface TaskRegistry {
@@ -147,7 +147,11 @@ task('oci:transfer', async ({ host, config, logger, release, paths }: TaskContex
     } else {
       const currentManifest = await readManifest(host, paths.current)
       const previous = currentManifest?.images.find(
-        (candidate) => candidate.localId === built.localId && candidate.ref !== ref
+        (candidate) =>
+          candidate.ref !== ref &&
+          (candidate.contentKey
+            ? candidate.contentKey === built.contentKey
+            : candidate.localId === built.localId)
       )
       if (previous && (await remoteImageId(ctx, previous.ref))) {
         if (verbose >= Verbose.NORMAL) {
@@ -161,11 +165,25 @@ task('oci:transfer', async ({ host, config, logger, release, paths }: TaskContex
       if (!remoteId) throw new Error(`[${host.name}] ${ref} not found on the server after transfer`)
     }
 
-    image = { ref, localId: built.localId, remoteId, platform: built.platform }
+    if (built.healthcheck && !(await remoteHealthcheck(ctx, ref))) {
+      logger.warning(
+        `the image HEALTHCHECK is ignored by ${facts.engine} (OCI image format, e.g. built by Docker with the containerd store): declare the healthcheck in the service configuration instead`,
+        { prefix: host.name }
+      )
+    }
+
+    image = {
+      ref,
+      localId: built.localId,
+      contentKey: built.contentKey,
+      remoteId,
+      platform: built.platform,
+    }
     revision = built.revision
     dirty = built.dirty
   }
 
+  await registerImage(host, paths.cataConfig, ref)
   await writeManifest(host, paths.release, {
     ...manifestExtras(host.name, release),
     schemaVersion: 1,
@@ -184,7 +202,7 @@ task('oci:cleanup', async ({ host, config, logger, release, paths }: TaskContext
   // A failed cleanup must not roll back a healthy release: warn instead.
   try {
     const facts = await hostFacts(host, logger)
-    const removed = await cleanupRemote(host, facts.bin, paths.releases, logger)
+    const removed = await cleanupRemote(host, facts.bin, paths, logger)
     if (removed.length && verbosity(config) >= Verbose.NORMAL) {
       logger.step(host.name, `removed ${removed.length} old image(s)`)
     }

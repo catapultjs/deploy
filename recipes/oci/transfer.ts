@@ -28,6 +28,16 @@ export async function remoteImageId(ctx: Context, ref: string): Promise<string |
   return stdout.trim() || null
 }
 
+/** Whether the image on the server still declares a healthcheck. */
+export async function remoteHealthcheck(ctx: Context, ref: string): Promise<boolean> {
+  const { stdout } = await ssh(
+    ctx.host,
+    `set +e\n${q(ctx.facts.bin)} image inspect --format '{{json .Config.Healthcheck}}' ${q(ref)} 2>/dev/null || true`
+  )
+  const value = stdout.trim()
+  return Boolean(value) && value !== 'null' && !value.includes('"NONE"')
+}
+
 export async function remoteTag(ctx: Context, source: string, target: string): Promise<void> {
   await ssh(ctx.host, `set -e\n${q(ctx.facts.bin)} tag ${q(source)} ${q(target)}`)
 }

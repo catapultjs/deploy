@@ -51,6 +51,18 @@ export async function listContainers(
     })
 }
 
+/** Restart count and start time of each container: they change when it restarts. */
+async function restartMarks(host: Host, facts: RemoteFacts, names: string[]) {
+  const { stdout } = await ssh(
+    host,
+    `set -e\n${q(facts.bin)} container inspect --format '{{.RestartCount}} {{.State.StartedAt}}' ${names.map(q).join(' ')}`
+  )
+  const lines = stdout.split('\n').filter(Boolean)
+  return new Map(names.map((name, index) => [name, lines[index] ?? '']))
+}
+
+const SETTLE_MS = 3_000
+
 export interface WaitOptions {
   host: Host
   facts: RemoteFacts
@@ -64,13 +76,14 @@ export interface WaitOptions {
 
 /**
  * Waits until every matching container runs (and is healthy when it declares a
- * healthcheck), then checks again after a short delay to catch containers
- * crashing right after start. Fails fast on exited or unhealthy containers.
+ * healthcheck), then checks again after a short delay. A container restarted in
+ * between is in a crash loop: with a restart policy it shows as running at every
+ * poll. Fails fast on exited or unhealthy containers.
  */
 export async function waitReady(options: WaitOptions): Promise<void> {
   const { host, facts, filterSets, timeoutSeconds, logger, verbose, logsTask } = options
   const deadline = Date.now() + timeoutSeconds * 1000
-  let confirmed = false
+  let marks: Map<string, string> | null = null
 
   while (true) {
     const list = await listContainers(host, facts, filterSets)
@@ -84,16 +97,32 @@ export async function waitReady(options: WaitOptions): Promise<void> {
 
     const pending = list.filter((c) => containerState(c.state, c.status) === 'pending')
     if (!pending.length) {
-      if (confirmed) {
-        if (verbose >= Verbose.NORMAL) logger.step(host.name, `${list.length} container(s) ready`)
-        return
+      const current = await restartMarks(
+        host,
+        facts,
+        list.map((c) => c.name)
+      )
+      if (marks) {
+        const previous = marks
+        const restarted = list.filter(
+          (c) => previous.has(c.name) && previous.get(c.name) !== current.get(c.name)
+        )
+        if (restarted.length) {
+          throw new Error(
+            `[${host.name}] containers restarted while starting (crash loop): ${restarted.map((c) => c.name).join(', ')}. See \`cata task ${logsTask}\``
+          )
+        }
+        if (list.every((c) => previous.has(c.name))) {
+          if (verbose >= Verbose.NORMAL) logger.step(host.name, `${list.length} container(s) ready`)
+          return
+        }
       }
-      confirmed = true
-      await sleep(2_000)
+      marks = current
+      await sleep(SETTLE_MS)
       continue
     }
 
-    confirmed = false
+    marks = null
     if (Date.now() >= deadline) {
       const details = pending.map((c) => `${c.name} (${c.status || c.state})`).join(', ')
       throw new Error(`[${host.name}] containers not ready after ${timeoutSeconds}s: ${details}`)

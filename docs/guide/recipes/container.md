@@ -27,6 +27,7 @@ set('shared_dirs', ['storage'])
 set('container_services', {
   web: {
     command: ['node', 'bin/server.js'],
+    init: true,
     env: { PORT: '3333' },
     env_file: ['.env'],
     ports: ['127.0.0.1:3333:3333'],
@@ -34,6 +35,7 @@ set('container_services', {
   },
   worker: {
     command: ['node', 'ace', 'queue:work'],
+    init: true,
     env_file: ['.env'],
   },
 })
@@ -61,7 +63,7 @@ Add a `.containerignore` (or `.dockerignore`) that excludes at least `.env` and 
 2. `shared_dirs` / `shared_files` are linked into the release. The `env` values of each service are written to `container/<service>.env` in the release, readable by the deploy user only.
 3. The optional migration runs in a one-off container of the new image, on the project network, with the service's env files, user and volumes. A failure stops the deployment before publication.
 4. After publication, each service container (`<container_project>-<service>`) is stopped, removed and started again from the new image. Containers of services removed from `container_services` are stopped and removed.
-5. Catapult waits until every container runs, and is healthy when the image declares a healthcheck. A container that crashes right after start fails the deployment and triggers the automatic rollback.
+5. Catapult waits until every container runs, and is healthy when the image declares a healthcheck, then checks again 3 seconds later. A container that exits, becomes unhealthy, or restarts in between (a crash loop hidden by the restart policy) fails the deployment and triggers the automatic rollback.
 
 All services share a network named after `container_project`, so they reach each other by container name. Ports are released between stop and start: expect a short interruption on each deployment.
 
@@ -103,6 +105,7 @@ Manual tasks run against the current release: `npx cata task container:logs`. Fo
 | Option       | Type                     | Default    | Description                                                      |
 | ------------ | ------------------------ | ---------- | ---------------------------------------------------------------- |
 | `command`    | `string[]`               | image CMD  | Command and arguments, passed without shell                      |
+| `init`       | `boolean`                | `false`    | Runs an init process as PID 1 (signal forwarding, zombie reaping) |
 | `entrypoint` | `string`                 | image      | Executable replacing the image entrypoint                        |
 | `user`       | `string`                 | image      | `user` or `uid:gid`                                              |
 | `env`        | `Record<string, string>` | `{}`       | Non-secret variables, written to an env file of the release      |
@@ -113,6 +116,8 @@ Manual tasks run against the current release: `npx cata task container:logs`. Fo
 | `labels`     | `Record<string, string>` | `{}`       | Extra labels (the `com.catapultjs.` prefix is reserved)          |
 
 Keep secrets in `env_file` (typically a shared `.env`), never in `env`: values are passed as env files, never on the command line. Relative volume sources resolve inside the release directory: point them to `shared_dirs` entries to keep data across releases, or use named volumes.
+
+Enable `init` for processes that do not handle `SIGTERM`, such as Node.js running as PID 1: without it, each stop waits `container_stop_timeout` seconds before the container is killed.
 
 Labels apply to service containers only, not to the one-off migration container, so reverse-proxy routing labels never target it.
 
@@ -147,4 +152,5 @@ A rollback does not restore data or reverse migrations. Write migrations that th
 
 - Containers are replaced in place: a short interruption happens on fixed ports.
 - One image per project. Use `compose` for stacks combining several images.
-- Healthchecks come from the image (`HEALTHCHECK`); CPU and memory limits, extra networks and engine-specific options are not supported yet.
+- Healthchecks come from the image (`HEALTHCHECK`). Podman ignores it for OCI images, the format produced by Docker with the containerd image store: Catapult warns when it is lost. Build with Podman locally to keep it.
+- CPU and memory limits, extra networks and engine-specific options are not supported yet.

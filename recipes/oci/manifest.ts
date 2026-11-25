@@ -13,6 +13,8 @@ export interface ManifestImage {
   ref: string
   /** Image ID on the build machine; null for a source image pulled on the server. */
   localId: string | null
+  /** Content hash of the local image (layers and config), used to skip unchanged transfers. */
+  contentKey?: string
   /** Image ID on the server. Compare IDs from the same side only. */
   remoteId: string
   platform: string

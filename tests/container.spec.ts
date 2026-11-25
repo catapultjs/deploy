@@ -85,7 +85,11 @@ test.group('container — deploy', () => {
               volumes: ['./storage:/app/storage', 'data:/data:ro'],
               labels: { 'traefik.enable': 'true' },
             },
-            worker: { command: ['node', 'ace', 'queue:work'], restart: 'unless-stopped' },
+            worker: {
+              command: ['node', 'ace', 'queue:work'],
+              restart: 'unless-stopped',
+              init: true,
+            },
           },
           container_migrate: { service: 'web', command: ['node', 'ace', 'migration:run'] },
         },
@@ -158,7 +162,14 @@ test.group('container — deploy', () => {
           'node',
           'bin/server.js',
         ])
-        assert.includeMembers(worker, ['--name', 'app-worker', '--restart', 'unless-stopped'])
+        assert.includeMembers(worker, [
+          '--name',
+          'app-worker',
+          '--restart',
+          'unless-stopped',
+          '--init',
+        ])
+        assert.notInclude(web, '--init')
         assert.lengthOf(
           calls(run, 'remote-deploy@web', 'network').filter((c) => c.args[1] === 'create'),
           1

@@ -43,6 +43,7 @@ const TOOLS = [
   'dirname',
   'readlink',
   'ln',
+  'touch',
 ]
 
 // State is kept per side ("local" or "remote-<ssh target>") in OCI_STATE; every call
@@ -85,10 +86,11 @@ const config = JSON.parse(process.env.OCI_COMPOSE_CONFIG || '{"services":{}}')
 const statuses = JSON.parse(process.env.OCI_CONTAINER_STATUS || '{}')
 
 if (cmd === 'compose') {
+  // Like podman compose, whatever the provider: the banner mentions podman-compose(1).
+  if (name === 'podman') process.stderr.write('\u001b[4m>>>> Executing external compose provider "/usr/bin/provider". Please see podman-compose(1) for how to disable this message. <<<<\\n\u001b[0m')
   switch (sub) {
     case 'version':
       if (process.env.OCI_COMPOSE_MISSING) fail('no compose provider')
-      if (name === 'podman') process.stderr.write('>>>> Executing external compose provider "/usr/bin/docker-compose" <<<<\\n')
       console.log(process.env.OCI_COMPOSE_VERSION || 'Docker Compose version v2.29.0')
       break
     case 'config':
@@ -117,14 +119,38 @@ if (cmd === 'compose') {
 switch (cmd) {
   case '--version': console.log(name + ' version 9.9.9'); break
   case 'info': console.log(process.env.OCI_STATE); break
-  case 'build': state.images[rest[rest.indexOf('-t') + 1]] = process.env.OCI_BUILD_ID || 'sha256:built'; save(); break
-  case 'image': { const ref = rest.at(-1); if (!state.images[ref]) fail('no such image ' + ref); console.log(state.images[ref]); break }
+  case 'build': {
+    const ref = rest[rest.indexOf('-t') + 1]
+    state.images[ref] = process.env.OCI_BUILD_ID || 'sha256:built'
+    state.labels = state.labels || {}
+    state.labels[ref] = rest[rest.indexOf('--label') + 1]
+    save()
+    break
+  }
+  case 'image': {
+    const ref = rest.at(-1)
+    if (!state.images[ref]) fail('no such image ' + ref)
+    const format = rest[rest.indexOf('--format') + 1] || ''
+    const config = process.env.OCI_IMAGE_CONFIG || '{"Cmd":["node"]}'
+    if (format.includes('RootFS')) console.log(JSON.stringify([process.env.OCI_BUILD_CONTENT || 'layer-' + state.images[ref]]) + '\\n' + config)
+    else if (format.includes('Healthcheck')) console.log(side !== 'local' && process.env.OCI_DROP_HEALTHCHECK ? 'null' : JSON.stringify(JSON.parse(config).Healthcheck || null))
+    else console.log(state.images[ref])
+    break
+  }
   case 'save': { const ref = rest.at(-1); if (!state.images[ref]) fail('no such image'); process.stdout.write('ARCHIVE ' + ref + ' ' + state.images[ref] + '\\n' + 'x'.repeat(64 * 1024)); break }
   case 'load': { const data = fs.readFileSync(0, 'utf8'); const m = data.match(/^ARCHIVE (\\S+) (\\S+)\\n/); if (!m) fail('invalid archive'); state.images[m[1]] = m[2]; save(); console.log('Loaded image: ' + m[1]); break }
   case 'tag': if (!state.images[rest[0]]) fail('no such image'); state.images[rest[1]] = state.images[rest[0]]; save(); break
   case 'pull': state.images[rest[0]] = 'sha256:pulled'; save(); break
   case 'rmi': if ((process.env.OCI_IN_USE || '').split(',').includes(rest[0])) fail('image is in use'); delete state.images[rest[0]]; save(); break
-  case 'images': for (const ref of Object.keys(state.images)) if (ref.startsWith(rest.at(-1) + ':')) console.log(ref); break
+  case 'images': {
+    const label = rest.includes('--filter') ? rest[rest.indexOf('--filter') + 1].replace(/^label=/, '') : ''
+    for (const ref of Object.keys(state.images)) {
+      if (!ref.startsWith(rest.at(-1) + ':')) continue
+      if (label && (state.labels || {})[ref] !== label) continue
+      console.log(ref)
+    }
+    break
+  }
   case 'ps': {
     const filters = []
     for (let i = 0; i < rest.length; i++) if (rest[i] === '--filter') filters.push(rest[i + 1].replace(/^label=/, ''))
@@ -168,6 +194,16 @@ switch (cmd) {
   case 'stop': case 'start': case 'restart': if (!state.containers[rest.at(-1)]) fail('no such container ' + rest.at(-1)); break
   case 'rm': if (!state.containers[rest.at(-1)]) fail('no such container'); delete state.containers[rest.at(-1)]; save(); break
   case 'logs': console.log('log line'); break
+  case 'container': {
+    const restarting = (process.env.OCI_RESTARTING || '').split(',')
+    for (const name of rest.slice(3)) {
+      const c = state.containers[name]
+      if (!c) fail('no such container ' + name)
+      const service = c.labels['com.docker.compose.service'] || c.labels['com.catapultjs.service']
+      console.log(restarting.includes(service) ? c.polls + ' t' + c.polls : '0 t0')
+    }
+    break
+  }
   default: fail('unknown command ' + cmd)
 }
 `
@@ -223,6 +259,10 @@ export interface Scenario {
   remotes?: Remote[]
   localEngines?: string[]
   localImages?: Record<string, string>
+  /** Local images built by another project (different project label). */
+  otherProjectImages?: string[]
+  /** Refs recorded in the server registry (.catapult/images) of each host before running. */
+  registry?: string[]
   tasks?: string[]
   rollback?: { host: string; target: string }
   env?: Record<string, string>
@@ -298,7 +338,19 @@ async function runOci(options: Scenario) {
       if (options.git === 'dirty') await writeFile(join(projectDir, 'dirty.txt'), 'x')
     }
     if (options.localImages) {
-      await writeFile(join(state, 'local.json'), JSON.stringify({ images: options.localImages }))
+      // Local images carry the project label of the "app" project unless listed in otherProjectImages.
+      const labels = Object.fromEntries(
+        Object.keys(options.localImages).map((ref) => [
+          ref,
+          options.otherProjectImages?.includes(ref)
+            ? 'com.catapultjs.project=other'
+            : 'com.catapultjs.project=app',
+        ])
+      )
+      await writeFile(
+        join(state, 'local.json'),
+        JSON.stringify({ images: options.localImages, labels })
+      )
     }
 
     const remoteEnv: Record<string, { arch: string; path: string }> = {}
@@ -312,6 +364,12 @@ async function runOci(options: Scenario) {
       }
       await mkdir(join(env.deployPath(remote.name), 'releases'), { recursive: true })
       await mkdir(join(env.deployPath(remote.name), '.catapult'), { recursive: true })
+      if (options.registry) {
+        await writeFile(
+          join(env.deployPath(remote.name), '.catapult', 'images'),
+          options.registry.map((ref) => `${ref}\n`).join('')
+        )
+      }
       if (remote.images || remote.containers) {
         const containers = Object.fromEntries(
           Object.entries(remote.containers ?? {}).map(([name, container]) => [

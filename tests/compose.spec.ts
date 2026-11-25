@@ -215,7 +215,8 @@ test.group('compose — failures', () => {
       },
       async (run) => {
         assert.equal(run.exitCode, 1)
-        assert.include(run.stderr, 'compose-run failed')
+        assert.include(run.stderr, 'compose run failed: compose-run failed')
+        assert.notInclude(run.stderr, '>>>>')
         assert.lengthOf(composeCalls(run, 'web', 'up'), 0)
         assert.isNull(await current(run.env))
       }
@@ -232,6 +233,21 @@ test.group('compose — failures', () => {
       (run) => {
         assert.equal(run.exitCode, 1)
         assert.include(run.stderr, 'containers failed: app-web-1 (Exited (1) 1 second ago)')
+      }
+    )
+  }).timeout(60_000)
+
+  test('detects a crash loop hidden by the restart policy', async ({ assert }) => {
+    await scenario(
+      {
+        ...COMPOSE,
+        compose: { services: { web: { build: {} }, db: { image: 'postgres:16' } } },
+        statuses: { web: 'running|Up Less than a second' },
+        env: { OCI_RESTARTING: 'web' },
+      },
+      (run) => {
+        assert.equal(run.exitCode, 1)
+        assert.include(run.stderr, 'containers restarted while starting (crash loop): app-web-1')
       }
     )
   }).timeout(60_000)
@@ -282,29 +298,42 @@ test.group('compose — failures', () => {
 })
 
 test.group('compose — provider and rollback', () => {
-  test('warns about the Podman socket and restart service', async ({ assert }) => {
+  test('requires the Podman socket for the docker-compose provider', async ({ assert }) => {
+    const check = { recipe: 'compose', tasks: ['oci:check', 'compose:check'] }
+    await scenario({ ...check, env: { FAKE_SOCKET: 'inactive' } }, (run) => {
+      assert.equal(run.exitCode, 1)
+      assert.include(run.stderr, 'the docker-compose provider needs the Podman API')
+    })
     await scenario(
       {
-        recipe: 'compose',
-        tasks: ['oci:check', 'compose:check'],
-        env: { FAKE_SOCKET: 'inactive', FAKE_RESTART: 'disabled' },
+        ...check,
+        env: { FAKE_SOCKET: 'inactive', OCI_COMPOSE_VERSION: 'podman-compose version 1.6.0' },
       },
       (run) => {
         assert.equal(run.exitCode, 0, run.stderr)
-        assert.include(run.stdout, 'podman.socket is not active')
-        assert.include(run.stdout, 'podman-restart.service is not enabled')
+        assert.include(run.stdout, 'podman-compose version 1.6.0')
       }
     )
     await scenario(
       {
+        ...check,
+        remotes: [{ name: 'web', engines: ['docker'] }],
+        env: { FAKE_SOCKET: 'inactive' },
+      },
+      (run) => assert.equal(run.exitCode, 0, run.stderr)
+    )
+  }).timeout(60_000)
+
+  test('warns when podman-restart.service is disabled', async ({ assert }) => {
+    await scenario(
+      {
         recipe: 'compose',
         tasks: ['oci:check', 'compose:check'],
-        remotes: [{ name: 'web', engines: ['docker'] }],
-        env: { FAKE_SOCKET: 'inactive', FAKE_RESTART: 'disabled' },
+        env: { FAKE_RESTART: 'disabled' },
       },
       (run) => {
         assert.equal(run.exitCode, 0, run.stderr)
-        assert.notInclude(run.stdout, 'podman')
+        assert.include(run.stdout, 'podman-restart.service is not enabled')
       }
     )
   }).timeout(60_000)

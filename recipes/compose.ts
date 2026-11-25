@@ -232,12 +232,33 @@ function verbosity(ctx: { config: TaskContext['config'] }): number {
   return ctx.config.verbose ?? Verbose.SILENT
 }
 
+const ANSI_CODES = new RegExp(`${String.fromCharCode(27)}\\[[0-9;]*m`, 'g')
+
+/** Removes ANSI codes and the banner `podman compose` prints before running a provider. */
+export function cleanOutput(output: string): string {
+  return output
+    .replaceAll(ANSI_CODES, '')
+    .split('\n')
+    .filter((line) => !line.includes('>>>>'))
+    .join('\n')
+    .trim()
+}
+
 async function composeOutput(target: Stack, subcommand: string, withOverride = true) {
-  const { stdout } = await ssh(
-    target.host,
-    `set -e\n${compose(target, withOverride)} ${subcommand}`
-  )
-  return stdout
+  try {
+    const { stdout } = await ssh(
+      target.host,
+      `set -e\n${compose(target, withOverride)} ${subcommand}`
+    )
+    return stdout
+  } catch (error) {
+    const stderr = cleanOutput(String((error as { stderr?: unknown }).stderr ?? ''))
+    const name = subcommand.split(' ')[0]
+    throw new Error(
+      `[${target.host.name}] compose ${name} failed: ${stderr || (error as Error).message}`,
+      { cause: error }
+    )
+  }
 }
 
 function lines(output: string): string[] {
@@ -263,21 +284,30 @@ async function checkCompose(host: Host, logger: CatapultLogger): Promise<string>
     `set +e
 out=$(${q(facts.bin)} compose version 2>&1)
 echo "status=$?"
-echo "version=$(printf '%s\\n' "$out" | grep -v '^>>>>' | head -n 1)"
-case "$out" in
-  *podman-compose*) echo "provider=podman-compose" ;;
-  *docker-compose*|*"Docker Compose"*) echo "provider=docker-compose" ;;
-esac
+printf '%s\n' "$out" | sed 's/^/line=/'
 if [ ${q(facts.engine)} = podman ] && command -v systemctl >/dev/null 2>&1; then
   echo "socket=$(${systemctl} is-active podman.socket 2>/dev/null)"
 fi`
   )
+  const outputLines = stdout.split('\n')
   const values = Object.fromEntries(
-    stdout
-      .split('\n')
-      .filter((line) => line.includes('='))
+    outputLines
+      .filter((line) => line.includes('=') && !line.startsWith('line='))
       .map((line) => [line.slice(0, line.indexOf('=')), line.slice(line.indexOf('=') + 1).trim()])
   )
+  // The Podman banner mentions podman-compose(1) whatever the provider: read the
+  // provider from its own version line instead.
+  const output = cleanOutput(
+    outputLines
+      .filter((line) => line.startsWith('line='))
+      .map((line) => line.slice(5))
+      .join('\n')
+  )
+  const version = output
+    .split('\n')
+    .find((line) => /compose/i.test(line))
+    ?.trim()
+  const provider = /podman-compose/i.test(version ?? '') ? 'podman-compose' : 'docker-compose'
 
   if (values.status !== '0') {
     throw new Error(
@@ -289,16 +319,15 @@ fi`
 
   if (facts.engine === 'podman') {
     const user = facts.rootless ? ' --user' : ''
-    if (values.provider === 'docker-compose' && values.socket && values.socket !== 'active') {
-      logger.warning(
-        `the docker-compose provider talks to the Podman API but podman.socket is not active. Run \`systemctl${user} enable --now podman.socket\` on the server`,
-        { prefix: host.name }
+    if (provider === 'docker-compose' && values.socket && values.socket !== 'active') {
+      throw new Error(
+        `[${host.name}] the docker-compose provider needs the Podman API but podman.socket is not active. Run \`systemctl${user} enable --now podman.socket\` on the server`
       )
     }
   }
 
   await checkPodmanRestart(host, facts, logger)
-  return values.version || 'compose'
+  return version || 'compose'
 }
 
 // ---------------------------------------------------------------------------
@@ -324,6 +353,57 @@ export function detectImageServices(services: Record<string, { image?: string; b
       return repo === name || repo === `localhost/${name}` || service.image === source
     })
     .map(([service]) => service)
+}
+
+/**
+ * Extracts `image` and `build` of each service from the YAML printed by
+ * `compose config`. Minimal on purpose: only needed for providers without JSON
+ * output (podman-compose), whose output is a plain resolved mapping.
+ */
+export function yamlServices(yaml: string): Record<string, { image?: string; build?: boolean }> {
+  const result: Record<string, { image?: string; build?: boolean }> = {}
+  let inServices = false
+  let serviceIndent = -1
+  let keyIndent = -1
+  let current: string | null = null
+
+  for (const raw of yaml.split('\n')) {
+    const line = raw.trim()
+    if (!line || line.startsWith('#')) continue
+    const indent = raw.length - raw.trimStart().length
+    if (indent === 0) {
+      inServices = line === 'services:'
+      serviceIndent = -1
+      current = null
+      continue
+    }
+    if (!inServices) continue
+    if (serviceIndent === -1) serviceIndent = indent
+    if (indent === serviceIndent) {
+      const match = line.match(/^['"]?([^'":]+)['"]?:\s*$/)
+      current = match ? match[1] : null
+      if (current) result[current] = {}
+      keyIndent = -1
+      continue
+    }
+    if (!current || indent < serviceIndent) continue
+    if (keyIndent === -1) keyIndent = indent
+    if (indent !== keyIndent) continue
+    const match = line.match(/^(image|build):\s*(.*)$/)
+    if (match?.[1] === 'build') result[current].build = true
+    if (match?.[1] === 'image') result[current].image = match[2].replace(/^['"]|['"]$/g, '')
+  }
+  return result
+}
+
+/** Resolved services, from JSON when the provider supports it, else from YAML. */
+async function resolvedServices(target: Stack) {
+  try {
+    const config = JSON.parse(await composeOutput(target, 'config --format json', false))
+    return (config.services ?? {}) as Record<string, { image?: string; build?: unknown }>
+  } catch {
+    return yamlServices(await composeOutput(target, 'config', false))
+  }
 }
 
 function overrideYaml(services: string[], ref: string): string {
@@ -457,8 +537,7 @@ task('compose:override', async ({ host, logger, release, paths }: TaskContext) =
       throw new Error(`compose_image_services lists unknown services: ${unknown.join(', ')}`)
     }
   } else {
-    const config = JSON.parse(await composeOutput(target, 'config --format json', false))
-    services = detectImageServices(config.services ?? {})
+    services = detectImageServices(await resolvedServices(target))
   }
 
   if (!services.length) {
@@ -544,7 +623,7 @@ task('compose:logs', async ({ host, logger, release, paths }: TaskContext) => {
     target,
     `logs --no-color --tail ${logLines()} ${serviceArgs(targetServices())} 2>&1`
   )
-  logger.log(output.trim())
+  logger.log(cleanOutput(output))
 })
 
 desc('Displays the containers of the stack')

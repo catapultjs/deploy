@@ -42,12 +42,14 @@ export default defineConfig({
 services:
   web:
     build: .
+    init: true
     command: ['node', 'bin/server.js']
     env_file: .env
     ports: ['127.0.0.1:3333:3333']
     restart: always
   worker:
     image: myapp
+    init: true
     command: ['node', 'ace', 'queue:work']
     env_file: .env
     restart: always
@@ -63,6 +65,8 @@ Run `npx cata deploy:setup` once, put the production `.env` in `shared/.env` on 
 
 Add a `.containerignore` (or `.dockerignore`) that excludes at least `.env` and `node_modules`: the build context is your local directory, uncommitted changes included.
 
+Set `init: true` on Node.js services: without an init process, Node.js as PID 1 ignores `SIGTERM` and every container replacement waits 10 seconds before the container is killed.
+
 ## How it works
 
 1. The image is built locally once per deployment as `localhost/<container_image>:<release>`, for the architecture of the servers.
@@ -70,9 +74,11 @@ Add a `.containerignore` (or `.dockerignore`) that excludes at least `.env` and 
 3. Compose files are uploaded into the release directory, and `shared_dirs` / `shared_files` are linked into it.
 4. A generated override, `compose.catapult.yml`, pins the release image (`pull_policy: never`) for the services that use it: services with a `build` section, and services whose image is `container_image` (any tag). Your Compose files are never modified.
 5. External images are pulled, the optional migration runs in a one-off container, `current` switches to the release, then `up -d --no-build` starts the stack.
-6. Catapult waits until every container runs, and is healthy when it declares a healthcheck. A container that crashes right after start fails the deployment and triggers the automatic rollback.
+6. Catapult waits until every container runs, and is healthy when it declares a healthcheck, then checks again 3 seconds later. A container that exits, becomes unhealthy, or restarts in between (a crash loop hidden by `restart: always`) fails the deployment and triggers the automatic rollback. Crashes happening later are left to `deploy:healthcheck`.
 
 Each release contains its Compose files, the override and a `release.json` manifest listing the image IDs. No secret is written to the manifest.
+
+Images are cleaned per project: the server keeps a list of the images each project created (`.catapult/images`), so two projects sharing an image name never remove each other's images.
 
 **Pipeline**
 
@@ -145,9 +151,13 @@ All keys are available in [JSON configurations](/guide/json-configuration) with 
 Catapult checks the server but never installs or changes anything on it.
 
 - **Docker**: the Compose plugin (`docker compose version`), and a deploy user allowed to use Docker.
-- **Podman**: a Compose provider for `podman compose` (`docker-compose` or `podman-compose`). With `docker-compose`, the Podman API socket must be active: `systemctl --user enable --now podman.socket`.
+- **Podman**: a Compose provider for `podman compose` (`docker-compose` or `podman-compose`). With `docker-compose`, the Podman API socket must be active, otherwise `compose:check` fails: `systemctl --user enable --now podman.socket`.
 - **Podman after a reboot**: restart policies are applied by `podman-restart.service`. Enable it with `systemctl --user enable podman-restart.service` (without `--user` for rootful Podman).
 - **Rootless Podman**: enable lingering so containers survive the end of the SSH session: `sudo loginctl enable-linger <user>`.
+
+Providers name containers differently (`app-web-1` with `docker-compose`, `app_web_1` with `podman-compose`). Before switching provider on a server, run `npx cata task compose:down`, otherwise the old containers keep their ports.
+
+**Image healthchecks with Podman**: Podman ignores the `HEALTHCHECK` of OCI images, the format produced by Docker with the containerd image store (the default on recent installations). Catapult warns when the healthcheck of your image is lost on the server: declare it in `compose.yml` (`healthcheck:`) instead. Images built locally with Podman keep it (Catapult builds them in Docker format).
 
 ## Data and volumes
 
