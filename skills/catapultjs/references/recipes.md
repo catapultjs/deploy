@@ -752,6 +752,24 @@ Runs containers from one image with Docker or Podman, without Compose. Owns its 
 
 Manual tasks: `container:start`, `container:stop`, `container:restart`, `container:remove` (keeps volumes and network), `container:logs`, `container:status`. Podman reboots need `podman-restart.service` enabled (checked, warning only); rootless needs linger.
 
+## `recipes/quadlet`
+
+```typescript
+import '@catapultjs/deploy/recipes/quadlet'
+```
+
+Runs the release image as systemd services with Podman Quadlet. Owns its whole pipeline: never combine with `git`, `rsync` or an application recipe. Same image keys and flow as `recipes/compose` (local build once, SSH stream, `release.json`, cleanup); `container_engine` is forced to `podman`. Full guide: https://catapultjs.com/guide/recipes/quadlet
+
+Put `.container`, `.network`, `.volume`, `.pod` files in `quadlet_path` (flat, `.build`/`.image`/`.kube` and `ServiceName=` rejected). Prefix file names with the project (unit names are global; conflicts with another project's files fail `quadlet:check`). Placeholders rendered per release: `{{image}}` (use `Image={{image}}`; another tag of the project repository is rejected), `{{release}}`, `{{release_path}}` (shared files linked, e.g. `EnvironmentFile={{release_path}}/.env`), `{{shared_path}}`, `{{base_path}}`, `{{project}}`; unknown placeholders fail. Catapult adds `com.catapultjs.project`/`service` labels to `.container` files, validates with the Quadlet generator (`-dryrun`) before the build, installs into `~/.config/containers/systemd/<project>/` (rootless) or `/etc/containers/systemd/<project>/` (SSH as root; sudo unsupported), daemon-reloads, restarts only changed units, uninstalls removed ones, waits for units active (crash loop: 2 `NRestarts` while waiting) and containers healthy. Boot via `[Install] WantedBy=default.target` (warned if missing, except oneshot). Use `PodmanArgs=--init` for Node.js and `HealthCmd=none` on workers sharing the web image. No pre-publication migration: use a oneshot `.container` (`Type=oneshot`, `RemainAfterExit=yes`) required by services. Rollback reinstalls the target's rendered files after `reset-failed`.
+
+| Key | Type | Default | Description |
+| --- | --- | --- | --- |
+| `quadlet_path` | `string` | `'quadlet'` | Local directory of Quadlet files |
+| `quadlet_wait_timeout` | `number` | `60` | Seconds to wait for readiness |
+| `quadlet_logs_lines` | `number` | `100` | Journal lines for `quadlet:logs` |
+
+Manual tasks: `quadlet:start`, `quadlet:stop`, `quadlet:restart`, `quadlet:uninstall` (keeps volumes), `quadlet:logs` (journalctl), `quadlet:status`. Requirements: Podman 4.4+, systemd, cgroups v2 and linger for rootless.
+
 ---
 
 ## Monorepo pattern

@@ -102,7 +102,7 @@ Top-level contract:
 | `before`   | Optional target-to-task mapping, equivalent to `before()`                                           |
 | `after`    | Optional target-to-task mapping, equivalent to `after()`                                            |
 
-Built-in recipe names accepted by JSON: `adonisjs`, `adonisjs_local`, `astro`, `astro_static`, `caddy`, `compose`, `container`, `directus`, `git`, `nestjs`, `nextjs`, `nextjs_local`, `nextjs_static`, `nuxt`, `nuxt_static`, `pm2`, `redis`, `rsync`, `systemd`, `tanstack`, `vitepress`. Do not use module paths such as `recipes/git`.
+Built-in recipe names accepted by JSON: `adonisjs`, `adonisjs_local`, `astro`, `astro_static`, `caddy`, `compose`, `container`, `directus`, `git`, `nestjs`, `nextjs`, `nextjs_local`, `nextjs_static`, `nuxt`, `nuxt_static`, `pm2`, `quadlet`, `redis`, `rsync`, `systemd`, `tanstack`, `vitepress`. Do not use module paths such as `recipes/git`.
 
 The schema validates known `store` key types and rejects unknown keys. Use TypeScript or JavaScript when a custom recipe needs its own store contract.
 

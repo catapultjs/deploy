@@ -44,6 +44,9 @@ const TOOLS = [
   'readlink',
   'ln',
   'touch',
+  'find',
+  'cmp',
+  'chmod',
 ]
 
 // State is kept per side ("local" or "remote-<ssh target>") in OCI_STATE; every call
@@ -232,12 +235,99 @@ const args = process.argv.slice(2)
 require('node:fs').cpSync(args.at(-2), args.at(-1).replace(/^[^:]+:/, ''), { recursive: true })
 `
 
-const SYSTEMCTL = `#!/bin/sh
-case "$*" in
-  *is-active*podman.socket*) echo "\${FAKE_SOCKET:-active}"; [ "\${FAKE_SOCKET:-active}" = active ] ;;
-  *is-enabled*podman-restart*) echo "\${FAKE_RESTART:-enabled}"; [ "\${FAKE_RESTART:-enabled}" = enabled ] ;;
-  *) exit 1 ;;
-esac
+// systemd for the Quadlet recipe: starting a unit creates the container described by
+// the installed .container file (labels, image) in the engine state. Unit states come
+// from FAKE_UNITS, keyed by "base@release" or "base": "ActiveState|SubState|NRestarts"
+// values separated by ";" are returned on successive polls.
+const SYSTEMCTL = `#!${process.execPath}
+const fs = require('node:fs')
+const path = require('node:path')
+const argv = process.argv.slice(2)
+const side = process.env.OCI_SIDE || 'local'
+fs.appendFileSync(process.env.OCI_LOG, JSON.stringify({ side, bin: 'systemctl', args: argv, cwd: process.cwd() }) + '\\n')
+const all = argv.join(' ')
+if (/is-active.*podman\\.socket/.test(all)) { const v = process.env.FAKE_SOCKET || 'active'; console.log(v); process.exit(v === 'active' ? 0 : 3) }
+if (/is-enabled.*podman-restart/.test(all)) { const v = process.env.FAKE_RESTART || 'enabled'; console.log(v); process.exit(v === 'enabled' ? 0 : 1) }
+const user = argv[0] === '--user'
+const [cmd, ...rest] = user ? argv.slice(1) : argv
+const engineFile = path.join(process.env.OCI_STATE, side + '.json')
+const unitsFile = path.join(process.env.OCI_STATE, 'systemd-' + side + '.json')
+const engine = fs.existsSync(engineFile) ? JSON.parse(fs.readFileSync(engineFile, 'utf8')) : {}
+engine.images = engine.images || {}
+engine.containers = engine.containers || {}
+const polls = fs.existsSync(unitsFile) ? JSON.parse(fs.readFileSync(unitsFile, 'utf8')) : {}
+const dir = user ? path.join(process.env.XDG_CONFIG_HOME || path.join(process.env.HOME, '.config'), 'containers', 'systemd') : '/etc/containers/systemd'
+const find = (current, name) => {
+  if (!fs.existsSync(current)) return null
+  for (const entry of fs.readdirSync(current, { withFileTypes: true })) {
+    const full = path.join(current, entry.name)
+    if (entry.isDirectory()) { const found = find(full, name); if (found) return found }
+    else if (entry.name === name) return full
+  }
+  return null
+}
+const units = rest.filter((arg) => arg.endsWith('.service'))
+const describe = (unit) => {
+  const base = unit.replace(/\\.service$/, '')
+  const file = find(dir, base + '.container')
+  const labels = {}
+  let image = ''
+  for (const line of file ? fs.readFileSync(file, 'utf8').split('\\n') : []) {
+    let m = /^Label=([^=]+)=(.*)$/.exec(line)
+    if (m) labels[m[1]] = m[2]
+    m = /^Image=(.*)$/.exec(line)
+    if (m) image = m[1]
+  }
+  return { base, file, labels, release: image.split(':').pop() }
+}
+const saveEngine = () => fs.writeFileSync(engineFile, JSON.stringify(engine))
+switch (cmd) {
+  case 'show-environment': process.exit(process.env.FAKE_MANAGER === 'no' ? 1 : 0)
+  case 'daemon-reload': case 'reset-failed': break
+  case 'start': case 'restart':
+    for (const unit of units) {
+      const { base, file, labels, release } = describe(unit)
+      if ((process.env.FAKE_UNIT_FAIL || '').split(',').includes(base)) {
+        process.stderr.write('Job for ' + unit + ' failed because the control process exited with error code.\\n')
+        process.exit(1)
+      }
+      if (!file || (cmd === 'start' && engine.containers['systemd-' + base])) continue
+      engine.containers['systemd-' + base] = { labels, release, polls: 0 }
+    }
+    saveEngine()
+    break
+  case 'stop':
+    for (const unit of units) delete engine.containers['systemd-' + unit.replace(/\\.service$/, '')]
+    saveEngine()
+    break
+  case 'show': {
+    const statuses = JSON.parse(process.env.FAKE_UNITS || '{}')
+    const blocks = units.map((unit) => {
+      const { base, release } = describe(unit)
+      const key = base + '@' + release
+      const sequence = (statuses[key] || statuses[base] || 'active|running|0').split(';')
+      const count = polls[key] || 0
+      polls[key] = count + 1
+      const [active, sub, restarts] = sequence[Math.min(count, sequence.length - 1)].split('|')
+      return 'Id=' + unit + '\\nActiveState=' + active + '\\nSubState=' + sub + '\\nNRestarts=' + restarts
+    })
+    fs.writeFileSync(unitsFile, JSON.stringify(polls))
+    console.log(blocks.join('\\n\\n'))
+    break
+  }
+  case 'status': console.log(units.map((unit) => '● ' + unit).join('\\n')); break
+  default: process.exit(1)
+}
+`
+
+// Quadlet generator: logs the unit directory it validates (as cwd), fails on demand.
+const QUADLET = `#!${process.execPath}
+const fs = require('node:fs')
+fs.appendFileSync(process.env.OCI_LOG, JSON.stringify({ side: process.env.OCI_SIDE || 'local', bin: 'quadlet', args: process.argv.slice(2), cwd: process.env.QUADLET_UNIT_DIRS || '' }) + '\\n')
+if (process.env.FAKE_QUADLET_ERROR) {
+  process.stderr.write('quadlet-generator[1]: Loading source unit file x\\nquadlet-generator[1]: ' + process.env.FAKE_QUADLET_ERROR + '\\n')
+  process.exit(1)
+}
 `
 
 export interface Remote {
@@ -256,6 +346,8 @@ export interface OciEnv {
   root: string
   deployPath: (host: string) => string
   releasePath: (host: string, release: string) => string
+  /** Rootless Quadlet directory of the fake servers (they share HOME). */
+  quadletDir: string
 }
 
 export interface Scenario {
@@ -313,6 +405,7 @@ async function runOci(options: Scenario) {
     root,
     deployPath: (host) => join(root, 'srv', host),
     releasePath: (host, release) => join(root, 'srv', host, 'releases', release),
+    quadletDir: join(root, '.config', 'containers', 'systemd'),
   }
 
   try {
@@ -327,6 +420,9 @@ async function runOci(options: Scenario) {
       systemctl: SYSTEMCTL,
       uname: '#!/bin/sh\necho "${FAKE_ARCH:-x86_64}"\n',
       loginctl: '#!/bin/sh\necho "${FAKE_LINGER:-yes}"\n',
+      quadlet: QUADLET,
+      journalctl: '#!/bin/sh\necho "journal: $*"\n',
+      stat: '#!/bin/sh\necho "${FAKE_CGROUP:-cgroup2fs}"\n',
     }
     for (const [name, script] of Object.entries(scripts)) {
       await writeFile(join(shared, name), script, { mode: 0o755 })

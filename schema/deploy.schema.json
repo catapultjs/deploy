@@ -29,6 +29,7 @@
           "nuxt",
           "nuxt_static",
           "pm2",
+          "quadlet",
           "redis",
           "rsync",
           "systemd",
@@ -223,6 +224,9 @@
         "nextjs_server_path": { "type": "string", "minLength": 1 },
         "nextjs_upload_archive": { "type": "boolean" },
         "nuxt_path": { "type": "string" },
+        "quadlet_logs_lines": { "type": "number", "exclusiveMinimum": 0 },
+        "quadlet_path": { "type": "string", "minLength": 1 },
+        "quadlet_wait_timeout": { "type": "number", "exclusiveMinimum": 0 },
         "redis_db": {
           "oneOf": [
             { "type": "integer", "minimum": 0 },

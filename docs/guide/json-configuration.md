@@ -77,6 +77,7 @@ The JSON format accepts this closed list of recipes:
 - `nuxt`
 - `nuxt_static`
 - `pm2`
+- `quadlet`
 - `redis`
 - `rsync`
 - `systemd`

@@ -129,6 +129,7 @@ export default defineConfig({
                 { text: 'caddy', link: '/guide/recipes/caddy' },
                 { text: 'compose', link: '/guide/recipes/compose' },
                 { text: 'container', link: '/guide/recipes/container' },
+                { text: 'quadlet', link: '/guide/recipes/quadlet' },
                 { text: 'git', link: '/guide/recipes/git' },
                 { text: 'rsync', link: '/guide/recipes/rsync' },
                 { text: 'adonisjs', link: '/guide/recipes/adonisjs' },

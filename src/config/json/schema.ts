@@ -262,6 +262,9 @@ export const deployJsonSchema: AnySchemaObject = {
         nextjs_server_path: nonEmptyString,
         nextjs_upload_archive: { type: 'boolean' },
         nuxt_path: stringValue,
+        quadlet_logs_lines: { type: 'number', exclusiveMinimum: 0 },
+        quadlet_path: nonEmptyString,
+        quadlet_wait_timeout: { type: 'number', exclusiveMinimum: 0 },
         redis_db: {
           oneOf: [
             { type: 'integer', minimum: 0 },
